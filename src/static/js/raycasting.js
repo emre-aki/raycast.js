@@ -111,7 +111,7 @@
             },
             "COLOR_MAP": {
                 "ENV":  ["#7F2A1A", "#6F2516", "#5F1F13", "#4F1A0F", "#3F150C", "#2F0F09", "#1F0A06", "#000000"],
-                "WALL": ["#FFFFFF", "#F0F0F0", "#D4D4D4", "#B8B8B8", "#9C9C9C", "#7F7F7F", "#636363", "#474747", "#2B2B2B", "#000000"],
+                "WALL": ["#FFFFFFFF", "#FFFFFFDF", "#FFFFFFBF", "#FFFFFF9F", "#FFFFFF7F", "#FFFFFF5F", "#FFFFFF3F", "#FFFFFF1F", "#FFFFFF0F"],
                 "PORTAL": ["#FFFF000F", "#FFFF001F", "#FFFF002F", "#FFFF003F", "#FFFF004F"]
             }
         },
@@ -543,7 +543,7 @@
                                     hitVWall = 1;
                                     wall.x = sampleMap.x;
                                     wall.y = sampleMap.y;
-                                    if (wall.y === sampleMap.y) {
+                                    if (wall.y === sampleMap.y) { // TODO: fix bug (do it properly)
                                         ctx.fillStyle = "#01A1A1";
                                     }
                                 } else if (sample === "P") {
@@ -575,7 +575,7 @@
                                         distToWall = distH;
                                         wall.x = sampleMap.x;
                                         wall.y = sampleMap.y;
-                                        if (wall.x === sampleMap.x) {
+                                        if (wall.x === sampleMap.x) { // TODO: fix bug (do it properly)
                                             ctx.fillStyle = "#016666";
                                         }
                                     }
@@ -711,13 +711,18 @@
                 }
             },
             "addPortal": function (self, fromX, toX, fromY, toY, toAngle) {
-                if (Math.floor(self.player.x) === fromX && Math.floor(self.player.y) === fromY) {
+                if (Math.floor(self.player.x) === Math.floor(fromX) && 
+                    Math.floor(self.player.y) === Math.floor(fromY)) {
                     self.player.x = toX;
                     self.player.y = toY;
                     self.player.angle = toAngle;
                 }
             },
             "movePlayer": function (self) {
+                // TODO:
+                // ----
+                //  - make moving against walls as in 
+                //    "https://rawgit.com/krotik/gladiator_3d/master/examples/game_demo/main.html"
                 const memoPos = [self.player.x, self.player.y];
                 if (self.keyState.W && 1) {
                     self.player.x += Math.cos(self.player.angle) * (self.STEP_SIZE);
@@ -756,8 +761,8 @@
                 self.exec.movePlayer(self);
 
                 // TODO: add portals dynamically by reading from the map
-                self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
-                self.exec.addPortal(self, 62, 9, 21, 9, Math.PI);
+                self.exec.addPortal(self, 10, 62, 9.5, 22, Math.PI * 0.5);
+                self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
             }
         },
         "start": function () {
