@@ -232,8 +232,8 @@
                                 const aRay = fullDyn ? Math.atan2(y, x) : 0;
 
                                 const pMapSample = {
-                                    "x": fullDyn ? (Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay) * rRay))) : (Math.round(self.player.x + x)),
-                                    "y": fullDyn ? (Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay) * rRay))) : (Math.round(self.player.y + y)),
+                                    "x": fullDyn ? (Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay) * rRay))) : (Math.floor(self.player.x + x)),
+                                    "y": fullDyn ? (Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay) * rRay))) : (Math.floor(self.player.y + y)),
                                 };
 
 
@@ -363,8 +363,8 @@
                             }
 
                             self.util.drawLine(
-                                tileSize * (Math.round(self.player.x) + 0.5) + offset.x,
-                                tileSize * (Math.round(self.player.y) + 0.5) + offset.y,
+                                tileSize * (Math.floor(self.player.x) + 0.5) + offset.x,
+                                tileSize * (Math.floor(self.player.y) + 0.5) + offset.y,
                                 tileSize * wall.x + offset.x,
                                 tileSize * wall.y + offset.y
                             );
@@ -373,15 +373,15 @@
                         // draw player
                         ctx.fillStyle = "#000000";
                         ctx.fillRect(
-                            tileSize * Math.round(self.player.x) + offset.x - 1,
-                            tileSize * Math.round(self.player.y) + offset.y - 1,
+                            tileSize * Math.floor(self.player.x) + offset.x - 1,
+                            tileSize * Math.floor(self.player.y) + offset.y - 1,
                             tileSize + 2,
                             tileSize + 2
                         );
                         ctx.fillStyle = "#FF0000";
                         ctx.fillRect(
-                            tileSize * Math.round(self.player.x) + offset.x,
-                            tileSize * Math.round(self.player.y) + offset.y,
+                            tileSize * Math.floor(self.player.x) + offset.x,
+                            tileSize * Math.floor(self.player.y) + offset.y,
                             tileSize,
                             tileSize
                         );
@@ -756,8 +756,8 @@
                 self.exec.movePlayer(self);
 
                 // TODO: add portals dynamically by reading from the map
-                self.exec.addPortal(self, 10, 62, 9.5, 22, Math.PI * 0.5);
-                self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
+                self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
+                self.exec.addPortal(self, 62, 9, 21, 9, Math.PI);
             }
         },
         "start": function () {
