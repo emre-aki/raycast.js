@@ -711,7 +711,7 @@
                 }
             },
             "addPortal": function (self, fromX, toX, fromY, toY, toAngle) {
-                if (Math.round(self.player.x) === fromX && Math.round(self.player.y) === fromY) {
+                if (Math.floor(self.player.x) === fromX && Math.floor(self.player.y) === fromY) {
                     self.player.x = toX;
                     self.player.y = toY;
                     self.player.angle = toAngle;
