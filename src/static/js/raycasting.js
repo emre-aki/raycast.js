@@ -54,8 +54,8 @@
             "E": 0
         },
         "map": window.__map__.MAP,
-        "mRows": 600,
-        "mCols": 800,
+        "mRows": 150,
+        "mCols": 200,
         "nRows": window.__map__.N_ROWS,
         "nCols": window.__map__.N_COLS,
         "offsetLinebr": window.__map__.OFFSET_LINEBR,
@@ -742,7 +742,7 @@
                 }
             },
             "gameLoop": function (self, deltaT) {
-                self.util.render.frame.rasterized(self);
+                self.util.render.frame.naive(self);
 
                 // display stats
                 self.util.print(
