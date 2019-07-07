@@ -711,8 +711,7 @@
                 }
             },
             "addPortal": function (self, fromX, toX, fromY, toY, toAngle) {
-                if (Math.floor(self.player.x) === Math.floor(fromX) && 
-                    Math.floor(self.player.y) === Math.floor(fromY)) {
+                if (Math.floor(self.player.x) === fromX && Math.floor(self.player.y) === fromY) {
                     self.player.x = toX;
                     self.player.y = toY;
                     self.player.angle = toAngle;
@@ -761,7 +760,7 @@
                 self.exec.movePlayer(self);
 
                 // TODO: add portals dynamically by reading from the map
-                self.exec.addPortal(self, 10, 62, 9.5, 22, Math.PI * 0.5);
+                self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
                 self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
             }
         },
