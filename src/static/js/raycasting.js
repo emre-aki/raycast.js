@@ -54,8 +54,8 @@
             "E": 0
         },
         "map": window.__map__.MAP,
-        "mRows": 150,
-        "mCols": 200,
+        "mRows": 600,
+        "mCols": 800,
         "nRows": window.__map__.N_ROWS,
         "nCols": window.__map__.N_COLS,
         "offsetLinebr": window.__map__.OFFSET_LINEBR,
@@ -742,7 +742,7 @@
                 }
             },
             "gameLoop": function (self, deltaT) {
-                self.util.render.frame.naive(self);
+                self.util.render.frame.rasterized(self);
 
                 // display stats
                 self.util.print(
@@ -756,8 +756,8 @@
                 self.exec.movePlayer(self);
 
                 // TODO: add portals dynamically by reading from the map
-                self.exec.addPortal(self, 10, 62, 9, 22, 0);
-                self.exec.addPortal(self, 62, 9, 21, 9, Math.PI);
+                self.exec.addPortal(self, 10, 62, 9.5, 22, Math.PI * 0.5);
+                self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
             }
         },
         "start": function () {
