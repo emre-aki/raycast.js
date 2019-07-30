@@ -1,3 +1,7 @@
+
+
+
+
 (function () {
     /*
     ================================================================
@@ -26,11 +30,6 @@
 
     const canvas = document.getElementById("canvas");
     const ctx = canvas.getContext("2d");
-    let player = {
-        "angle": 0,
-        "x": 0,
-        "y": 0
-    };
     const fs = {
         "__static__": "./static/",
         "__dirname__": "./static/js/",
@@ -41,43 +40,77 @@
         // ----
         // Make sin/cos && sqrt tables for optimization
         "res": [800, 600],
-        "FPS": 30,
+        "FPS": 60,
         "FOV": Math.PI / 3,
         "DRAW_DIST": 20,
-        "STEP_SIZE": 0.25,
+        "STEP_SIZE": 0.2, // 0.066
         "keyState": {
             "W": 0,
             "A": 0,
             "S": 0,
             "D": 0,
             "Q": 0,
-            "E": 0
+            "E": 0,
+            "SPC": 0
         },
         "map": window.__map__.MAP,
-        "mRows": 150,
-        "mCols": 200,
+        "mRows": 600,
+        "mCols": 800,
         "nRows": window.__map__.N_ROWS,
         "nCols": window.__map__.N_COLS,
         "offsetLinebr": window.__map__.OFFSET_LINEBR,
-        "player": player,
+        "player": {
+            "angle": window.__player__.ANGLE,
+            "sprite": {"index": 0, "reverse": 0},
+            "x": window.__player__.X,
+            "y": window.__player__.Y
+        },
         "assets": {
             "sprites": {
                 "player": {
-                    "img": new Image(),
-                    "name": "pistol1.png", 
-                    "loc": { "x": 0, "y": 0 },
-                    "ready": false
+                    "shotgun0": {
+                        "img": new Image(),
+                        "name": "shotgun_0.png",
+                        "loc": {"x": 0, "y": 0},
+                        "ready": 0
+                    },
+                    "shotgun1": {
+                        "img": new Image(),
+                        "name": "shotgun_1.png",
+                        "loc": {"x": 0, "y": 0},
+                        "ready": 0
+                    },
+                    "shotgun2": {
+                        "img": new Image(),
+                        "name": "shotgun_2.png",
+                        "loc": {"x": 0, "y": 0},
+                        "ready": 0
+                    },
+                    "shotgun3": {
+                        "img": new Image(),
+                        "name": "shotgun_3.png",
+                        "loc": {"x": 0, "y": 0},
+                        "ready": 0
+                    },
+                    "shotgun4": {
+                        "img": new Image(),
+                        "name": "shotgun_4.png",
+                        "loc": {"x": 0, "y": 0},
+                        "ready": 0
+                    }
                 },
-                "setup": function (self, key) {
+                "setup": function (self, path) {
+                    const sprite = path.split(".").reduce(function(acc, curr) {
+                        return acc[curr];
+                    }, self.assets.sprites);
                     return new Promise(function (resolve, reject) {
-                        self.assets.sprites[key].img.onload = function () {
-                            self.assets.sprites[key].ready = true;
-                            resolve(self.assets.sprites[key]);
+                        sprite.img.onload = function () {
+                            resolve(sprite);
                         };
-                        self.assets.sprites[key].img.onerror = function () {
+                        sprite.img.onerror = function () {
                             reject();
                         };
-                        self.assets.sprites[key].img.src = fs.__static__ + "sprites/" + self.assets.sprites[key].name;
+                        sprite.img.src = fs.__static__ + "sprites/" + sprite.name;
                     });
                 }
             },
@@ -87,25 +120,28 @@
                     "name": "theme.mp3",
                     "status": "INIT"
                 },
-                "setup": function (self, key) {
+                "setup": function (self, path) {
+                    const theme = path.split(".").reduce(function (acc, curr) {
+                        return acc[curr];
+                    }, self.assets.themes);
                     return new Promise(function (resolve, reject) {
-                        self.assets.themes[key].audio.onended = function () {
-                            self.assets.themes[key].status = "READY";
+                        theme.audio.onended = function () {
+                            theme.status = "READY";
                             this.currentTime = 0;
-                            self.exec.playAudio(self, key);
+                            self.exec.playAudio(self, theme);
                         };
-                        self.assets.themes[key].audio.onerror = function () {
-                            self.assets.themes[key].status = "INIT";
+                        theme.audio.onerror = function () {
+                            theme.status = "INIT";
                             reject();
                         };
-                        self.assets.themes[key].audio.oncanplaythrough = function () {
-                            self.assets.themes[key].status = "READY";
-                            resolve(self.assets.themes[key]);
+                        theme.audio.oncanplaythrough = function () {
+                            theme.status = "READY";
+                            resolve(theme);
                         };
                         document.addEventListener("keydown", function () {
-                            self.exec.playAudio(self, key);
+                            self.exec.playAudio(self, theme);
                         });
-                        self.assets.themes[key].audio.src = fs.__static__ + "audio/" + self.assets.themes[key].name;
+                        theme.audio.src = fs.__static__ + "audio/" + theme.name;
                     });
                 }
             },
@@ -115,6 +151,7 @@
                 "PORTAL": ["#FFFF000F", "#FFFF001F", "#FFFF002F", "#FFFF003F", "#FFFF004F"]
             }
         },
+        "intervals": {},
         "const": {
             "sqrt3": Math.sqrt(3)
         },
@@ -137,6 +174,8 @@
                     self.keyState.Q = type === "keydown" ? 1 : (type === "keyup" ? 0 : self.keyState.Q);
                 } else if (key === 69) {
                     self.keyState.E = type === "keydown" ? 1 : (type === "keyup" ? 0 : self.keyState.E);
+                } else if (key === 32) {
+                    self.keyState.SPC = type === "keydown" ? 1 : (type === "keyup" ? 0 : self.keyState.SPC);
                 }
             },
             "drawLine": function (x0, y0, x1, y1, color) {
@@ -176,10 +215,14 @@
                 ctx.fillText(text, x, y);
             },
             "render": {
-                "globalSprites": function (self) {
-                    for (key in self.assets.sprites) {
-                        if (!(!self.assets.sprites[key].img) && !(!self.assets.sprites[key].img.src) && self.assets.sprites[key].ready) {
-                            ctx.drawImage(self.assets.sprites[key].img, self.assets.sprites[key].loc.x, self.assets.sprites[key].loc.y);
+                "sprites": function (self, sprites) {
+                    for (key in sprites) {
+                        if (!(!sprites[key].img)) {
+                            if (!(!sprites[key].img.src) && sprites[key].ready & 1) {
+                                ctx.drawImage(sprites[key].img, sprites[key].loc.x, sprites[key].loc.y);
+                            }
+                        } else {
+                            self.util.render.sprites(self, sprites[key]);
                         }
                     }
                 },
@@ -230,13 +273,10 @@
                             for (let x = -1 * rRow; x < rRow; x += 1) {
                                 const rRay = fullDyn ? Math.sqrt(x * x + y * y) : 0;
                                 const aRay = fullDyn ? Math.atan2(y, x) : 0;
-
                                 const pMapSample = {
-                                    "x": fullDyn ? (Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay) * rRay))) : (Math.floor(self.player.x + x)),
-                                    "y": fullDyn ? (Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay) * rRay))) : (Math.floor(self.player.y + y)),
+                                    "x": fullDyn ? Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay) * rRay)) : Math.floor(self.player.x + x),
+                                    "y": fullDyn ? Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay) * rRay)) : Math.floor(self.player.y + y)
                                 };
-
-
                                 const pTransformMM = {
                                     "x": offset.x + y * tileSize,
                                     "y": offset.y - x * tileSize
@@ -340,7 +380,7 @@
                             step_v.y      = step_v.x * ray.slope;
                             trace_v.x     = right & 1 ? Math.ceil(self.player.x) : Math.floor(self.player.x);
                             trace_v.y     = self.player.y + (trace_v.x - self.player.x) * ray.slope;
-                            while (!(hitWall_v & 1) &&
+                            while ((hitWall_v & 1) === 0 &&
                                    trace_v.x >= 0 && trace_v.x < self.nCols &&
                                    trace_v.y >= 0 && trace_v.y < self.nRows) {
                                 const pSample = {
@@ -462,55 +502,24 @@
                                     iRow += 1;
                                 }
                             }
-                        }
-
-                        // display mini-map
-                        const tileSizeMap = 2;
-                        const radiusMap = 25;
-                        self.util.render.minimap.dynamicBetter(
-                            self,
-                            {
-                                "x": self.res[0] - 10 - tileSizeMap * (radiusMap + self.offsetLinebr),
-                                "y": self.res[1] - 10 - tileSizeMap * (radiusMap + self.offsetLinebr)
-                            },
-                            tileSizeMap,
-                            radiusMap,
-                            true
-                        );
-                        self.util.render.minimap.dynamicBetter(
-                            self,
-                            {
-                                "x": self.res[0] - 10 - tileSizeMap * (radiusMap + self.offsetLinebr),
-                                "y": self.res[1] - 20 - tileSizeMap * (3 * radiusMap + self.offsetLinebr)
-                            },
-                            tileSizeMap,
-                            radiusMap
-                        );
-                        self.util.render.minimap.static(
-                            self, 
-                            {
-                                "x": 10,
-                                "y": self.res[1] - tileSizeMap * self.nRows - 10
-                            },
-                            tileSizeMap
-                        );
-
-                        // render global sprites
-                        self.util.render.globalSprites(self);                        
+                        }                    
                     },
                     "rasterized": function (self) {
                         // draw background
-                        ctx.fillStyle = "#000000";
-                        ctx.fillRect(0, 0, self.res[0], self.res[1]);
+                        ctx.fillStyle = "#00FFFF";
+                        ctx.fillRect(0, 0, self.res[0], self.res[1] * 0.5);
+                        ctx.fillStyle = "#303030";
+                        ctx.fillRect(0, self.res[1] * 0.5, self.res[0], self.res[1] * 0.5);
+
                         const tileSize = {
                             // TODO: optimize--avoid division for each frame
                             "x": Math.round(self.res[0] / self.mCols), 
                             "y": Math.round(self.res[1] / self.mRows)
                         };
-                        ctx.fillStyle = "#00FFFF";
-                        ctx.fillRect(0, 0, self.res[0], self.res[1] * 0.5);
 
                         // raycasting
+                        let previousHit;
+                        let currentHit;
                         for (let iCol = 0; iCol < self.mCols; iCol += 1) {
                             const ray   = {
                                 "angle": (self.player.angle - self.FOV * 0.5) + (iCol / self.mCols) * self.FOV
@@ -521,34 +530,29 @@
                             const right = ray.dir.x > 0 ? 1 : 0;
                             let distToWall;
                             let distToPortal;
-                            const wall = {};
 
                             // vertical wall detection
                             const stepV   = {};
                             const traceV  = {};
-                            stepV.x       = right && 1 ? 1 : -1;
+                            stepV.x       = right & 1 ? 1 : -1;
                             stepV.y       = stepV.x * ray.slope;
                             traceV.x      = right ? Math.ceil(self.player.x) : Math.floor(self.player.x);
                             traceV.y      = self.player.y + (traceV.x - self.player.x) * ray.slope;
                             let hitVWall = 0;
-                            while ((hitVWall && 1) === 0 && traceV.x >= 0 && traceV.x < self.nCols && traceV.y >= 0 && traceV.y < self.nRows) {
+                            while ((hitVWall & 1) === 0 && traceV.x >= 0 && traceV.x < self.nCols && traceV.y >= 0 && traceV.y < self.nRows) {
                                 const sampleMap = {
                                     "x": Math.floor(traceV.x + (right ? 0 : -1)),
                                     "y": Math.floor(traceV.y)
                                 };
                                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                                 if (sample === "#") {
-                                    const hitDist = {"x": traceV.x - self.player.x, "y": traceV.y - self.player.y};
-                                    distToWall = hitDist.x * hitDist.x + hitDist.y * hitDist.y;
+                                    const hitCoord = {"x": traceV.x - self.player.x, "y": traceV.y - self.player.y};
+                                    distToWall = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
                                     hitVWall = 1;
-                                    wall.x = sampleMap.x;
-                                    wall.y = sampleMap.y;
-                                    if (wall.y === sampleMap.y) { // TODO: fix bug (do it properly)
-                                        ctx.fillStyle = "#01A1A1";
-                                    }
+                                    currentHit = "vertical";
                                 } else if (sample === "P") {
-                                    const hitDist = {"x": traceV.x - self.player.x, "y": traceV.y - self.player.y};
-                                    distToPortal = hitDist.x * hitDist.x + hitDist.y * hitDist.y;
+                                    const hitCoord = {"x": traceV.x - self.player.x, "y": traceV.y - self.player.y};
+                                    distToPortal = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
                                 }
                                 traceV.x += stepV.x;
                                 traceV.y += stepV.y;
@@ -557,45 +561,45 @@
                             // horizontal wall detection
                             const stepH  = {};
                             const traceH = {};
-                            stepH.y      = up && 1 ? -1 : 1;
+                            stepH.y      = up & 1 ? -1 : 1;
                             stepH.x      = stepH.y / ray.slope;
                             traceH.y     = up ? Math.floor(self.player.y) : Math.ceil(self.player.y);
                             traceH.x     = self.player.x + (traceH.y - self.player.y) / ray.slope;
                             let hitHWall = 0;
-                            while ((hitHWall && 1) === 0 && traceH.x >= 0 && traceH.x < self.nCols && traceH.y >= 0 && traceH.y < self.nRows) {
+                            while ((hitHWall & 1) === 0 && traceH.x >= 0 && traceH.x < self.nCols && traceH.y >= 0 && traceH.y < self.nRows) {
                                 const sampleMap = {
                                     "x": Math.floor(traceH.x),
                                     "y": Math.floor(traceH.y + (up ? -1 : 0))
                                 };
                                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                                 if (sample === "#") {
-                                    const hitDist = {"x": traceH.x - self.player.x, "y": traceH.y - self.player.y};
-                                    const distH   = hitDist.x * hitDist.x + hitDist.y * hitDist.y; 
-                                    if ((hitVWall & 1) === 0 || distToWall > distH) {
-                                        distToWall = distH;
-                                        wall.x = sampleMap.x;
-                                        wall.y = sampleMap.y;
-                                        if (wall.x === sampleMap.x) { // TODO: fix bug (do it properly)
-                                            ctx.fillStyle = "#016666";
-                                        }
+                                    const hitCoord = {"x": traceH.x - self.player.x, "y": traceH.y - self.player.y};
+                                    const hitDist   = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
+                                    if ((hitVWall & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
+                                        distToWall = hitDist;
+                                        currentHit = "horizontal";
                                     }
                                     hitHWall = 1;
                                 } else if (sample === "P") {
-                                    const hitDist = {"x": traceH.x - self.player.x, "y": traceH.y - self.player.y};
-                                    const distH   = hitDist.x * hitDist.x + hitDist.y * hitDist.y; 
-                                    if (!distToPortal || distToPortal > distH) {
-                                        distToPortal = distH;
+                                    const hitCoord = {"x": traceH.x - self.player.x, "y": traceH.y - self.player.y};
+                                    const hitDist   = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y; 
+                                    if (!distToPortal || distToPortal > hitDist) {
+                                        distToPortal = hitDist;
                                     }
                                 }
                                 traceH.x += stepH.x;
                                 traceH.y += stepH.y;
                             }
+                            previousHit = currentHit;
+                            distToWall = Math.sqrt(distToWall) /* * 3 */;
 
                             // fix the fish-eye distortion
-                            distToWall = Math.sqrt(distToWall);
                             distToWall *= Math.cos(self.player.angle - ray.angle);
 
                             // draw rows for the current column
+                            // TODO:
+                            // ----
+                            //  - bring back gradients (for walls and floor/ceiling both)
                             let heightCeil = (self.mRows * 0.5) - (self.mRows / distToWall);
                             let startFloor = self.mRows - heightCeil;
                             let interval   = self.assets.COLOR_MAP.ENV.length / heightCeil;
@@ -619,10 +623,12 @@
                             /**/
                             heightCeil = heightCeil === -Infinity ? 0 : heightCeil;
                             startFloor = startFloor === Infinity ? self.mRows : startFloor;
-                            //ctx.fillStyle = self.assets.COLOR_MAP.WALL[Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST)) >= self.assets.COLOR_MAP.WALL.length ? self.assets.COLOR_MAP.WALL.length  - 1 : Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST))];
-                            const ang = self.util.rad2Deg(ray.angle - self.player.angle);
-                            //ctx.fillStyle = "red";
+                            ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
                             ctx.fillRect(tileSize.x * iCol, heightCeil * tileSize.y, tileSize.x, (startFloor - heightCeil) * tileSize.y);
+                            //ctx.fillStyle = "#000000";
+                            //ctx.fillRect(tileSize.x * iCol, tileSize.y * heightCeil, tileSize.x, tileSize.y * (startFloor - heightCeil));
+                            //ctx.fillStyle = self.assets.COLOR_MAP.WALL[Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST)) >= self.assets.COLOR_MAP.WALL.length ? self.assets.COLOR_MAP.WALL.length  - 1 : Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST))];
+                            //ctx.fillRect(tileSize.x * iCol, heightCeil * tileSize.y, tileSize.x, (startFloor - heightCeil) * tileSize.y);
                             /**/
 
                             // draw portal for the current col, if there exists any
@@ -657,9 +663,6 @@
                             25, 
                             true
                         );
-
-                        // render global sprites
-                        self.util.render.globalSprites(self);
                     },
                     "final": function () {}
                 }
@@ -676,11 +679,6 @@
                     { "color": "#FFFFFF", "size": 60 }
                 );
                 return new Promise(function (resolve, reject) {
-                    // initialize player
-                    self.player.x = 2;
-                    self.player.y = 9.5;
-                    self.player.angle = 0;
-
                     // setup event listeners
                     document.onkeydown = function (e) {
                         self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
@@ -690,12 +688,42 @@
                     };
 
                     // setup sprites
-                    self.assets.sprites.setup(self, "player")
+                    self.assets.sprites.setup(self, "player.shotgun0")
                         .then(function (sprite) {
+                            sprite.ready = 1;
                             sprite.loc.x = Math.round((self.res[0] / 2) - sprite.img.width / 2);
                             sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
+                        })
+                        .then(function () {
+                            return self.assets.sprites.setup(self, "player.shotgun1");
+                        })
+                        .then(function (sprite) {
+                            sprite.loc.x = Math.round((self.res[0] / 2) - sprite.img.width / 2);
+                            sprite.loc.y = Math.round(self.res[1] - sprite.img.height);                            
+                        })
+                        .then(function () {
+                            return self.assets.sprites.setup(self, "player.shotgun2");
+                        })
+                        .then(function (sprite) {
+                            sprite.loc.x = Math.round((self.res[0] / 2) - sprite.img.width / 2);
+                            sprite.loc.y = Math.round(self.res[1] - sprite.img.height);                            
+                        }).then(function () {
+                            return self.assets.sprites.setup(self, "player.shotgun3");
+                        })
+                        .then(function (sprite) {
+                            sprite.loc.x = Math.round((self.res[0] / 2) - sprite.img.width / 2);
+                            sprite.loc.y = Math.round(self.res[1] - sprite.img.height);                            
+                        })
+                        .then(function () {
+                            return self.assets.sprites.setup(self, "player.shotgun4");
+                        })
+                        .then(function (sprite) {
+                            sprite.loc.x = Math.round((self.res[0] / 2) - sprite.img.width / 2);
+                            sprite.loc.y = Math.round(self.res[1] - sprite.img.height);                            
+                        })
 
-                            //setup theme music
+                    // setup theme music
+                        .then(function () {
                             return self.assets.themes.setup(self, "main");
                         })
                         .then(function (theme) {
@@ -704,9 +732,9 @@
                 });
             },
             "playAudio": function (self, theme) {
-                if (self.assets.themes[theme].status === "READY") {
-                    self.assets.themes[theme].status = "PLAYING";
-                    self.assets.themes[theme].audio.play()
+                if (theme.status === "READY") {
+                    theme.status = "PLAYING";
+                    theme.audio.play()
                         .catch(function (error) {});
                 }
             },
@@ -720,33 +748,60 @@
             "movePlayer": function (self) {
                 // TODO:
                 // ----
-                //  - make moving against walls as in 
-                //    "https://rawgit.com/krotik/gladiator_3d/master/examples/game_demo/main.html"
+                //  - investigate calculation with wall angle
                 const memoPos = [self.player.x, self.player.y];
-                if (self.keyState.W && 1) {
+                if (self.keyState.W & 1) {
                     self.player.x += Math.cos(self.player.angle) * (self.STEP_SIZE);
                     self.player.y += Math.sin(self.player.angle) * (self.STEP_SIZE);
-                } if (self.keyState.A && 1) {
-                    self.player.angle -= 0.1;
-                } if (self.keyState.S && 1) {
+                } if (self.keyState.A & 1) {
+                    self.player.angle -= 0.05;
+                } if (self.keyState.S & 1) {
                     self.player.x -= Math.cos(self.player.angle) * (self.STEP_SIZE);
                     self.player.y -= Math.sin(self.player.angle) * (self.STEP_SIZE);
-                } if (self.keyState.D && 1) {
-                    self.player.angle += 0.1;
-                } if (self.keyState.Q && 1) {
+                } if (self.keyState.D & 1) {
+                    self.player.angle += 0.05;
+                } if (self.keyState.Q & 1) {
                     self.player.x += Math.sin(self.player.angle) * (self.STEP_SIZE);
                     self.player.y -= Math.cos(self.player.angle) * (self.STEP_SIZE);
-                } if (self.keyState.E && 1) {
+                } if (self.keyState.E & 1) {
                     self.player.x -= Math.sin(self.player.angle) * (self.STEP_SIZE);
                     self.player.y += Math.cos(self.player.angle) * (self.STEP_SIZE);
                 }
-                 if (self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(self.player.x)] === "#") {
+                const sample_x = self.map[(self.nCols + self.offsetLinebr) * Math.floor(memoPos[1]) + Math.floor(self.player.x)];
+                const sample_y = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(memoPos[0])];
+                if (sample_x === "#") {
                     self.player.x = memoPos[0];
+                } if (sample_y === "#") {
                     self.player.y = memoPos[1];
                 }
             },
+            "animateShooting": function (self) {
+                if ((self.keyState.SPC & 1) && !self.intervals.animShooting) {
+                    self.intervals.animShooting = setInterval(function () {
+                        if (Object.keys(self.assets.sprites.player).length - 1 === self.player.sprite.index) {
+                            self.player.sprite.reverse = 1;
+                        } else if ((self.player.sprite.reverse & 1) && self.player.sprite.index === 0) {
+                            self.player.sprite.reverse = 0;
+                            clearInterval(self.intervals.animShooting);
+                            self.intervals.animShooting = undefined;
+                            return;
+                        }
+                        self.assets.sprites.player["shotgun" + self.player.sprite.index.toString()].ready = 0;
+                        self.player.sprite.index = (self.player.sprite.reverse & 1) ? (self.player.sprite.index === 2 ? 0 : self.player.sprite.index - 1) : self.player.sprite.index + 1;
+                        self.assets.sprites.player["shotgun" + self.player.sprite.index.toString()].ready = 1;
+                    }, 150);
+                }
+            },
             "gameLoop": function (self, deltaT) {
-                self.util.render.frame.naive(self);
+                self.util.render.frame.rasterized(self);
+
+                self.exec.movePlayer(self);
+                self.exec.animateShooting(self);
+                self.util.render.sprites(self, self.assets.sprites);
+
+                // TODO: add portals dynamically by reading from the map
+                self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
+                self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
 
                 // display stats
                 self.util.print(
@@ -756,18 +811,12 @@
                     5, 15, 
                     { "size": 14 }
                 );
-
-                self.exec.movePlayer(self);
-
-                // TODO: add portals dynamically by reading from the map
-                self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
-                self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
             }
         },
         "start": function () {
             const self = this;
             let tsStart = new Date();
-            setInterval(function () {
+            self.intervals.game = setInterval(function () {
                 // main game loop--reiterates ~30 times a second
                 const tsEnd = new Date();
                 self.exec.gameLoop(self, tsEnd - tsStart);
