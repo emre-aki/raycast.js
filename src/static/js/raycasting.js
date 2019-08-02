@@ -1,17 +1,16 @@
 (function() {
   /*
-    ================================================================
-                        Raycasting on Canvas
-                                  by
-                           Emre Akı, 2018.
-
+  ================================================================
+                      Raycasting on Canvas
+                                by
+                         Emre Akı, 2018.
 
       This is a simple implementation of the once-popular 3-D
-    rendering technique known as "ray-casting" or "ray-tracing"
-    which was featured in the video game Wolfenstein 3D.
+    rendering technique known as "ray-casting" which was featured
+    in the video game Wolfenstein 3D.
 
       All of the rendering is carried out within a single 800x600
-    canvas for the sake of simplicity at ~30 frames per second.
+    canvas for the sake of simplicity at ~60 frames per second.
 
       This little project was inspired by a video on YouTube posted
     by a fellow seasoned programmer who goes by the name 'javidx9.'
@@ -21,8 +20,8 @@
       https://youtu.be/xW8skO7MFYw
 
     Last updated: 07.30.2019
-    ================================================================
-     */
+  ================================================================
+  */
 
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
@@ -38,8 +37,8 @@
     "res": [800, 600],
     "FPS": 60,
     "FOV": Math.PI / 3,
-    "DRAW_DIST": 20,
-    "STEP_SIZE": 0.2, // 0.066
+    "DRAW_DIST": 70,
+    "STEP_SIZE": 0.2,
     "keyState": {
       "W": 0,
       "A": 0,
@@ -57,7 +56,7 @@
     "offsetLinebr": window.__map__.OFFSET_LINEBR,
     "player": {
       "angle": window.__player__.ANGLE,
-      "sprite": { "index": 0, "reverse": 0 },
+      "sprite": {"index": 0, "reverse": 0},
       "x": window.__player__.X,
       "y": window.__player__.Y
     },
@@ -67,31 +66,31 @@
           "shotgun0": {
             "img": new Image(),
             "name": "shotgun_0.png",
-            "loc": { "x": 0, "y": 0 },
+            "loc": {"x": 0, "y": 0},
             "ready": 0
           },
           "shotgun1": {
             "img": new Image(),
             "name": "shotgun_1.png",
-            "loc": { "x": 0, "y": 0 },
+            "loc": {"x": 0, "y": 0},
             "ready": 0
           },
           "shotgun2": {
             "img": new Image(),
             "name": "shotgun_2.png",
-            "loc": { "x": 0, "y": 0 },
+            "loc": {"x": 0, "y": 0},
             "ready": 0
           },
           "shotgun3": {
             "img": new Image(),
             "name": "shotgun_3.png",
-            "loc": { "x": 0, "y": 0 },
+            "loc": {"x": 0, "y": 0},
             "ready": 0
           },
           "shotgun4": {
             "img": new Image(),
             "name": "shotgun_4.png",
-            "loc": { "x": 0, "y": 0 },
+            "loc": {"x": 0, "y": 0},
             "ready": 0
           }
         },
@@ -140,22 +139,22 @@
             theme.audio.src = fs.__static__ + "audio/" + theme.name;
           });
         }
-      },
-      "COLOR_MAP": {
-        "ENV": ["#7F2A1A", "#6F2516", "#5F1F13", "#4F1A0F", "#3F150C", "#2F0F09", "#1F0A06", "#000000"],
-        "WALL": ["#FFFFFFFF", "#FFFFFFDF", "#FFFFFFBF", "#FFFFFF9F", "#FFFFFF7F", "#FFFFFF5F", "#FFFFFF3F", "#FFFFFF1F", "#FFFFFF0F"],
-        "PORTAL": ["#FFFF000F", "#FFFF001F", "#FFFF002F", "#FFFF003F", "#FFFF004F"]
       }
     },
     "intervals": {},
     "const": {
-      "sqrt3": Math.sqrt(3)
+      "sqrt3": Math.sqrt(3),
+      "RATIO_DRAW_DIST_TO_BACKGROUND": 1 // 5 * 0.2
     },
     "util": {
       "rad2Deg": function(rad) {
         const rad360 = 6.28319;
         const radToDeg = 57.2958;
         return (((rad + rad360) % rad360) * radToDeg + 360) % 360;
+      },
+      "eucDist": function(a, b, pseudo) {
+        const pseudoDist = (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+        return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
       },
       "handleAsyncKeyState": function(self, type, key) {
         if (key === 87) {
@@ -241,7 +240,7 @@
                   "y": offset.y - Math.cos(a) * r * tileSize
                 };
                 const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
-                if (r === R) { // render minimap border
+                if (r === R) {// render minimap border
                   ctx.fillStyle = "#000000";
                 } else if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
                   if (mapSample === ".") {
@@ -262,7 +261,7 @@
               {"x": offset.x,                               "y": offset.y - 2 * tileSize},
               {"x": offset.x - self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
               {"x": offset.x + self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
-              { "border": { "color": "#00000", "thickness": 1 } }
+              {"border": {"color": "#00000", "thickness": 1}}
             );
           },
           "dynamicBetter": function(self, offset, tileSize, R, fullDyn) {
@@ -331,7 +330,7 @@
               caretPos.a, 
               caretPos.b, 
               caretPos.c, 
-              {"border": { "color": "#000000", "thickness": 1}}
+              {"border": {"color": "#000000", "thickness": 1}}
             );
           },
           "static": function(self, offset, tileSize) {
@@ -352,8 +351,8 @@
             // draw player FOV
             for (let iCol = 0; iCol < 2; iCol += 1) {
               // raycasting
-              const ray   = { "angle": self.player.angle - self.FOV * 0.5 + iCol * self.FOV };
-              ray.dir     = { "x": Math.cos(ray.angle), "y": Math.sin(ray.angle) };
+              const ray   = {"angle": self.player.angle - self.FOV * 0.5 + iCol * self.FOV};
+              ray.dir     = {"x": Math.cos(ray.angle), "y": Math.sin(ray.angle)};
               ray.slope   = ray.dir.y / ray.dir.x;
               const up    = ray.dir.y < 0 ? 1 : 0;
               const right = ray.dir.x > 0 ? 1 : 0;
@@ -376,8 +375,7 @@
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * pSample.y + pSample.x];
                 if (sample === "#") {
-                  distToWall = (trace_h.y - self.player.y) * (trace_h.y - self.player.y) +
-                               (trace_h.x - self.player.x) * (trace_h.x - self.player.x);
+                  distToWall = self.util.eucDist(trace_h, {"x": self.player.x, "y": self.player.y}, true);
                   wall = {
                     "x": pSample.x,
                     "y": pSample.y + (up & 1 ? 1 : 0)
@@ -405,8 +403,7 @@
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * pSample.y + pSample.x];
                 if (sample === "#") {
-                  const dist_tmp = (trace_v.y - self.player.y) * (trace_v.y - self.player.y) +
-                                   (trace_v.x - self.player.x) * (trace_v.x - self.player.x);
+                  const dist_tmp = self.util.eucDist(trace_v, {"x": self.player.x, "y": self.player.y}, true);
                   hitWall_v      = 1;
                   if ((hitWall_h & 1) === 0 || dist_tmp < distToWall) {
                     distToWall = dist_tmp;
@@ -454,82 +451,11 @@
           }
         },
         "frame": {
-          "naive": function(self) {
-            // draw background
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, self.res[0], self.res[1]);
-
-            // raycasting
-            const tileSizeX = Math.round(self.res[0] / self.mCols);
-            const tileSizeY = Math.round(self.res[1] / self.mRows);
-            for (let colI = 0; colI < self.mCols; colI += 1) {
-              const angleRay = self.player.angle - self.FOV / 2 + (colI / self.mCols) * self.FOV;
-
-              // wall detection
-              const step     = 0.01;
-              let hitWall    = false;
-              let distPortal = null;
-              let dist       = 0;
-              while (!hitWall && dist < self.DRAW_DIST) {
-                dist += step;
-                const ray = {
-                  "x": Math.floor(self.player.x + dist * Math.cos(angleRay)),
-                  "y": Math.floor(self.player.y + dist * Math.sin(angleRay))
-                };
-                const sample = self.map[(self.nCols + self.offsetLinebr) * ray.y + ray.x];
-                if (ray.x < 0 || ray.y < 0 || ray.x >= self.nCols || ray.y >= self.nRows) { // ray out of bounds
-                  hitWall = true;
-                  dist = self.DRAW_DIST;
-                } else if (sample === "#") {
-                  hitWall = true;
-                } else if (!!distPortal === false && sample === "P") {
-                  distPortal = dist;
-                }
-              }
-
-              // draw rows for current col
-              const heightCeil  = self.mRows / 2 - self.mRows / dist;
-              const heightFloor = self.mRows - heightCeil;
-              const interval    = self.assets.COLOR_MAP.ENV.length / heightCeil;
-              for (let rowI = 0; rowI < self.mRows; rowI += 1) {
-                if (rowI < heightCeil) {
-                  // drawing ceiling
-                  ctx.fillStyle = self.assets.COLOR_MAP.ENV[Math.floor(rowI * interval)];
-                } else if (heightCeil <= rowI && rowI < heightFloor) {
-                  // drawing wall
-                  ctx.fillStyle = self.assets.COLOR_MAP.WALL[Math.floor((dist / self.DRAW_DIST) * self.assets.COLOR_MAP.WALL.length)];
-                } else {
-                  // drawing floor
-                  ctx.fillStyle = self.assets.COLOR_MAP.ENV[Math.floor((self.mRows - rowI) * interval)];
-                }
-                ctx.fillRect(colI * tileSizeX, rowI * tileSizeY, tileSizeX, tileSizeY);
-              }
-
-              // draw portal for the current col, if there exists any
-              if (!!distPortal) {
-                const heightCeil = self.mRows / 2 - self.mRows / distPortal;
-                const heightFloor = self.mRows - heightCeil;
-                const interval = self.assets.COLOR_MAP.PORTAL.length / heightCeil;
-                let iRow = 0;
-                while (iRow < self.mRows && iRow < heightFloor) {
-                  if (self.mRows <= heightFloor) {
-                    // if too close to/inside the portal
-                    ctx.fillStyle = self.assets.COLOR_MAP.PORTAL[self.assets.COLOR_MAP.PORTAL.length - 1];
-                  } else {
-                    ctx.fillStyle = self.assets.COLOR_MAP.PORTAL[Math.floor(iRow * interval)] ||
-                                    self.assets.COLOR_MAP.PORTAL[self.assets.COLOR_MAP.PORTAL.length - 1];
-                  }
-                  ctx.fillRect(tileSizeX * colI, tileSizeY * iRow, tileSizeX, tileSizeY);
-                  iRow += 1;
-                }
-              }
-            }
-          },
           "rasterized": function(self) {
             // draw background
-            ctx.fillStyle = "#00FFFF";
+            ctx.fillStyle = self.assets.background.ceiling;
             ctx.fillRect(0, 0, self.res[0], self.res[1] * 0.5);
-            ctx.fillStyle = "#303030";
+            ctx.fillStyle = self.assets.background.floor;
             ctx.fillRect(0, self.res[1] * 0.5, self.res[0], self.res[1] * 0.5);
 
             const tileSize = {
@@ -539,13 +465,17 @@
             };
 
             // raycasting
+            const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
             let previousHit;
             let currentHit;
             for (let iCol = 0; iCol < self.mCols; iCol += 1) {
               const ray   = {
                 "angle": self.player.angle - self.FOV * 0.5 + (iCol / self.mCols) * self.FOV
               };
-              ray.dir     = { "x": Math.cos(ray.angle), "y": Math.sin(ray.angle) };
+              ray.dir     = {
+                "x": Math.cos(ray.angle), 
+                "y": Math.sin(ray.angle)
+              };
               ray.slope   = ray.dir.y / ray.dir.x;
               const up    = ray.dir.y < 0 ? 1 : 0;
               const right = ray.dir.x > 0 ? 1 : 0;
@@ -559,22 +489,23 @@
               stepV.y      = stepV.x * ray.slope;
               traceV.x     = right ? Math.ceil(self.player.x) : Math.floor(self.player.x);
               traceV.y     = self.player.y + (traceV.x - self.player.x) * ray.slope;
-              let hitVWall = 0;
-              while ((hitVWall & 1) === 0 && traceV.x >= 0 && traceV.x < self.nCols &&
-                                             traceV.y >= 0 && traceV.y < self.nRows) {
+              let hitV     = 0;
+              while ((hitV & 1) === 0 && traceV.x >= 0 && traceV.x < self.nCols &&
+                                         traceV.y >= 0 && traceV.y < self.nRows) {
                 const sampleMap = {
                   "x": Math.floor(traceV.x + (right ? 0 : -1)),
                   "y": Math.floor(traceV.y)
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (sample === "#") {
-                  const hitCoord = { "x": traceV.x - self.player.x, "y": traceV.y - self.player.y };
-                  distToWall     = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
-                  hitVWall       = 1;
+                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
+                  hitV           = 1;
+                  distToWall     = sqrDrawDist;
+                } else if (sample === "#") {
+                  distToWall     = self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true);
+                  hitV           = 1;
                   currentHit     = "vertical";
                 } else if (sample === "P") {
-                  const hitCoord = { "x": traceV.x - self.player.x, "y": traceV.y - self.player.y };
-                  distToPortal   = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
+                  distToPortal   = self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true);
                 }
                 traceV.x += stepV.x;
                 traceV.y += stepV.y;
@@ -587,25 +518,26 @@
               stepH.x      = stepH.y / ray.slope;
               traceH.y     = up ? Math.floor(self.player.y) : Math.ceil(self.player.y);
               traceH.x     = self.player.x + (traceH.y - self.player.y) / ray.slope;
-              let hitHWall = 0;
-              while ((hitHWall & 1) === 0 && traceH.x >= 0 && traceH.x < self.nCols &&
-                                             traceH.y >= 0 && traceH.y < self.nRows) {
+              let hitH     = 0;
+              while ((hitH & 1) === 0 && traceH.x >= 0 && traceH.x < self.nCols &&
+                                         traceH.y >= 0 && traceH.y < self.nRows) {
                 const sampleMap = {
                   "x": Math.floor(traceH.x),
                   "y": Math.floor(traceH.y + (up ? -1 : 0))
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (sample === "#") {
-                  const hitCoord = { "x": traceH.x - self.player.x, "y": traceH.y - self.player.y };
-                  const hitDist  = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
-                  if ((hitVWall & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
-                    distToWall = hitDist;
-                    currentHit = "horizontal";
+                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
+                  hitH = 1;
+                  distToWall     = distToWall ? distToWall : sqrDrawDist;
+                } else if (sample === "#") {
+                  const hitDist  = self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true);
+                  if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
+                    distToWall   = hitDist;
+                    currentHit   = "horizontal";
                   }
-                  hitHWall = 1;
+                  hitH = 1;
                 } else if (sample === "P") {
-                  const hitCoord = { "x": traceH.x - self.player.x, "y": traceH.y - self.player.y };
-                  const hitDist = hitCoord.x * hitCoord.x + hitCoord.y * hitCoord.y;
+                  const hitDist = self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true);
                   if (!distToPortal || distToPortal > hitDist) {
                     distToPortal = hitDist;
                   }
@@ -614,35 +546,39 @@
                 traceH.y += stepH.y;
               }
               previousHit = currentHit;
-              distToWall = Math.sqrt(distToWall) /* * 3 */;
+
+              // calculate the real distance
+              distToWall = Math.sqrt(distToWall);
+              //dst = distToWall;
 
               // fix the fish-eye distortion
-              distToWall *= Math.cos(self.player.angle - ray.angle);
+              distToWall = distToWall === self.DRAW_DIST ? distToWall : distToWall * Math.cos(ray.angle - self.player.angle);
+              //distToWall *= Math.cos(self.player.angle - ray.angle);
 
-              // draw rows for the current column
-              // TODO:
-              // ----
-              //  - bring back gradients (for walls and floor/ceiling both)
-              let heightCeil = self.mRows * 0.5 - self.mRows / distToWall;
-              let startFloor = self.mRows - heightCeil;
-              let interval = self.assets.COLOR_MAP.ENV.length / heightCeil;
-
-              /**/
-              heightCeil = heightCeil === -Infinity ? 0 : heightCeil;
-              startFloor = startFloor === Infinity ? self.mRows : startFloor;
+              // draw vertical strip of wall
+              let wallHeight = self.VIEW_DIST / distToWall;
+              wallHeight = wallHeight > self.mRows ? self.mRows : wallHeight;
               ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
+              ctx.globalAlpha = 1;
               ctx.fillRect(
                 tileSize.x * iCol,
-                heightCeil * tileSize.y,
+                tileSize.y * (self.mRows - wallHeight) * 0.5,
                 tileSize.x,
-                (startFloor - heightCeil) * tileSize.y
+                tileSize.y * wallHeight
               );
-              //ctx.fillStyle = "#000000";
-              //ctx.fillRect(tileSize.x * iCol, tileSize.y * heightCeil, tileSize.x, tileSize.y * (startFloor - heightCeil));
-              //ctx.fillStyle = self.assets.COLOR_MAP.WALL[Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST)) >= self.assets.COLOR_MAP.WALL.length ? self.assets.COLOR_MAP.WALL.length  - 1 : Math.floor(self.assets.COLOR_MAP.WALL.length * (distToWall / self.DRAW_DIST))];
-              //ctx.fillRect(tileSize.x * iCol, heightCeil * tileSize.y, tileSize.x, (startFloor - heightCeil) * tileSize.y);
-              /**/
-
+              
+              // shade walls
+              ctx.globalAlpha = distToWall / self.DRAW_DIST;
+              //ctx.globalAlpha = dst / self.DRAW_DIST;
+              ctx.fillStyle = "#000000";
+              ctx.fillRect(
+                tileSize.x * iCol,
+                tileSize.y * (self.mRows - wallHeight - 2) * 0.5,
+                tileSize.x,
+                tileSize.y * (wallHeight + 2)
+              );
+              ctx.globalAlpha = 1;
+              
               // draw portal for the current col, if there exists any
               /*
               if (distToPortal) {
@@ -682,6 +618,7 @@
     },
     "exec": {
       "setup": function(self) {
+        // render loading screen
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, self.res[0], self.res[1]);
         self.util.print(
@@ -690,6 +627,29 @@
           Math.floor(self.res[1] / 2), 
           {"color": "#FFFFFF", "size": 60}
         );
+
+        // calculate maximum view distance
+        self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
+
+        // setup background
+        self.assets.background = {
+          "ceiling": (function() {
+            const grad = ctx.createLinearGradient(0, 0, 0, self.res[1] * 0.5);
+            grad.addColorStop(0, "#808080");
+            grad.addColorStop(1 - self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST, "#000000");
+            grad.addColorStop(1, "#000000");
+            return grad;
+          })(),
+          "floor": (function() {
+            const grad = ctx.createLinearGradient(0, self.res[1] * 0.5, 0, self.res[1]);
+            grad.addColorStop(0, "#000000");
+            grad.addColorStop(self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST, "#000000");
+            grad.addColorStop(1, "#333333");
+            return grad;
+          })()
+        };
+
+        // async ops.
         return new Promise(function(resolve, reject) {
           // setup event listeners
           document.onkeydown = function(e) {
@@ -825,7 +785,7 @@
           " | FPS: " + (1000 / deltaT).toFixed(1),
           5,
           15,
-          { "size": 14 }
+          {"size": 14}
         );
       }
     },
