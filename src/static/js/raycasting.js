@@ -37,7 +37,7 @@
     "res": [800, 600],
     "FPS": 60,
     "FOV": Math.PI / 3,
-    "DRAW_DIST": 70,
+    "DRAW_DIST": 50,
     "STEP_SIZE": 0.2,
     "keyState": {
       "W": 0,
@@ -173,7 +173,7 @@
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
         }
       },
-      "drawLine": function(x0, y0, x1, y1, color) {
+      "drawLine": function(ctx, x0, y0, x1, y1, color) {
         ctx.strokeStyle = color || "#FFCC00";
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -181,7 +181,8 @@
         ctx.lineTo(x1, y1);
         ctx.stroke();
       },
-      "drawCaret": function(a, b, c, options) {
+      "drawCaret": function(ctx, a, b, c, options) {
+        options = options || {};
         const com = {
           "x": (a.x + b.x + c.x) / 3,
           "y": (a.y + b.y + c.y) / 3
@@ -258,6 +259,7 @@
               }
             }
             self.util.drawCaret(
+              ctx,
               {"x": offset.x,                               "y": offset.y - 2 * tileSize},
               {"x": offset.x - self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
               {"x": offset.x + self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
@@ -327,11 +329,63 @@
               }
             };
             self.util.drawCaret(
-              caretPos.a, 
-              caretPos.b, 
-              caretPos.c, 
+              ctx,
+              caretPos.a,
+              caretPos.b,
+              caretPos.c,
               {"border": {"color": "#000000", "thickness": 1}}
             );
+          },
+          "easy": function(self, offset, R, tileSize) {
+            const mmCanvas  = document.createElement("canvas");
+            const mmCtx     = mmCanvas.getContext("2d");
+            mmCanvas.width  = 2 * R * tileSize;
+            mmCanvas.height = mmCanvas.width;
+
+            mmCtx.fillStyle = "#000000";
+            mmCtx.beginPath();
+            mmCtx.arc(R * tileSize, R * tileSize, R * tileSize, 0, 2 * Math.PI);
+            mmCtx.fill();
+
+            mmCtx.globalCompositeOperation = "source-atop";
+            for(let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
+              for(let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
+                const sampleMap = {
+                  "x": Math.floor(self.player.x) + offsetCol,
+                  "y": Math.floor(self.player.y) + offsetRow,
+                };
+                const translateMap = {
+                  "x": (R + offsetCol) * tileSize,
+                  "y": (R + offsetRow) * tileSize,
+                };
+                if(sampleMap.x >= 0 && sampleMap.x < self.nCols &&
+                  sampleMap.y >= 0 && sampleMap.y < self.nRows) {
+                  const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
+                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF" : sample === "P" ? "#FF0000" : "#A9A9A9";         
+                } else { // render map out-of-bounds
+                  mmCtx.fillStyle = "#FFFFFF";
+                }
+                mmCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
+              }
+            }
+            self.util.drawCaret(
+              mmCtx,
+              {"x": (R + 0.5 + 2 * Math.cos(self.player.angle)) * tileSize,                   "y": (R + 0.5 + 2 * Math.sin(self.player.angle)) * tileSize},
+              {"x": (R + 0.5 + 2 * Math.cos(self.player.angle + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + 2 * Math.sin(self.player.angle + Math.PI * 4 / 3)) * tileSize},
+              {"x": (R + 0.5 + 2 * Math.cos(self.player.angle + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + 2 * Math.sin(self.player.angle + Math.PI * 2 / 3)) * tileSize},
+              {"border": {"color": "#000000", "thickness": 1}}
+            );
+
+            ctx.fillStyle = "#000000";
+            ctx.beginPath();
+            ctx.arc(offset.x, offset.y, (R + 1) * tileSize, 0, 2 * Math.PI);
+            ctx.fill();
+
+            ctx.translate(offset.x, offset.y);
+            ctx.rotate(-1 * Math.PI * 0.5 - self.player.angle);
+            ctx.drawImage(mmCanvas, -1 * R * tileSize, -1 * R * tileSize, mmCanvas.width, mmCanvas.height);
+            ctx.rotate(Math.PI * 0.5 + self.player.angle);
+            ctx.translate(-1 * offset.x, -1 * offset.y);
           },
           "static": function(self, offset, tileSize) {
             // draw map
@@ -419,6 +473,7 @@
               }
 
               self.util.drawLine(
+                ctx,
                 tileSize * (Math.floor(self.player.x) + 0.5) + offset.x,
                 tileSize * (Math.floor(self.player.y) + 0.5) + offset.y,
                 tileSize * wall.x + offset.x,
@@ -549,11 +604,10 @@
 
               // calculate the real distance
               distToWall = Math.sqrt(distToWall);
-              //dst = distToWall;
+              const dst = distToWall;
 
               // fix the fish-eye distortion
-              distToWall = distToWall === self.DRAW_DIST ? distToWall : distToWall * Math.cos(ray.angle - self.player.angle);
-              //distToWall *= Math.cos(self.player.angle - ray.angle);
+              distToWall *= Math.cos(self.player.angle - ray.angle);
 
               // draw vertical strip of wall
               let wallHeight = self.VIEW_DIST / distToWall;
@@ -568,8 +622,7 @@
               );
               
               // shade walls
-              ctx.globalAlpha = distToWall / self.DRAW_DIST;
-              //ctx.globalAlpha = dst / self.DRAW_DIST;
+              ctx.globalAlpha = dst / self.DRAW_DIST;
               ctx.fillStyle = "#000000";
               ctx.fillRect(
                 tileSize.x * iCol,
@@ -601,15 +654,16 @@
             }
 
             // display mini-map
-            self.util.render.minimap.dynamicBetter(
+            const mmTileSize = 2;
+            const mmR = 25;
+            self.util.render.minimap.easy(
               self,
               {
-                "x": self.res[0] - 50 * 2 + 30,
-                "y": self.res[1] - 50 * 2 + 30
+                "x": self.res[0] - mmR * mmTileSize - 10,
+                "y": self.res[1] - mmR * mmTileSize - 10
               },
-              2,
-              25,
-              true
+              mmR,
+              mmTileSize
             );
           },
           "final": function() {}
