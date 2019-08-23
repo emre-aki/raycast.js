@@ -269,9 +269,6 @@
             );
           },
           "dynamicBetter": function(self, offset, tileSize, R, fullDyn) {
-            // TODO:
-            // ----
-            //  - Find a way to aesthetically render border around minimap
             for (let y = -1 * R; y < R; y += 1) {
               const rRow = Math.round(Math.sqrt(R * R - y * y)); // might use polar coordinates as an alternative
               for (let x = -1 * rRow; x < rRow; x += 1) {
@@ -792,9 +789,6 @@
         }
       },
       "movePlayer": function(self) {
-        // TODO:
-        // ----
-        //  - investigate calculation with wall angle
         const memoPos = [self.player.x, self.player.y];
         // TODO: add wall margin logix
         if (self.keyState.W & 1) {
@@ -814,10 +808,15 @@
           self.player.x -= Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.cos(self.player.angle) * self.STEP_SIZE;
         }
-        const sample_x =  self.map[(self.nCols + self.offsetLinebr) * Math.floor(memoPos[1]) + Math.floor(self.player.x)];
-        const sample_y = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(memoPos[0])];
-        if (sample_x === "#") { self.player.x = memoPos[0]; }
-        if (sample_y === "#") { self.player.y = memoPos[1]; }
+        const stepX =  self.map[(self.nCols + self.offsetLinebr) * Math.floor(memoPos[1]) + Math.floor(self.player.x)];
+        const stepY = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(memoPos[0])];
+        if(stepX === "#") { self.player.x = memoPos[0]; }
+        if(stepY === "#") { self.player.y = memoPos[1]; }
+        const stepXY = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(self.player.x)];
+        if(stepXY === "#") {
+          self.player.x = memoPos[0];
+          self.player.y = memoPos[1];
+        }
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
           self.player.animWalking.reverse = self.player.animWalking.index === 10 /* TODO: make 10 a constant */
                                             ? 1 
