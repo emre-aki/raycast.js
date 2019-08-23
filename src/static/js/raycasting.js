@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 08.02.2019
+    Last updated: 08.23.2019
   ================================================================
   */
 
@@ -37,7 +37,7 @@
     "res": [800, 600],
     "FPS": 60,
     "FOV": Math.PI / 3,
-    "DRAW_DIST": 50,
+    "DRAW_DIST": -1, // initialized in setup
     "STEP_SIZE": 0.2,
     "keyState": {
       "W": 0,
@@ -56,7 +56,8 @@
     "offsetLinebr": window.__map__.OFFSET_LINEBR,
     "player": {
       "angle": window.__player__.ANGLE,
-      "sprite": {"index": 0, "reverse": 0},
+      "animSprite": {"index": 0, "reverse": 0},
+      "animWalking": {"index": 0, "reverse": 0},
       "x": window.__player__.X,
       "y": window.__player__.Y
     },
@@ -144,7 +145,8 @@
     "intervals": {},
     "const": {
       "sqrt3": Math.sqrt(3),
-      "RATIO_DRAW_DIST_TO_BACKGROUND": 1 // 5 * 0.2
+      "DRAW_DIST": 50,
+      "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
     "util": {
       "rad2Deg": function(rad) {
@@ -505,6 +507,31 @@
             );
           }
         },
+        "background": function(self, floor) {
+          const opts = {
+            "start": {
+              "x": 0,
+              "y": floor ? self.res[1] * 0.5 : 0,
+              "color": floor ? "#000000" : "#808080"
+            },
+            "center": {
+              "index": floor 
+                       ? self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST
+                       : 1 - self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST,
+              "color": "#000000"
+            },
+            "end": {
+              "x": 0,
+              "y": floor ? self.res[1] : self.res[1] * 0.5,
+              "color": floor ? "#333333" : "#000000"
+            }
+          };
+          const gradient = ctx.createLinearGradient(opts.start.x, opts.start.y, opts.end.x, opts.end.y);
+          gradient.addColorStop(0, opts.start.color);
+          gradient.addColorStop(opts.center.index, opts.center.color);
+          gradient.addColorStop(1, opts.end.color);
+          return gradient;
+        },
         "frame": {
           "rasterized": function(self) {
             // draw background
@@ -611,12 +638,12 @@
 
               // draw vertical strip of wall
               let wallHeight = self.VIEW_DIST / distToWall;
-              wallHeight = wallHeight > self.mRows ? self.mRows : wallHeight;
+              //wallHeight = wallHeight > self.mRows ? self.mRows : wallHeight; //TODO: fix
               ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
               ctx.globalAlpha = 1;
               ctx.fillRect(
                 tileSize.x * iCol,
-                tileSize.y * (self.mRows - wallHeight) * 0.5,
+                tileSize.y * (self.mRows - wallHeight) * 0.5 + self.player.animWalking.index,
                 tileSize.x,
                 tileSize.y * wallHeight
               );
@@ -626,7 +653,7 @@
               ctx.fillStyle = "#000000";
               ctx.fillRect(
                 tileSize.x * iCol,
-                tileSize.y * (self.mRows - wallHeight - 2) * 0.5,
+                tileSize.y * (self.mRows - wallHeight - 2) * 0.5 + self.player.animWalking.index,
                 tileSize.x,
                 tileSize.y * (wallHeight + 2)
               );
@@ -656,14 +683,15 @@
             // display mini-map
             const mmTileSize = 2;
             const mmR = 25;
-            self.util.render.minimap.easy(
+            self.util.render.minimap.dynamicBetter(
               self,
               {
                 "x": self.res[0] - mmR * mmTileSize - 10,
                 "y": self.res[1] - mmR * mmTileSize - 10
               },
+              mmTileSize,
               mmR,
-              mmTileSize
+              true
             );
           },
           "final": function() {}
@@ -685,22 +713,13 @@
         // calculate maximum view distance
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
 
+        // set maximum draw distance
+        self.DRAW_DIST = self.const.DRAW_DIST;
+
         // setup background
         self.assets.background = {
-          "ceiling": (function() {
-            const grad = ctx.createLinearGradient(0, 0, 0, self.res[1] * 0.5);
-            grad.addColorStop(0, "#808080");
-            grad.addColorStop(1 - self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST, "#000000");
-            grad.addColorStop(1, "#000000");
-            return grad;
-          })(),
-          "floor": (function() {
-            const grad = ctx.createLinearGradient(0, self.res[1] * 0.5, 0, self.res[1]);
-            grad.addColorStop(0, "#000000");
-            grad.addColorStop(self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST, "#000000");
-            grad.addColorStop(1, "#333333");
-            return grad;
-          })()
+          "ceiling": self.util.render.background(self),
+          "floor": self.util.render.background(self, true)
         };
 
         // async ops.
@@ -777,6 +796,7 @@
         // ----
         //  - investigate calculation with wall angle
         const memoPos = [self.player.x, self.player.y];
+        // TODO: add wall margin logix
         if (self.keyState.W & 1) {
           self.player.x += Math.cos(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.sin(self.player.angle) * self.STEP_SIZE;
@@ -798,26 +818,36 @@
         const sample_y = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(memoPos[0])];
         if (sample_x === "#") { self.player.x = memoPos[0]; }
         if (sample_y === "#") { self.player.y = memoPos[1]; }
+        if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
+          self.player.animWalking.reverse = self.player.animWalking.index === 10 /* TODO: make 10 a constant */
+                                            ? 1 
+                                            : self.player.animWalking.index === -10
+                                              ? 0 
+                                              : self.player.animWalking.reverse;
+          self.player.animWalking.index += (self.player.animWalking.reverse & 1) ? -1 : 1;
+        } else {
+          self.player.animWalking = {"index": 0, "reverse": 0}
+        }
       },
       "animateShooting": function(self) {
         if (self.keyState.SPC & 1 && !self.intervals.animShooting) {
           self.intervals.animShooting = setInterval(function() {
-            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.sprite.index) {
-              self.player.sprite.reverse = 1;
-            } else if (self.player.sprite.reverse & 1 && self.player.sprite.index === 0) {
-              self.player.sprite.reverse = 0;
+            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.animSprite.index) {
+              self.player.animSprite.reverse = 1;
+            } else if (self.player.animSprite.reverse & 1 && self.player.animSprite.index === 0) {
+              self.player.animSprite.reverse = 0;
               clearInterval(self.intervals.animShooting);
               self.intervals.animShooting = undefined;
               return;
             }
-            self.assets.sprites.player["shotgun" + self.player.sprite.index.toString()].ready = 0;
-            self.player.sprite.index =
-              self.player.sprite.reverse & 1
-                ? self.player.sprite.index === 2
+            self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 0;
+            self.player.animSprite.index =
+              self.player.animSprite.reverse & 1
+                ? self.player.animSprite.index === 2
                   ? 0
-                  : self.player.sprite.index - 1
-                : self.player.sprite.index + 1;
-            self.assets.sprites.player["shotgun" + self.player.sprite.index.toString()].ready = 1;
+                  : self.player.animSprite.index - 1
+                : self.player.animSprite.index + 1;
+            self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 1;
           }, 150);
         }
       },
