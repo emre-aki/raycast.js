@@ -847,6 +847,19 @@
                   : self.player.animSprite.index - 1
                 : self.player.animSprite.index + 1;
             self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 1;
+            if (self.player.animSprite.index === 1) { // if shooting frame, increase lighting
+              self.DRAW_DIST = 70;
+              self.assets.background = {
+                "ceiling": self.util.render.background(self),
+                "floor": self.util.render.background(self, true)
+              };
+            } else {
+              self.DRAW_DIST = self.const.DRAW_DIST;
+              self.assets.background = {
+                "ceiling": self.util.render.background(self),
+                "floor": self.util.render.background(self, true)
+              };
+            }
           }, 150);
         }
       },
