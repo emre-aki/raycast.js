@@ -57,7 +57,7 @@
     "player": {
       "angle": window.__player__.ANGLE,
       "animSprite": {"index": 0, "reverse": 0},
-      "animWalking": {"index": 0, "reverse": 0},
+      "animWalking": {"index": 0, "reverse": 0, "apex": 10},
       "x": window.__player__.X,
       "y": window.__player__.Y
     },
@@ -818,14 +818,14 @@
           self.player.y = memoPos[1];
         }
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
-          self.player.animWalking.reverse = self.player.animWalking.index === 10 /* TODO: make 10 a constant */
+          self.player.animWalking.reverse = self.player.animWalking.index === self.player.animWalking.apex
                                             ? 1 
-                                            : self.player.animWalking.index === -10
+                                            : self.player.animWalking.index === -1 * self.player.animWalking.apex
                                               ? 0 
                                               : self.player.animWalking.reverse;
           self.player.animWalking.index += (self.player.animWalking.reverse & 1) ? -1 : 1;
         } else {
-          self.player.animWalking = {"index": 0, "reverse": 0}
+          self.player.animWalking = {"index": 0, "reverse": 0, "apex": self.player.animWalking.apex};
         }
       },
       "animateShooting": function(self) {
