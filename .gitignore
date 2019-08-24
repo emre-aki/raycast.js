@@ -1,0 +1,6 @@
+# directories
+lib/*
+
+# dotfiles
+.DS_Store
+.Python
