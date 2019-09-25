@@ -329,7 +329,7 @@
               {"border": {"color": "#000000", "thickness": 1}}
             );
           },
-          "easy": function(self, offset, R, tileSize) {
+          "easy": function(self, offset, tileSize, R) {
             const mmCanvas  = document.createElement("canvas");
             const mmCtx     = mmCanvas.getContext("2d");
             mmCanvas.width  = 2 * R * tileSize;
@@ -673,15 +673,14 @@
             // display mini-map
             const mmTileSize = 2;
             const mmR = 25;
-            self.util.render.minimap.dynamicBetter(
+            self.util.render.minimap.easy(
               self,
               {
                 "x": self.res[0] - mmR * mmTileSize - 10,
                 "y": self.res[1] - mmR * mmTileSize - 10
               },
               mmTileSize,
-              mmR,
-              true
+              mmR
             );
           },
           "final": function() {}
