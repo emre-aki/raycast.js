@@ -144,8 +144,10 @@
     },
     "intervals": {},
     "const": {
-      "sqrt3": Math.sqrt(3),
-      "DRAW_DIST": 50,
+      "math": {
+        "sqrt3": Math.sqrt(3),
+      },
+      "DRAW_DIST": 90,
       "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
     "util": {
@@ -246,13 +248,9 @@
                 if (r === R) {// render minimap border
                   ctx.fillStyle = "#000000";
                 } else if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
-                  if (mapSample === ".") {
-                    ctx.fillStyle = "#A9A9A9BF";
-                  } else if (mapSample === "#") {
-                    ctx.fillStyle = "#FFFFFF";
-                  } else if (mapSample === "P") {
-                    ctx.fillStyle = "#FF0000";
-                  }
+                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF" 
+                                  : mapSample === "P" ? "#FF0000" 
+                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
                 } else {
                   // render map out-of-bounds
                   ctx.fillStyle = "#FFFFFF";
@@ -263,8 +261,8 @@
             self.util.drawCaret(
               ctx,
               {"x": offset.x,                               "y": offset.y - 2 * tileSize},
-              {"x": offset.x - self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
-              {"x": offset.x + self.const.sqrt3 * tileSize, "y": offset.y + tileSize},
+              {"x": offset.x - self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
+              {"x": offset.x + self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
               {"border": {"color": "#00000", "thickness": 1}}
             );
           },
@@ -288,13 +286,9 @@
                 };
                 const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
                 if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
-                  if (mapSample === ".") {
-                    ctx.fillStyle = "#A9A9A9BF";
-                  } else if (mapSample === "#") {
-                    ctx.fillStyle = "#FFFFFF";
-                  } else if (mapSample === "P") {
-                    ctx.fillStyle = "#FF0000";
-                  }
+                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
+                                  : mapSample === "P" ? "#FF0000"
+                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
                 } else { // render map out of bounds
                   ctx.fillStyle = "#FFFFFF";
                 }
@@ -312,7 +306,7 @@
               },
               "b": {
                 "x": fullDyn
-                  ? offset.x + (0.5 - self.const.sqrt3) * tileSize
+                  ? offset.x + (0.5 - self.const.math.sqrt3) * tileSize
                   : offset.x + (2 * Math.cos(self.player.angle + (5 * Math.PI) / 6) + 0.5) * tileSize,
                 "y": fullDyn
                   ? offset.y + 1.5 * tileSize
@@ -320,7 +314,7 @@
               },
               "c": {
                 "x": fullDyn
-                  ? offset.x + (0.5 + self.const.sqrt3) * tileSize
+                  ? offset.x + (0.5 + self.const.math.sqrt3) * tileSize
                   : offset.x + (2 * Math.cos(self.player.angle + Math.PI / 6) + 0.5) * tileSize,
                 "y": fullDyn
                   ? offset.y + 1.5 * tileSize
@@ -360,7 +354,9 @@
                 if(sampleMap.x >= 0 && sampleMap.x < self.nCols &&
                   sampleMap.y >= 0 && sampleMap.y < self.nRows) {
                   const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF" : sample === "P" ? "#FF0000" : "#A9A9A9";         
+                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF" 
+                                    : sample === "P" ? "#FF0000" 
+                                    : sample === "V" || sample === "H" ? "#0000FF" : "#A9A9A9";
                 } else { // render map out-of-bounds
                   mmCtx.fillStyle = "#FFFFFF";
                 }
@@ -390,13 +386,10 @@
             // draw map
             for (let mY = 0; mY < self.nRows; mY += 1) {
               for (let mX = 0; mX < self.nCols; mX += 1) {
-                if (self.map[mY * (self.nCols + self.offsetLinebr) + mX] === ".") {
-                  ctx.fillStyle = "#A9A9A9BF";
-                } else if (self.map[mY * (self.nCols + self.offsetLinebr) + mX] === "#") {
-                  ctx.fillStyle = "#FFFFFF";
-                } else if (self.map[mY * (self.nCols + self.offsetLinebr) + mX] === "P") {
-                  ctx.fillStyle = "#FF0000";
-                }
+                const mapSample = self.map[(self.nCols + self.offsetLinebr) * mY + mX];
+                ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
+                                : mapSample === "P" ? "#FF0000"
+                                : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
                 ctx.fillRect(tileSize * mX + offset.x, tileSize * mY + offset.y, tileSize, tileSize);
               }
             }
@@ -628,7 +621,7 @@
 
               // calculate the real distance
               distToWall = Math.sqrt(distToWall);
-              const dst = distToWall;
+              const realDist = distToWall;
 
               // fix the fish-eye distortion
               distToWall *= Math.cos(self.player.angle - ray.angle);
@@ -646,7 +639,7 @@
               );
               
               // shade walls
-              ctx.globalAlpha = dst / self.DRAW_DIST;
+              ctx.globalAlpha = realDist / self.DRAW_DIST;
               ctx.fillStyle = "#000000";
               ctx.fillRect(
                 tileSize.x * iCol,
@@ -831,14 +824,6 @@
       "animateShooting": function(self) {
         if (self.keyState.SPC & 1 && !self.intervals.animShooting) {
           self.intervals.animShooting = setInterval(function() {
-            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.animSprite.index) {
-              self.player.animSprite.reverse = 1;
-            } else if (self.player.animSprite.reverse & 1 && self.player.animSprite.index === 0) {
-              self.player.animSprite.reverse = 0;
-              clearInterval(self.intervals.animShooting);
-              self.intervals.animShooting = undefined;
-              return;
-            }
             self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 0;
             self.player.animSprite.index =
               self.player.animSprite.reverse & 1
@@ -847,8 +832,16 @@
                   : self.player.animSprite.index - 1
                 : self.player.animSprite.index + 1;
             self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 1;
+            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.animSprite.index) {
+              self.player.animSprite.reverse = 1;
+            } else if (self.player.animSprite.index === 0) {
+              self.player.animSprite.reverse = 0;
+              clearInterval(self.intervals.animShooting);
+              self.intervals.animShooting = undefined;
+              return;
+            }
             if (self.player.animSprite.index === 1) { // if shooting frame, increase lighting
-              self.DRAW_DIST = 70;
+              self.DRAW_DIST = 150;
               self.assets.background = {
                 "ceiling": self.util.render.background(self),
                 "floor": self.util.render.background(self, true)
