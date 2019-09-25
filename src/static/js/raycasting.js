@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 08.23.2019
+    Last updated: 09.25.2019
   ================================================================
   */
 
@@ -513,7 +513,7 @@
             "end": {
               "x": 0,
               "y": floor ? self.res[1] : self.res[1] * 0.5,
-              "color": floor ? "#333333" : "#000000"
+              "color": floor ? "#595A64" : "#000000"
             }
           };
           const gradient = ctx.createLinearGradient(opts.start.x, opts.start.y, opts.end.x, opts.end.y);
