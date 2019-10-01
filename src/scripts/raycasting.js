@@ -19,16 +19,17 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 09.25.2019
+    Last updated: 10.01.2019
   ================================================================
   */
 
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const fs = {
-    "__static__": "./static/",
-    "__dirname__": "./static/js/",
-    "__file__": "./static/js/raycasting.js"
+    "__dirname__": "./scripts/",
+    "__file__": "./scripts/raycasting.js",
+    "__sprites__": "./assets/sprites/",
+    "__audio__": "./assets/audio/"
   };
   const game = {
     // TODO:
@@ -106,7 +107,7 @@
             sprite.img.onerror = function() {
               reject();
             };
-            sprite.img.src = fs.__static__ + "sprites/" + sprite.name;
+            sprite.img.src = fs.__sprites__ + sprite.name;
           });
         }
       },
@@ -137,7 +138,7 @@
             document.addEventListener("keydown", function() {
               self.exec.playAudio(self, theme);
             });
-            theme.audio.src = fs.__static__ + "audio/" + theme.name;
+            theme.audio.src = fs.__audio__ + theme.name;
           });
         }
       }
