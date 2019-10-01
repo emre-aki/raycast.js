@@ -1,6 +1,13 @@
 # directories
 lib/*
+screenshots/*
 
 # dotfiles
 .DS_Store
 .Python
+
+# editor files
+*.sublime-workspace
+
+# pip
+pip-selfcheck.json
