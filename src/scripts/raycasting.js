@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 10.01.2019
+    Last updated: 10.05.2019
   ================================================================
   */
 
@@ -275,15 +275,15 @@
                 const aRay       = fullDyn ? Math.atan2(y, x) : 0;
                 const pMapSample = {
                   "x": fullDyn
-                    ? Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay) * rRay))
+                    ? Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay + Math.PI * 0.5) * rRay))
                     : Math.floor(self.player.x + x),
                   "y": fullDyn
-                    ? Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay) * rRay))
+                    ? Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay + Math.PI * 0.5) * rRay))
                     : Math.floor(self.player.y + y)
                 };
                 const pTransformMM = {
-                  "x": offset.x + y * tileSize,
-                  "y": offset.y - x * tileSize
+                  "x": offset.x + x * tileSize,
+                  "y": offset.y + y * tileSize
                 };
                 const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
                 if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
