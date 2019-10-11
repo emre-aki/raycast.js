@@ -577,7 +577,6 @@
               const up    = ray.dir.y < 0 ? 1 : 0;
               const right = ray.dir.x > 0 ? 1 : 0;
               let distToWall;
-              let distToPortal;
 
               // vertical wall detection
               const stepV  = {};
@@ -607,8 +606,6 @@
                     hitV           = 1;
                     currentHit     = "vertical";
                   }
-                } else if (sample === "P") {
-                  distToPortal   = self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true);
                 }
                 traceV.x += stepV.x;
                 traceV.y += stepV.y;
@@ -645,11 +642,6 @@
                     }
                     hitH = 1;
                   }
-                } else if (sample === "P") {
-                  const hitDist = self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true);
-                  if (!distToPortal || distToPortal > hitDist) {
-                    distToPortal = hitDist;
-                  }
                 }
                 traceH.x += stepH.x;
                 traceH.y += stepH.y;
@@ -685,26 +677,6 @@
                 tileSize.y * (wallHeight + 2)
               );
               ctx.globalAlpha = 1;
-              
-              // draw portal for the current col, if there exists any
-              /*
-              if (distToPortal) {
-                const heightCeil = self.mRows * 0.5 - self.mRows / Math.sqrt(distToPortal);
-                const startFloor = self.mRows - heightCeil;
-                const interval   = self.assets.COLOR_MAP.PORTAL.length / heightCeil;
-                let iRow = 0;
-                while (iRow < self.mRows && iRow < startFloor) {
-                  if (self.mRows <= startFloor) { // if too close to/inside the portal
-                    ctx.fillStyle = self.assets.COLOR_MAP.PORTAL[self.assets.COLOR_MAP.PORTAL.length - 1];
-                  } else {
-                    ctx.fillStyle = self.assets.COLOR_MAP.PORTAL[Math.round(iRow * interval)] || 
-                                    self.assets.COLOR_MAP.PORTAL[self.assets.COLOR_MAP.PORTAL.length - 1];
-                  }
-                  ctx.fillRect(iCol * tileSize.x, iRow * tileSize.y, tileSize.x, tileSize.y);
-                  iRow += 1;
-                }
-              }
-              */
             }
 
             // display mini-map
