@@ -47,7 +47,8 @@
       "D": 0,
       "Q": 0,
       "E": 0,
-      "SPC": 0
+      "SPC": 0,
+      "RTN": 0
     },
     "map": window.__map__.MAP,
     "mRows": 600,
@@ -55,6 +56,7 @@
     "nRows": window.__map__.N_ROWS,
     "nCols": window.__map__.N_COLS,
     "offsetLinebr": window.__map__.OFFSET_LINEBR,
+    "doors": {},
     "player": {
       "angle": window.__player__.ANGLE,
       "animSprite": {"index": 0, "reverse": 0},
@@ -148,6 +150,8 @@
       "math": {
         "sqrt3": Math.sqrt(3),
       },
+      "DOOR_ANIM_INTERVAL": 20,
+      "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
       "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
@@ -176,7 +180,27 @@
           self.keyState.E = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.E;
         } else if (key === 32) {
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
+        } else if (key === 13) {
+          self.keyState.RTN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.RTN;
+        }        
+      },
+      "getDoors": function(self) {
+        const doors = {};
+        for(let y = 0; y < self.nRows; y += 1) {
+          for(let x = 0; x < self.nCols; x += 1) {
+            const sample = self.map[(self.nCols + self.offsetLinebr) * y + x];
+            if(sample === "H" || sample === "V") {
+              doors[x.toString() + "_" + y.toString()] = {
+                "loc": {"x": x, "y": y},
+                "state": 10, // 0: open, 10: closed
+                "reverse": 0,
+                "interval": undefined,
+                "timeout": undefined,
+              };
+            }
+          }
         }
+        return doors;
       },
       "drawLine": function(ctx, x0, y0, x1, y1, color) {
         ctx.strokeStyle = color || "#FFCC00";
@@ -573,10 +597,16 @@
                 if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
                   hitV           = 1;
                   distToWall     = sqrDrawDist;
-                } else if (sample === "#") {
-                  distToWall     = self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true);
-                  hitV           = 1;
-                  currentHit     = "vertical";
+                } else if (sample === "#" || sample === "V") {
+                  const pHit = {               // TODO: ∨ make 0.5 dynamic
+                    "x": traceV.x + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) : 0),
+                    "y": traceV.y + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) * ray.slope : 0)
+                  };
+                  if(sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
+                    distToWall     = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true);
+                    hitV           = 1;
+                    currentHit     = "vertical";
+                  }
                 } else if (sample === "P") {
                   distToPortal   = self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true);
                 }
@@ -602,13 +632,19 @@
                 if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
                   hitH = 1;
                   distToWall     = distToWall ? distToWall : sqrDrawDist;
-                } else if (sample === "#") {
-                  const hitDist  = self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true);
-                  if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
-                    distToWall   = hitDist;
-                    currentHit   = "horizontal";
+                } else if (sample === "#" || sample === "H") {
+                  const pHit = {               // TODO: ∨ make 0.5 dynamic
+                    "x": traceH.x + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) / ray.slope : 0),
+                    "y": traceH.y + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) : 0)
+                  };
+                  if(sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
+                    const hitDist  = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true);
+                    if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
+                      distToWall   = hitDist;
+                      currentHit   = "horizontal";
+                    }
+                    hitH = 1;
                   }
-                  hitH = 1;
                 } else if (sample === "P") {
                   const hitDist = self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true);
                   if (!distToPortal || distToPortal > hitDist) {
@@ -712,6 +748,9 @@
           "floor": self.util.render.background(self, true)
         };
 
+        // setup doors
+        self.doors = self.util.getDoors(self);
+
         // async ops.
         return new Promise(function(resolve, reject) {
           // setup event listeners
@@ -801,12 +840,27 @@
           self.player.x -= Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.cos(self.player.angle) * self.STEP_SIZE;
         }
-        const stepX =  self.map[(self.nCols + self.offsetLinebr) * Math.floor(memoPos[1]) + Math.floor(self.player.x)];
-        const stepY = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(memoPos[0])];
-        if(stepX === "#") { self.player.x = memoPos[0]; }
-        if(stepY === "#") { self.player.y = memoPos[1]; }
-        const stepXY = self.map[(self.nCols + self.offsetLinebr) * Math.floor(self.player.y) + Math.floor(self.player.x)];
-        if(stepXY === "#") {
+
+        // collision detection
+        const stepX = {"x": Math.floor(self.player.x), "y": Math.floor(memoPos[1])};
+        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y)};
+        const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
+        const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
+        if((sampleX === "#") ||
+           ((sampleX === "V" || sampleX === "H") &&
+            (self.doors[stepX.x.toString() + "_" + stepX.y.toString()].state > 0))) {
+          self.player.x = memoPos[0]; 
+        }
+        if((sampleY === "#") ||
+           ((sampleY === "V" || sampleY === "H") &&
+            (self.doors[stepY.x.toString() + "_" + stepY.y.toString()].state > 0))) {
+          self.player.y = memoPos[1]; 
+        }
+        const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
+        const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
+        if((sampleXY === "#") ||
+           ((sampleXY === "V" || sampleXY === "H") &&
+            (self.doors[stepXY.x.toString() + "_" + stepXY.y.toString()].state > 0))) {
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
@@ -856,11 +910,76 @@
           }, 150);
         }
       },
+      "interactWDoor": function(self) {
+        if((self.keyState.RTN & 1) > 0) {
+          const dir    = {
+            "x": Math.cos(self.player.angle),
+            "y": Math.sin(self.player.angle)
+          };
+          const slope  = dir.y / dir.x;
+          const up     = dir.y < 0 ? 1 : 0;
+          const right  = dir.x > 0 ? 1 : 0;
+          const traceV = {};
+          traceV.x = (right & 1) > 0 ? Math.ceil(self.player.x) : Math.floor(self.player.x);
+          traceV.y = self.player.y + (traceV.x - self.player.x) * slope;
+          const sampleMapV = {
+            "x": Math.floor(traceV.x - ((right & 1) > 0 ? 0 : 1)),
+            "y": Math.floor(traceV.y)
+          };
+          const sampleV = self.map[(self.nCols + self.offsetLinebr) * sampleMapV.y + sampleMapV.x];
+          const traceH = {};
+          traceH.y = (up & 1) > 0 ? Math.floor(self.player.y) : Math.ceil(self.player.y);
+          traceH.x = self.player.x + (traceH.y - self.player.y) / slope;
+          const sampleMapH = {
+            "x": Math.floor(traceH.x),
+            "y": Math.floor(traceH.y - ((up & 1) > 0 ? 1 : 0))
+          };
+          const sampleH = self.map[(self.nCols + self.offsetLinebr) * sampleMapH.y + sampleMapH.x];
+          if(sampleV === "V") {
+            self.exec.animateDoor(self, self.doors[sampleMapV.x.toString() + "_" + sampleMapV.y.toString()]);
+          } else if(sampleH === "H") {
+            self.exec.animateDoor(self, self.doors[sampleMapH.x.toString() + "_" + sampleMapH.y.toString()]);
+          }
+        }
+      },
+      "tryAndCloseDoor": function(self, door) {
+        if(Math.floor(self.player.x) !== door.loc.x || Math.floor(self.player.y) !== door.loc.y) {
+          self.exec.animateDoor(self, door);
+        } else {
+          clearTimeout(door.timeout);
+          door.timeout = setTimeout(function() {
+            self.exec.tryAndCloseDoor(self, door);
+          }, self.const.DOOR_RESET_DELAY);
+        }
+      },
+      "animateDoor": function(self, door) {
+        if(!door.interval) {
+          door.interval = setInterval(function(){
+            //console.log(door);
+            door.state += ((door.reverse & 1) === 0 ? -1 : 1);
+            if(door.state === 0) {
+              clearInterval(door.interval);
+              door.interval = undefined;
+              door.reverse = 1;
+              door.timeout = setTimeout(function() {
+                self.exec.tryAndCloseDoor(self, door);
+              }, self.const.DOOR_RESET_DELAY);
+            } else if(door.state === 10) {
+              door.reverse = 0;
+              clearTimeout(door.timeout);
+              clearInterval(door.interval);
+              door.timeout = undefined;
+              door.interval = undefined;
+            }
+          }, self.const.DOOR_ANIM_INTERVAL);
+        }
+      },
       "gameLoop": function(self, deltaT) {
         self.util.render.frame.rasterized(self);
 
         self.exec.movePlayer(self);
         self.exec.animateShooting(self);
+        self.exec.interactWDoor(self);
         self.util.render.sprites(self, self.assets.sprites);
 
         // TODO: add portals dynamically by reading from the map
