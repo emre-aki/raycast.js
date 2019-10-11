@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 10.05.2019
+    Last updated: 10.11.2019
   ================================================================
   */
 
@@ -653,7 +653,7 @@
               const realDist = distToWall;
 
               // fix the fish-eye distortion
-              distToWall *= Math.cos(self.player.angle - ray.angle);
+              distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // draw vertical strip of wall
               let wallHeight = self.VIEW_DIST / distToWall;
@@ -836,13 +836,16 @@
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
+
+        // TODO: move to a separate function, e.g. `animateWalking`
+        // walking animation 
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
+          self.player.animWalking.index += (self.player.animWalking.reverse & 1) ? -1 : 1;
           self.player.animWalking.reverse = self.player.animWalking.index === self.player.animWalking.apex
                                             ? 1 
                                             : self.player.animWalking.index === -1 * self.player.animWalking.apex
                                               ? 0 
                                               : self.player.animWalking.reverse;
-          self.player.animWalking.index += (self.player.animWalking.reverse & 1) ? -1 : 1;
         } else {
           self.player.animWalking = {"index": 0, "reverse": 0, "apex": self.player.animWalking.apex};
         }
