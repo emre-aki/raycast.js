@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 10.11.2019
+    Last updated: 10.14.2019
   ================================================================
   */
 
@@ -32,13 +32,11 @@
     "__audio__": "./assets/audio/"
   };
   const game = {
-    // TODO:
-    // ----
-    // Make sin/cos && sqrt tables for optimization
     "res": [800, 600],
     "FPS": 60,
     "FOV": Math.PI / 3,
-    "DRAW_DIST": -1, // initialized in setup
+    "DRAW_TILE_SIZE": {}, // initialized in setup
+    "DRAW_DIST": -1,      // initialized in setup
     "STEP_SIZE": 0.2,
     "keyState": {
       "W": 0,
@@ -59,8 +57,10 @@
     "doors": {},
     "player": {
       "angle": window.__player__.ANGLE,
-      "animSprite": {"index": 0, "reverse": 0},
-      "animWalking": {"index": 0, "reverse": 0, "apex": 10},
+      "anim": {
+        "sprite": {"index": 0, "reverse": 0},
+        "walking": {"index": 0, "reverse": 0, "apex": 10},
+      },
       "x": window.__player__.X,
       "y": window.__player__.Y
     },
@@ -148,6 +148,9 @@
     "intervals": {},
     "const": {
       "math": {
+        // TODO:
+        // ----
+        // Make sin/cos && sqrt tables for optimization
         "sqrt3": Math.sqrt(3),
       },
       "DOOR_ANIM_INTERVAL": 20,
@@ -555,12 +558,6 @@
             ctx.fillStyle = self.assets.background.floor;
             ctx.fillRect(0, self.res[1] * 0.5, self.res[0], self.res[1] * 0.5);
 
-            const tileSize = {
-              // TODO: optimize--avoid division for each frame
-              "x": Math.round(self.res[0] / self.mCols),
-              "y": Math.round(self.res[1] / self.mRows)
-            };
-
             // raycasting
             const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
             let previousHit;
@@ -661,20 +658,20 @@
               ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
               ctx.globalAlpha = 1;
               ctx.fillRect(
-                tileSize.x * iCol,
-                tileSize.y * (self.mRows - wallHeight) * 0.5 + self.player.animWalking.index,
-                tileSize.x,
-                tileSize.y * wallHeight
+                self.DRAW_TILE_SIZE.x * iCol,
+                self.DRAW_TILE_SIZE.y * (self.mRows - wallHeight) * 0.5 + self.player.anim.walking.index,
+                self.DRAW_TILE_SIZE.x,
+                self.DRAW_TILE_SIZE.y * wallHeight
               );
               
               // shade walls
               ctx.globalAlpha = realDist / self.DRAW_DIST;
               ctx.fillStyle = "#000000";
               ctx.fillRect(
-                tileSize.x * iCol,
-                tileSize.y * (self.mRows - wallHeight - 2) * 0.5 + self.player.animWalking.index,
-                tileSize.x,
-                tileSize.y * (wallHeight + 2)
+                self.DRAW_TILE_SIZE.x * iCol,
+                self.DRAW_TILE_SIZE.y * (self.mRows - wallHeight - 2) * 0.5 + self.player.anim.walking.index,
+                self.DRAW_TILE_SIZE.x,
+                self.DRAW_TILE_SIZE.y * (wallHeight + 2)
               );
               ctx.globalAlpha = 1;
             }
@@ -708,11 +705,13 @@
           {"color": "#FFFFFF", "size": 60}
         );
 
-        // calculate maximum view distance
+        // setup game variables
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
-
-        // set maximum draw distance
         self.DRAW_DIST = self.const.DRAW_DIST;
+        self.DRAW_TILE_SIZE = {
+          "x": self.res[0] / self.mCols,
+          "y": self.res[1] / self.mRows
+        }; 
 
         // setup background
         self.assets.background = {
@@ -723,16 +722,16 @@
         // setup doors
         self.doors = self.util.getDoors(self);
 
+        // setup event listeners
+        document.onkeydown = function(e) {
+          self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
+        };
+        document.onkeyup = function(e) {
+          self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
+        };
+
         // async ops.
         return new Promise(function(resolve, reject) {
-          // setup event listeners
-          document.onkeydown = function(e) {
-            self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
-          };
-          document.onkeyup = function(e) {
-            self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
-          };
-
           // setup sprites
           self.assets.sprites
             .setup(self, "player.shotgun0")
@@ -840,36 +839,36 @@
         // TODO: move to a separate function, e.g. `animateWalking`
         // walking animation 
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
-          self.player.animWalking.index += (self.player.animWalking.reverse & 1) ? -1 : 1;
-          self.player.animWalking.reverse = self.player.animWalking.index === self.player.animWalking.apex
+          self.player.anim.walking.index += (self.player.anim.walking.reverse & 1) ? -1 : 1;
+          self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
                                             ? 1 
-                                            : self.player.animWalking.index === -1 * self.player.animWalking.apex
+                                            : self.player.anim.walking.index === -1 * self.player.anim.walking.apex
                                               ? 0 
-                                              : self.player.animWalking.reverse;
+                                              : self.player.anim.walking.reverse;
         } else {
-          self.player.animWalking = {"index": 0, "reverse": 0, "apex": self.player.animWalking.apex};
+          self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
         }
       },
       "animateShooting": function(self) {
         if (self.keyState.SPC & 1 && !self.intervals.animShooting) {
           self.intervals.animShooting = setInterval(function() {
-            self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 0;
-            self.player.animSprite.index =
-              self.player.animSprite.reverse & 1
-                ? self.player.animSprite.index === 2
+            self.assets.sprites.player["shotgun" + self.player.anim.sprite.index.toString()].ready = 0;
+            self.player.anim.sprite.index =
+              self.player.anim.sprite.reverse & 1
+                ? self.player.anim.sprite.index === 2
                   ? 0
-                  : self.player.animSprite.index - 1
-                : self.player.animSprite.index + 1;
-            self.assets.sprites.player["shotgun" + self.player.animSprite.index.toString()].ready = 1;
-            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.animSprite.index) {
-              self.player.animSprite.reverse = 1;
-            } else if (self.player.animSprite.index === 0) {
-              self.player.animSprite.reverse = 0;
+                  : self.player.anim.sprite.index - 1
+                : self.player.anim.sprite.index + 1;
+            self.assets.sprites.player["shotgun" + self.player.anim.sprite.index.toString()].ready = 1;
+            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.anim.sprite.index) {
+              self.player.anim.sprite.reverse = 1;
+            } else if (self.player.anim.sprite.index === 0) {
+              self.player.anim.sprite.reverse = 0;
               clearInterval(self.intervals.animShooting);
               self.intervals.animShooting = undefined;
               return;
             }
-            if (self.player.animSprite.index === 1) { // if shooting frame, increase lighting
+            if (self.player.anim.sprite.index === 1) { // if shooting frame, increase lighting
               self.DRAW_DIST = 150;
               self.assets.background = {
                 "ceiling": self.util.render.background(self),
