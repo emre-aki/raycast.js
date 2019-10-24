@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 10.14.2019
+    Last updated: 10.24.2019
   ================================================================
   */
 
@@ -793,28 +793,39 @@
       },
       "movePlayer": function(self) {
         const memoPos = [self.player.x, self.player.y];
-        // TODO: add wall margin logix
+        const wallMargin = 0.25;
+        const margin = {"x": 0, "y": 0};
+
+        // update position in the map
         if (self.keyState.W & 1) {
           self.player.x += Math.cos(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.sin(self.player.angle) * self.STEP_SIZE;
+          margin.x = wallMargin * (Math.cos(self.player.angle) > 0 ? 1 : -1);
+          margin.y = wallMargin * (Math.sin(self.player.angle) > 0 ? 1 : -1);
         } if (self.keyState.A & 1) {
           self.player.angle -= 0.05;
         } if (self.keyState.S & 1) {
           self.player.x -= Math.cos(self.player.angle) * self.STEP_SIZE;
           self.player.y -= Math.sin(self.player.angle) * self.STEP_SIZE;
+          margin.x = wallMargin * (Math.cos(self.player.angle) > 0 ? -1 : 1);
+          margin.y = wallMargin * (Math.sin(self.player.angle) > 0 ? -1 : 1);
         } if (self.keyState.D & 1) {
           self.player.angle += 0.05;
         } if (self.keyState.Q & 1) {
           self.player.x += Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y -= Math.cos(self.player.angle) * self.STEP_SIZE;
+          margin.x = wallMargin * (Math.sin(self.player.angle) > 0 ? 1 : -1);
+          margin.y = wallMargin * (Math.cos(self.player.angle) > 0 ? -1 : 1);
         } if (self.keyState.E & 1) {
           self.player.x -= Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.cos(self.player.angle) * self.STEP_SIZE;
+          margin.x = wallMargin * (Math.sin(self.player.angle) > 0 ? -1 : 1);
+          margin.y = wallMargin * (Math.cos(self.player.angle) > 0 ? 1 : -1);
         }
 
         // collision detection
-        const stepX = {"x": Math.floor(self.player.x), "y": Math.floor(memoPos[1])};
-        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y)};
+        const stepX = {"x": Math.floor(self.player.x + margin.x), "y": Math.floor(memoPos[1])};
+        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + margin.y)};
         const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
         const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
         if((sampleX === "#") ||
