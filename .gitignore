@@ -1,4 +1,6 @@
 # directories
+bin/*
+include/*
 lib/*
 screenshots/*
 
