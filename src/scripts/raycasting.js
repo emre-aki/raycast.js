@@ -19,7 +19,7 @@
 
       https://youtu.be/xW8skO7MFYw
 
-    Last updated: 10.24.2019
+    Last updated: 10.30.2019
   ================================================================
   */
 
@@ -316,7 +316,7 @@
                 if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
                   ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
                                   : mapSample === "P" ? "#FF0000"
-                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
+                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A999";
                 } else { // render map out of bounds
                   ctx.fillStyle = "#FFFFFF";
                 }
@@ -327,26 +327,26 @@
               "a": {
                 "x": fullDyn
                   ? offset.x + 0.5 * tileSize
-                  : offset.x + (2 * Math.cos(self.player.angle - Math.PI * 0.5) + 0.5) * tileSize,
+                  : offset.x + (2 * Math.cos(self.player.angle) + 0.5) * tileSize,
                 "y": fullDyn
                   ? offset.y - 1.5 * tileSize
-                  : offset.y + (2 * Math.sin(self.player.angle - Math.PI * 0.5) + 0.5) * tileSize
+                  : offset.y + (2 * Math.sin(self.player.angle) + 0.5) * tileSize
               },
               "b": {
                 "x": fullDyn
                   ? offset.x + (0.5 - self.const.math.sqrt3) * tileSize
-                  : offset.x + (2 * Math.cos(self.player.angle + (5 * Math.PI) / 6) + 0.5) * tileSize,
+                  : offset.x + (2 * Math.cos(self.player.angle + (2 * Math.PI) / 3) + 0.5) * tileSize,
                 "y": fullDyn
                   ? offset.y + 1.5 * tileSize
-                  : offset.y + (2 * Math.sin(self.player.angle + (5 * Math.PI) / 6) + 0.5) * tileSize
+                  : offset.y + (2 * Math.sin(self.player.angle + (2 * Math.PI) / 3) + 0.5) * tileSize
               },
               "c": {
                 "x": fullDyn
                   ? offset.x + (0.5 + self.const.math.sqrt3) * tileSize
-                  : offset.x + (2 * Math.cos(self.player.angle + Math.PI / 6) + 0.5) * tileSize,
+                  : offset.x + (2 * Math.cos(self.player.angle + (4 * Math.PI) / 3) + 0.5) * tileSize,
                 "y": fullDyn
                   ? offset.y + 1.5 * tileSize
-                  : offset.y + (2 * Math.sin(self.player.angle + Math.PI / 6) + 0.5) * tileSize
+                  : offset.y + (2 * Math.sin(self.player.angle + (4 * Math.PI) / 3) + 0.5) * tileSize
               }
             };
             self.util.drawCaret(
