@@ -185,7 +185,7 @@
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
         } else if (key === 13) {
           self.keyState.RTN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.RTN;
-        }        
+        }
       },
       "getDoors": function(self) {
         const doors = {};
@@ -276,8 +276,8 @@
                 if (r === R) {// render minimap border
                   ctx.fillStyle = "#000000";
                 } else if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
-                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF" 
-                                  : mapSample === "P" ? "#FF0000" 
+                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
+                                  : mapSample === "P" ? "#FF0000"
                                   : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
                 } else {
                   // render map out-of-bounds
@@ -288,7 +288,7 @@
             }
             self.util.drawCaret(
               ctx,
-              {"x": offset.x,                               "y": offset.y - 2 * tileSize},
+              {"x": offset.x,                                    "y": offset.y - 2 * tileSize},
               {"x": offset.x - self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
               {"x": offset.x + self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
               {"border": {"color": "#00000", "thickness": 1}}
@@ -382,8 +382,8 @@
                 if(sampleMap.x >= 0 && sampleMap.x < self.nCols &&
                   sampleMap.y >= 0 && sampleMap.y < self.nRows) {
                   const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF" 
-                                    : sample === "P" ? "#FF0000" 
+                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF"
+                                    : sample === "P" ? "#FF0000"
                                     : sample === "V" || sample === "H" ? "#0000FF" : "#A9A9A9";
                 } else { // render map out-of-bounds
                   mmCtx.fillStyle = "#FFFFFF";
@@ -483,7 +483,7 @@
                     distToWall = dist_tmp;
                     wall = {
                       "x": pSample.x + (right & 1 ? 0 : 1),
-                      "y": pSample.y 
+                      "y": pSample.y
                     };
                   }
                 } else {
@@ -518,9 +518,9 @@
             );
 
             self.util.print(
-              "MAP", 
-              tileSize * self.nCols + offset.x - 28, 
-              offset.y + 12, 
+              "MAP",
+              tileSize * self.nCols + offset.x - 28,
+              offset.y + 12,
               {"size": 13, "style": "italic"}
             );
           }
@@ -567,7 +567,7 @@
                 "angle": self.player.angle - self.FOV * 0.5 + (iCol / self.mCols) * self.FOV
               };
               ray.dir     = {
-                "x": Math.cos(ray.angle), 
+                "x": Math.cos(ray.angle),
                 "y": Math.sin(ray.angle)
               };
               ray.slope   = ray.dir.y / ray.dir.x;
@@ -699,9 +699,9 @@
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, self.res[0], self.res[1]);
         self.util.print(
-          "Loading...", 
-          Math.floor(self.res[0] / 2) - 155, 
-          Math.floor(self.res[1] / 2), 
+          "Loading...",
+          Math.floor(self.res[0] / 2) - 155,
+          Math.floor(self.res[1] / 2),
           {"color": "#FFFFFF", "size": 60}
         );
 
@@ -831,12 +831,12 @@
         if((sampleX === "#") ||
            ((sampleX === "V" || sampleX === "H") &&
             (self.doors[stepX.x.toString() + "_" + stepX.y.toString()].state > 0))) {
-          self.player.x = memoPos[0]; 
+          self.player.x = memoPos[0];
         }
         if((sampleY === "#") ||
            ((sampleY === "V" || sampleY === "H") &&
             (self.doors[stepY.x.toString() + "_" + stepY.y.toString()].state > 0))) {
-          self.player.y = memoPos[1]; 
+          self.player.y = memoPos[1];
         }
         const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
         const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
@@ -848,7 +848,7 @@
         }
 
         // TODO: move to a separate function, e.g. `animateWalking`
-        // walking animation 
+        // walking animation
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
           self.player.anim.walking.index += (self.player.anim.walking.reverse & 1) ? -1 : 1;
           self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
