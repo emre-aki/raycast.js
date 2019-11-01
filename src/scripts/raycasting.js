@@ -1,28 +1,28 @@
+/*
+================================================================
+                    Raycasting on Canvas
+                              by
+                       Emre Akı, 2018.
+
+    This is a simple implementation of the once-popular 3-D
+  rendering technique known as "ray-casting" which was featured
+  in the video game Wolfenstein 3D.
+
+    All of the rendering is carried out within a single 800x600
+  canvas for the sake of simplicity at ~60 frames per second.
+
+    This little project was inspired by a video on YouTube posted
+  by a fellow seasoned programmer who goes by the name 'javidx9.'
+  You can follow the link below to refer to his tutorial of
+  ray-casting done entirely on a command-line window!
+
+    https://youtu.be/xW8skO7MFYw
+
+  Last updated: 10.31.2019
+================================================================
+*/
+
 (function() {
-  /*
-  ================================================================
-                      Raycasting on Canvas
-                                by
-                         Emre Akı, 2018.
-
-      This is a simple implementation of the once-popular 3-D
-    rendering technique known as "ray-casting" which was featured
-    in the video game Wolfenstein 3D.
-
-      All of the rendering is carried out within a single 800x600
-    canvas for the sake of simplicity at ~60 frames per second.
-
-      This little project was inspired by a video on YouTube posted
-    by a fellow seasoned programmer who goes by the name 'javidx9.'
-    You can follow the link below to refer to his tutorial of
-    ray-casting done entirely on a command-line window!
-
-      https://youtu.be/xW8skO7MFYw
-
-    Last updated: 10.30.2019
-  ================================================================
-  */
-
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
   const fs = {
