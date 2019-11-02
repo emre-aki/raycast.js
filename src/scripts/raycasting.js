@@ -38,6 +38,7 @@
     "DRAW_TILE_SIZE": {}, // initialized in setup
     "DRAW_DIST": -1,      // initialized in setup
     "STEP_SIZE": 0.2,
+    "PLAYER_HEIGHT": 0,   // initialized in setup
     "keyState": {
       "W": 0,
       "A": 0,
@@ -62,7 +63,8 @@
         "walking": {"index": 0, "reverse": 0, "apex": 10},
       },
       "x": window.__player__.X,
-      "y": window.__player__.Y
+      "y": window.__player__.Y,
+      "z": window.__player__.Z
     },
     "assets": {
       "sprites": {
@@ -176,8 +178,9 @@
         const radToDeg = 57.2958;
         return (((rad + rad360) % rad360) * radToDeg + 360) % 360;
       },
-      "eucDist": function(a, b, pseudo) {
-        const pseudoDist = (a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y);
+      "eucDist": function(a, b, pseudo, multiplier) {
+        multiplier = multiplier ? multiplier : 1;
+        const pseudoDist = ((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)) * multiplier * multiplier;
         return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
       },
       "handleAsyncKeyState": function(self, type, key) {
@@ -450,7 +453,7 @@
                   "y": Math.floor(traceV.y)
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
+                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
                   hitV           = 1;
                   distToWall     = sqrDrawDist;
                 } else if (sample === "#" || sample === "V") {
@@ -459,7 +462,7 @@
                     "y": traceV.y + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) * ray.slope : 0)
                   };
                   if(sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
-                    distToWall     = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true);
+                    distToWall     = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
                     hitV           = 1;
                     currentHit     = "vertical";
                   }
@@ -483,7 +486,7 @@
                   "y": Math.floor(traceH.y + (up ? -1 : 0))
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true) > sqrDrawDist) {
+                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
                   hitH = 1;
                   distToWall     = distToWall ? distToWall : sqrDrawDist;
                 } else if (sample === "#" || sample === "H") {
@@ -492,7 +495,7 @@
                     "y": traceH.y + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) : 0)
                   };
                   if(sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
-                    const hitDist  = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true);
+                    const hitDist  = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
                     if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
                       distToWall   = hitDist;
                       currentHit   = "horizontal";
@@ -513,26 +516,32 @@
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // draw vertical strip of wall
-              let wallHeight = self.VIEW_DIST / distToWall;
-              //wallHeight = wallHeight > self.mRows ? self.mRows : wallHeight; //TODO: fix
               ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
-              ctx.globalAlpha = 1;
+              const hWall = self.mRows * self.VIEW_DIST / distToWall;
+              const hCeil = (distToWall - self.VIEW_DIST) * (self.mRows - self.player.z) / distToWall;
+              const hFloor = self.mRows - hCeil - hWall;
               ctx.fillRect(
                 self.DRAW_TILE_SIZE.x * iCol,
-                self.DRAW_TILE_SIZE.y * (self.mRows - wallHeight) * 0.5 + self.player.anim.walking.index,
+                Math.floor(self.DRAW_TILE_SIZE.y * hCeil),
                 self.DRAW_TILE_SIZE.x,
-                self.DRAW_TILE_SIZE.y * wallHeight
+                Math.floor(self.DRAW_TILE_SIZE.y * hWall)
               );
-              
+
               // shade walls
               ctx.globalAlpha = realDist / self.DRAW_DIST;
               ctx.fillStyle = "#000000";
               ctx.fillRect(
                 self.DRAW_TILE_SIZE.x * iCol,
-                self.DRAW_TILE_SIZE.y * (self.mRows - wallHeight - 2) * 0.5 + self.player.anim.walking.index,
+                Math.floor(self.DRAW_TILE_SIZE.y * (hCeil - 1)),
                 self.DRAW_TILE_SIZE.x,
-                self.DRAW_TILE_SIZE.y * (wallHeight + 2)
+                Math.floor(self.DRAW_TILE_SIZE.y * (hWall + 2))
               );
+
+              // TODO: floor-casting
+              //
+
+              // TODO: ceiling-casting
+              //
               ctx.globalAlpha = 1;
             }
 
@@ -567,11 +576,13 @@
 
         // setup game variables
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
-        self.DRAW_DIST = self.const.DRAW_DIST;
+        self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
         self.DRAW_TILE_SIZE = {
           "x": self.res[0] / self.mCols,
           "y": self.res[1] / self.mRows
-        }; 
+        };
+        self.PLAYER_HEIGHT = self.mRows * 0.5;
+        self.player.z = self.PLAYER_HEIGHT;
 
         // setup background
         self.assets.background = {
@@ -710,13 +721,15 @@
         // TODO: move to a separate function, e.g. `animateWalking`
         // walking animation
         if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
-          self.player.anim.walking.index += (self.player.anim.walking.reverse & 1) ? -1 : 1;
+          self.player.z += (self.player.anim.walking.reverse & 1) ? -1 : 1;
+          self.player.anim.walking.index = self.player.z - self.PLAYER_HEIGHT;
           self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
-                                            ? 1 
+                                            ? 1
                                             : self.player.anim.walking.index === -1 * self.player.anim.walking.apex
-                                              ? 0 
+                                              ? 0
                                               : self.player.anim.walking.reverse;
         } else {
+          self.player.z = self.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
         }
       },
@@ -740,17 +753,17 @@
               return;
             }
             if (self.player.anim.sprite.index === 1) { // if shooting frame, increase lighting
-              self.DRAW_DIST = 150;
               self.assets.background = {
                 "ceiling": self.util.render.background(self),
                 "floor": self.util.render.background(self, true)
               };
+              self.DRAW_DIST = 150 * self.mRows;
             } else {
-              self.DRAW_DIST = self.const.DRAW_DIST;
               self.assets.background = {
                 "ceiling": self.util.render.background(self),
                 "floor": self.util.render.background(self, true)
               };
+              self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
             }
           }, 150);
         }
