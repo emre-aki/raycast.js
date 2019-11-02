@@ -153,6 +153,18 @@
         // Make sin/cos && sqrt tables for optimization
         "sqrt3": Math.sqrt(3),
       },
+      "minimapColors": {
+        "#": "#FFFFFF",
+        "u": "#FFFFFF",
+        "d": "#FFFFFF",
+        "l": "#FFFFFF",
+        "r": "#FFFFFF",
+        "P": "#FF0000",
+        "V": "#0000FF",
+        "H": "#0000FF",
+        ".": "#A9A9A999",
+        "-": "#A9A9A999",
+      },
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
@@ -260,40 +272,6 @@
           }
         },
         "minimap": {
-          "dynamic": function(self, offset, tileSize, R) {
-            for (let r = 0; r <= R; r += 1) {
-              const stride = 1 / r; // (2 * Math.PI) / (2 * Math.PI * r)
-              for (let a = 0; a < 2 * Math.PI; a += stride) {
-                const pMapSample = {
-                  "x": Math.round(Math.cos(a + self.player.angle) * r + self.player.x),
-                  "y": Math.round(Math.sin(a + self.player.angle) * r + self.player.y)
-                };
-                const pTransformMM = {
-                  "x": offset.x + Math.sin(a) * r * tileSize,
-                  "y": offset.y - Math.cos(a) * r * tileSize
-                };
-                const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
-                if (r === R) {// render minimap border
-                  ctx.fillStyle = "#000000";
-                } else if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
-                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
-                                  : mapSample === "P" ? "#FF0000"
-                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
-                } else {
-                  // render map out-of-bounds
-                  ctx.fillStyle = "#FFFFFF";
-                }
-                ctx.fillRect(pTransformMM.x, pTransformMM.y, tileSize, tileSize);
-              }
-            }
-            self.util.drawCaret(
-              ctx,
-              {"x": offset.x,                                    "y": offset.y - 2 * tileSize},
-              {"x": offset.x - self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
-              {"x": offset.x + self.const.math.sqrt3 * tileSize, "y": offset.y + tileSize},
-              {"border": {"color": "#00000", "thickness": 1}}
-            );
-          },
           "dynamicBetter": function(self, offset, tileSize, R, fullDyn) {
             for (let y = -1 * R; y < R; y += 1) {
               const rRow = Math.round(Math.sqrt(R * R - y * y)); // might use polar coordinates as an alternative
@@ -314,9 +292,7 @@
                 };
                 const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
                 if (pMapSample.x >= 0 && pMapSample.x < self.nCols && pMapSample.y >= 0 && pMapSample.y < self.nRows) {
-                  ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
-                                  : mapSample === "P" ? "#FF0000"
-                                  : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A999";
+                  ctx.fillStyle = self.const.minimapColors[mapSample];
                 } else { // render map out of bounds
                   ctx.fillStyle = "#FFFFFF";
                 }
@@ -382,9 +358,7 @@
                 if(sampleMap.x >= 0 && sampleMap.x < self.nCols &&
                   sampleMap.y >= 0 && sampleMap.y < self.nRows) {
                   const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                  mmCtx.fillStyle = sample === "#" ? "#FFFFFF"
-                                    : sample === "P" ? "#FF0000"
-                                    : sample === "V" || sample === "H" ? "#0000FF" : "#A9A9A9";
+                  mmCtx.fillStyle = self.const.minimapColors[sample];
                 } else { // render map out-of-bounds
                   mmCtx.fillStyle = "#FFFFFF";
                 }
@@ -409,120 +383,6 @@
             ctx.drawImage(mmCanvas, -1 * R * tileSize, -1 * R * tileSize, mmCanvas.width, mmCanvas.height);
             ctx.rotate(Math.PI * 0.5 + self.player.angle);
             ctx.translate(-1 * offset.x, -1 * offset.y);
-          },
-          "static": function(self, offset, tileSize) {
-            // draw map
-            for (let mY = 0; mY < self.nRows; mY += 1) {
-              for (let mX = 0; mX < self.nCols; mX += 1) {
-                const mapSample = self.map[(self.nCols + self.offsetLinebr) * mY + mX];
-                ctx.fillStyle = mapSample === "#" ? "#FFFFFF"
-                                : mapSample === "P" ? "#FF0000"
-                                : mapSample === "V" || mapSample === "H" ? "#0000FF" : "#A9A9A9";
-                ctx.fillRect(tileSize * mX + offset.x, tileSize * mY + offset.y, tileSize, tileSize);
-              }
-            }
-
-            // draw player FOV
-            for (let iCol = 0; iCol < 2; iCol += 1) {
-              // raycasting
-              const ray   = {"angle": self.player.angle - self.FOV * 0.5 + iCol * self.FOV};
-              ray.dir     = {"x": Math.cos(ray.angle), "y": Math.sin(ray.angle)};
-              ray.slope   = ray.dir.y / ray.dir.x;
-              const up    = ray.dir.y < 0 ? 1 : 0;
-              const right = ray.dir.x > 0 ? 1 : 0;
-              let wall    = {};
-              let distToWall;
-
-              // trace horizontal wall collisions
-              let hitWall_h = 0;
-              const step_h  = {};
-              const trace_h = {};
-              step_h.y      = up & 1 ? -1 : 1;
-              step_h.x      = step_h.y / ray.slope;
-              trace_h.y     = up & 1 ? Math.floor(self.player.y) : Math.ceil(self.player.y);
-              trace_h.x     = self.player.x + (trace_h.y - self.player.y) / ray.slope;
-              while (!(hitWall_h & 1) && trace_h.x >= 0 && trace_h.x < self.nCols &&
-                                         trace_h.y >= 0 && trace_h.y < self.nRows) {
-                const pSample = {
-                  "x": Math.floor(trace_h.x),
-                  "y": Math.floor(trace_h.y + (up & 1 ? -1 : 0))
-                };
-                const sample = self.map[(self.nCols + self.offsetLinebr) * pSample.y + pSample.x];
-                if (sample === "#") {
-                  distToWall = self.util.eucDist(trace_h, {"x": self.player.x, "y": self.player.y}, true);
-                  wall = {
-                    "x": pSample.x,
-                    "y": pSample.y + (up & 1 ? 1 : 0)
-                  };
-                  hitWall_h = 1;
-                } else {
-                  trace_h.x += step_h.x;
-                  trace_h.y += step_h.y;
-                }
-              }
-
-              // trace vertical wall collisions
-              let hitWall_v = 0;
-              const step_v  = {};
-              const trace_v = {};
-              step_v.x      = right & 1 ? 1 : -1;
-              step_v.y      = step_v.x * ray.slope;
-              trace_v.x     = right & 1 ? Math.ceil(self.player.x) : Math.floor(self.player.x);
-              trace_v.y     = self.player.y + (trace_v.x - self.player.x) * ray.slope;
-              while ((hitWall_v & 1) === 0 && trace_v.x >= 0 && trace_v.x < self.nCols &&
-                                              trace_v.y >= 0 && trace_v.y < self.nRows) {
-                const pSample = {
-                  "x": Math.floor(trace_v.x + (right & 1 ? 0 : -1)),
-                  "y": Math.floor(trace_v.y)
-                };
-                const sample = self.map[(self.nCols + self.offsetLinebr) * pSample.y + pSample.x];
-                if (sample === "#") {
-                  const dist_tmp = self.util.eucDist(trace_v, {"x": self.player.x, "y": self.player.y}, true);
-                  hitWall_v      = 1;
-                  if ((hitWall_h & 1) === 0 || dist_tmp < distToWall) {
-                    distToWall = dist_tmp;
-                    wall = {
-                      "x": pSample.x + (right & 1 ? 0 : 1),
-                      "y": pSample.y
-                    };
-                  }
-                } else {
-                  trace_v.x += step_v.x;
-                  trace_v.y += step_v.y;
-                }
-              }
-
-              self.util.drawLine(
-                ctx,
-                tileSize * (Math.floor(self.player.x) + 0.5) + offset.x,
-                tileSize * (Math.floor(self.player.y) + 0.5) + offset.y,
-                tileSize * wall.x + offset.x,
-                tileSize * wall.y + offset.y
-              );
-            }
-
-            // draw player
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(
-              tileSize * Math.floor(self.player.x) + offset.x - 1,
-              tileSize * Math.floor(self.player.y) + offset.y - 1,
-              tileSize + 2,
-              tileSize + 2
-            );
-            ctx.fillStyle = "#FF0000";
-            ctx.fillRect(
-              tileSize * Math.floor(self.player.x) + offset.x,
-              tileSize * Math.floor(self.player.y) + offset.y,
-              tileSize,
-              tileSize
-            );
-
-            self.util.print(
-              "MAP",
-              tileSize * self.nCols + offset.x - 28,
-              offset.y + 12,
-              {"size": 13, "style": "italic"}
-            );
           }
         },
         "background": function(self, floor) {
