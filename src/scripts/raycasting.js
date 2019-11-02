@@ -170,7 +170,6 @@
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
-      "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
     "util": {
       "rad2Deg": function(rad) {
@@ -388,38 +387,18 @@
             ctx.translate(-1 * offset.x, -1 * offset.y);
           }
         },
-        "background": function(self, floor) {
-          const opts = {
-            "start": {
-              "x": 0,
-              "y": floor ? self.res[1] * 0.5 : 0,
-              "color": floor ? "#000000" : "#808080"
-            },
-            "center": {
-              "index": floor 
-                       ? self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST
-                       : 1 - self.const.RATIO_DRAW_DIST_TO_BACKGROUND / self.DRAW_DIST,
-              "color": "#000000"
-            },
-            "end": {
-              "x": 0,
-              "y": floor ? self.res[1] : self.res[1] * 0.5,
-              "color": floor ? "#333333" : "#000000"
-            }
-          };
-          const gradient = ctx.createLinearGradient(opts.start.x, opts.start.y, opts.end.x, opts.end.y);
-          gradient.addColorStop(0, opts.start.color);
-          gradient.addColorStop(opts.center.index, opts.center.color);
-          gradient.addColorStop(1, opts.end.color);
+        "background": function(self) {
+          const gradient = ctx.createLinearGradient(0, 0, 0, self.res[1]);
+          gradient.addColorStop(0, "#808080");
+          gradient.addColorStop(0.5 + (self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows)), "#000000");
+          gradient.addColorStop(1, "#333333");
           return gradient;
         },
         "frame": {
           "rasterized": function(self) {
             // draw background
-            ctx.fillStyle = self.assets.background.ceiling;
-            ctx.fillRect(0, 0, self.res[0], self.res[1] * 0.5);
-            ctx.fillStyle = self.assets.background.floor;
-            ctx.fillRect(0, self.res[1] * 0.5, self.res[0], self.res[1] * 0.5);
+            ctx.fillStyle = self.assets.background;
+            ctx.fillRect(0, 0, self.res[0], self.res[1]);
 
             // raycasting
             const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
@@ -585,10 +564,7 @@
         self.player.z = self.PLAYER_HEIGHT;
 
         // setup background
-        self.assets.background = {
-          "ceiling": self.util.render.background(self),
-          "floor": self.util.render.background(self, true)
-        };
+        self.assets.background = self.util.render.background(self);
 
         // setup doors
         self.doors = self.util.getDoors(self);
@@ -728,9 +704,11 @@
                                             : self.player.anim.walking.index === -1 * self.player.anim.walking.apex
                                               ? 0
                                               : self.player.anim.walking.reverse;
+        self.assets.background = self.util.render.background(self);
         } else {
           self.player.z = self.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
+          self.assets.background = self.util.render.background(self);
         }
       },
       "animateShooting": function(self) {
@@ -753,17 +731,11 @@
               return;
             }
             if (self.player.anim.sprite.index === 1) { // if shooting frame, increase lighting
-              self.assets.background = {
-                "ceiling": self.util.render.background(self),
-                "floor": self.util.render.background(self, true)
-              };
               self.DRAW_DIST = 150 * self.mRows;
+              self.assets.background = self.util.render.background(self);
             } else {
-              self.assets.background = {
-                "ceiling": self.util.render.background(self),
-                "floor": self.util.render.background(self, true)
-              };
               self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
+              self.assets.background = self.util.render.background(self);
             }
           }, 150);
         }
