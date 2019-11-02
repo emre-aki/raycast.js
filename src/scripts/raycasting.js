@@ -203,10 +203,10 @@
       },
       "getDoors": function(self) {
         const doors = {};
-        for(let y = 0; y < self.nRows; y += 1) {
-          for(let x = 0; x < self.nCols; x += 1) {
+        for (let y = 0; y < self.nRows; y += 1) {
+          for (let x = 0; x < self.nCols; x += 1) {
             const sample = self.map[(self.nCols + self.offsetLinebr) * y + x];
-            if(sample === "H" || sample === "V") {
+            if (sample === "H" || sample === "V") {
               doors[x.toString() + "_" + y.toString()] = {
                 "loc": {"x": x, "y": y},
                 "state": 10, // 0: open, 10: closed
@@ -347,8 +347,8 @@
             mmCtx.fill();
 
             mmCtx.globalCompositeOperation = "source-atop";
-            for(let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
-              for(let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
+            for (let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
+              for (let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
                 const sampleMap = {
                   "x": Math.floor(self.player.x) + offsetCol,
                   "y": Math.floor(self.player.y) + offsetRow,
@@ -357,7 +357,7 @@
                   "x": (R + offsetCol) * tileSize,
                   "y": (R + offsetRow) * tileSize,
                 };
-                if(sampleMap.x >= 0 && sampleMap.x < self.nCols &&
+                if (sampleMap.x >= 0 && sampleMap.x < self.nCols &&
                   sampleMap.y >= 0 && sampleMap.y < self.nRows) {
                   const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                   mmCtx.fillStyle = self.const.minimapColors[sample];
@@ -675,28 +675,28 @@
         const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + margin.y)};
         const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
         const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
-        if((sampleX === "#") ||
-           ((sampleX === "V" || sampleX === "H") &&
-            (self.doors[stepX.x.toString() + "_" + stepX.y.toString()].state > 0))) {
+        if ((sampleX === "#") ||
+            ((sampleX === "V" || sampleX === "H") &&
+             (self.doors[stepX.x.toString() + "_" + stepX.y.toString()].state > 0))) {
           self.player.x = memoPos[0];
         }
-        if((sampleY === "#") ||
-           ((sampleY === "V" || sampleY === "H") &&
-            (self.doors[stepY.x.toString() + "_" + stepY.y.toString()].state > 0))) {
+        if ((sampleY === "#") ||
+            ((sampleY === "V" || sampleY === "H") &&
+             (self.doors[stepY.x.toString() + "_" + stepY.y.toString()].state > 0))) {
           self.player.y = memoPos[1];
         }
         const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
         const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
-        if((sampleXY === "#") ||
-           ((sampleXY === "V" || sampleXY === "H") &&
-            (self.doors[stepXY.x.toString() + "_" + stepXY.y.toString()].state > 0))) {
+        if ((sampleXY === "#") ||
+            ((sampleXY === "V" || sampleXY === "H") &&
+             (self.doors[stepXY.x.toString() + "_" + stepXY.y.toString()].state > 0))) {
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
 
         // TODO: move to a separate function, e.g. `animateWalking`
         // walking animation
-        if(self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
+        if (self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
           self.player.z += (self.player.anim.walking.reverse & 1) ? -1 : 1;
           self.player.anim.walking.index = self.player.z - self.PLAYER_HEIGHT;
           self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
@@ -741,7 +741,7 @@
         }
       },
       "interactWDoor": function(self) {
-        if((self.keyState.RTN & 1) > 0) {
+        if ((self.keyState.RTN & 1) > 0) {
           const dir    = {
             "x": Math.cos(self.player.angle),
             "y": Math.sin(self.player.angle)
@@ -765,15 +765,15 @@
             "y": Math.floor(traceH.y - ((up & 1) > 0 ? 1 : 0))
           };
           const sampleH = self.map[(self.nCols + self.offsetLinebr) * sampleMapH.y + sampleMapH.x];
-          if(sampleV === "V") {
+          if (sampleV === "V") {
             self.exec.animateDoor(self, self.doors[sampleMapV.x.toString() + "_" + sampleMapV.y.toString()]);
-          } else if(sampleH === "H") {
+          } else if (sampleH === "H") {
             self.exec.animateDoor(self, self.doors[sampleMapH.x.toString() + "_" + sampleMapH.y.toString()]);
           }
         }
       },
       "tryAndCloseDoor": function(self, door) {
-        if(Math.floor(self.player.x) !== door.loc.x || Math.floor(self.player.y) !== door.loc.y) {
+        if (Math.floor(self.player.x) !== door.loc.x || Math.floor(self.player.y) !== door.loc.y) {
           self.exec.animateDoor(self, door);
         } else {
           clearTimeout(door.timeout);
@@ -783,18 +783,18 @@
         }
       },
       "animateDoor": function(self, door) {
-        if(!door.interval) {
+        if (!door.interval) {
           door.interval = setInterval(function(){
             //console.log(door);
             door.state += ((door.reverse & 1) === 0 ? -1 : 1);
-            if(door.state === 0) {
+            if (door.state === 0) {
               clearInterval(door.interval);
               door.interval = undefined;
               door.reverse = 1;
               door.timeout = setTimeout(function() {
                 self.exec.tryAndCloseDoor(self, door);
               }, self.const.DOOR_RESET_DELAY);
-            } else if(door.state === 10) {
+            } else if (door.state === 10) {
               door.reverse = 0;
               clearTimeout(door.timeout);
               clearInterval(door.interval);
