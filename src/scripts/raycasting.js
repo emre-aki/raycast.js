@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 10.31.2019
+  Last updated: 11.07.2019
 ================================================================
 */
 
@@ -157,15 +157,11 @@
       },
       "minimapColors": {
         "#": "#FFFFFF",
-        "u": "#FFFFFF",
-        "d": "#FFFFFF",
-        "l": "#FFFFFF",
-        "r": "#FFFFFF",
         "P": "#FF0000",
         "V": "#0000FF",
         "H": "#0000FF",
         ".": "#A9A9A999",
-        "-": "#A9A9A999",
+        "-": "#A9A9A999"
       },
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
