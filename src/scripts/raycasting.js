@@ -497,9 +497,9 @@
               const hFloor = self.mRows - hCeil - hWall;
               ctx.fillRect(
                 self.DRAW_TILE_SIZE.x * iCol,
-                Math.floor(self.DRAW_TILE_SIZE.y * hCeil),
+                self.DRAW_TILE_SIZE.y * hCeil,
                 self.DRAW_TILE_SIZE.x,
-                Math.floor(self.DRAW_TILE_SIZE.y * hWall)
+                self.DRAW_TILE_SIZE.y * hWall
               );
 
               // shade walls
@@ -507,9 +507,9 @@
               ctx.fillStyle = "#000000";
               ctx.fillRect(
                 self.DRAW_TILE_SIZE.x * iCol,
-                Math.floor(self.DRAW_TILE_SIZE.y * (hCeil - 1)),
+                self.DRAW_TILE_SIZE.y * (hCeil - 1),
                 self.DRAW_TILE_SIZE.x,
-                Math.floor(self.DRAW_TILE_SIZE.y * (hWall + 2))
+                self.DRAW_TILE_SIZE.y * (hWall + 2)
               );
 
               // TODO: floor-casting
