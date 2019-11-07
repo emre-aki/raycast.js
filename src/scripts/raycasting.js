@@ -166,6 +166,7 @@
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
+      "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
     "util": {
       "rad2Deg": function(rad) {
@@ -384,9 +385,13 @@
           }
         },
         "background": function(self) {
+          const centerVertical = 0.5 + self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows);
+          const interval = self.const.RATIO_DRAW_DIST_TO_BACKGROUND * self.mRows / self.DRAW_DIST;
           const gradient = ctx.createLinearGradient(0, 0, 0, self.res[1]);
-          gradient.addColorStop(0, "#808080");
-          gradient.addColorStop(0.5 + (self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows)), "#000000");
+          gradient.addColorStop(0, "#558888");
+          gradient.addColorStop(centerVertical - interval, "#000000");
+          gradient.addColorStop(centerVertical, "#000000");
+          gradient.addColorStop(centerVertical + interval, "#000000");
           gradient.addColorStop(1, "#333333");
           return gradient;
         },
