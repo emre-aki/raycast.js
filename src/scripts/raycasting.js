@@ -100,18 +100,28 @@
             "ready": 0
           }
         },
-        "setup": function(self, path) {
-          const sprite = path.split(".").reduce(function(acc, curr) {
-            return acc[curr];
-          }, self.assets.sprites);
-          return new Promise(function(resolve, reject) {
+        "setup": function(self, keys) {
+          const loadSprite = function(i, resolve, reject) {
+            if (i === keys.length) {
+              return resolve(self.assets.sprites);
+            }
+            const sprite = keys[i].split(".").reduce(function(acc, curr) {
+              return acc[curr];
+            }, self.assets.sprites);
             sprite.img.onload = function() {
-              resolve(sprite);
+              sprite.loc.x = (self.res[0] - sprite.img.width) * 0.5;
+              sprite.loc.y = self.res[1] - sprite.img.height;
+              loadSprite(i + 1, resolve, reject);
             };
             sprite.img.onerror = function() {
-              reject();
+              reject(sprite);
             };
             sprite.img.src = fs.__sprites__ + sprite.name;
+          };
+          return new Promise(function(resolve, reject) {
+            loadSprite(0, resolve, reject);
+          });
+        }
           });
         }
       },
@@ -581,40 +591,15 @@
         // async ops.
         return new Promise(function(resolve, reject) {
           // setup sprites
-          self.assets.sprites
-            .setup(self, "player.shotgun0")
-            .then(function(sprite) {
-              sprite.ready = 1;
-              sprite.loc.x = Math.round(self.res[0] / 2 - sprite.img.width / 2);
-              sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
-            })
-            .then(function() {
-              return self.assets.sprites.setup(self, "player.shotgun1");
-            })
-            .then(function(sprite) {
-              sprite.loc.x = Math.round(self.res[0] / 2 - sprite.img.width / 2);
-              sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
-            })
-            .then(function() {
-              return self.assets.sprites.setup(self, "player.shotgun2");
-            })
-            .then(function(sprite) {
-              sprite.loc.x = Math.round(self.res[0] / 2 - sprite.img.width / 2);
-              sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
-            })
-            .then(function() {
-              return self.assets.sprites.setup(self, "player.shotgun3");
-            })
-            .then(function(sprite) {
-              sprite.loc.x = Math.round(self.res[0] / 2 - sprite.img.width / 2);
-              sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
-            })
-            .then(function() {
-              return self.assets.sprites.setup(self, "player.shotgun4");
-            })
-            .then(function(sprite) {
-              sprite.loc.x = Math.round(self.res[0] / 2 - sprite.img.width / 2);
-              sprite.loc.y = Math.round(self.res[1] - sprite.img.height);
+          self.assets.sprites.setup(self, [
+              "player.shotgun0",
+              "player.shotgun1",
+              "player.shotgun2",
+              "player.shotgun3",
+              "player.shotgun4"
+            ])
+            .then(function(sprites) {
+              sprites.player.shotgun0.ready = 1;
             })
 
             // setup theme music
