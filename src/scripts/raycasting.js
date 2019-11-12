@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 11.07.2019
+  Last updated: 11.12.2019
 ================================================================
 */
 
@@ -120,8 +120,6 @@
           };
           return new Promise(function(resolve, reject) {
             loadSprite(0, resolve, reject);
-          });
-        }
           });
         }
       },
