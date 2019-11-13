@@ -403,6 +403,36 @@
           gradient.addColorStop(1, "#333333");
           return gradient;
         },
+        "wallBounds": function(self, iCol, hCeil, hWall, hLine) {
+          ctx.fillStyle = "red";
+          ctx.fillRect(
+            iCol * self.DRAW_TILE_SIZE.x,
+            Math.floor(hCeil * self.DRAW_TILE_SIZE.y),
+            self.DRAW_TILE_SIZE.x,
+            hLine
+          );
+          ctx.fillStyle = "blue";
+          ctx.fillRect(
+            iCol * self.DRAW_TILE_SIZE.x,
+            Math.floor((self.mRows * 0.5 + (self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / self.DRAW_DIST)) * self.DRAW_TILE_SIZE.y),
+            self.DRAW_TILE_SIZE.x,
+            hLine
+          );
+          ctx.fillStyle = "yellow";
+          ctx.fillRect(
+            iCol * self.DRAW_TILE_SIZE.x,
+            Math.floor((hCeil + hWall) * self.DRAW_TILE_SIZE.y),
+            self.DRAW_TILE_SIZE.x,
+            hLine
+          );
+          ctx.fillStyle = "magenta";
+          ctx.fillRect(
+            self.DRAW_TILE_SIZE.x * iCol,
+            Math.floor(self.DRAW_TILE_SIZE.y * (hCeil + hWall * 0.5)),
+            self.DRAW_TILE_SIZE.x,
+            hLine
+          );
+        },
         "frame": {
           "rasterized": function(self) {
             // draw background
@@ -531,6 +561,12 @@
               // TODO: ceiling-casting
               //
               ctx.globalAlpha = 1;
+
+              if (window.DEBUG_MODE === 1) {
+                self.util.render.wallBounds(
+                  self, iCol, hCeil, hWall, self.DRAW_TILE_SIZE.y * 2
+                );
+              }
             }
 
             // display mini-map
