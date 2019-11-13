@@ -224,14 +224,6 @@
         }
         return doors;
       },
-      "drawLine": function(ctx, x0, y0, x1, y1, color) {
-        ctx.strokeStyle = color || "#FFCC00";
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(x0, y0);
-        ctx.lineTo(x1, y1);
-        ctx.stroke();
-      },
       "drawCaret": function(ctx, a, b, c, options) {
         options = options || {};
         const com = {
