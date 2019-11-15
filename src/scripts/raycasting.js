@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 11.12.2019
+  Last updated: 11.15.2019
 ================================================================
 */
 
@@ -59,8 +59,8 @@
     "player": {
       "angle": window.__player__.ANGLE,
       "anim": {
-        "sprite": {"index": 0, "reverse": 0},
         "walking": {"index": 0, "reverse": 0, "apex": 10},
+        "sprite": 0,
       },
       "x": window.__player__.X,
       "y": window.__player__.Y,
@@ -68,6 +68,9 @@
     },
     "assets": {
       "sprites": {
+        "animations": {
+          "playerWeapon": [] // initialized at setup
+        },
         "player": {
           "shotgun0": {
             "img": new Image(),
@@ -96,6 +99,24 @@
           "shotgun4": {
             "img": new Image(),
             "name": "shotgun_4.png",
+            "loc": {"x": 0, "y": 0},
+            "ready": 0
+          },
+          "shotgun5": {
+            "img": new Image(),
+            "name": "shotgun_5.png",
+            "loc": {"x": 0, "y": 0},
+            "ready": 0
+          },
+          "shotgun6": {
+            "img": new Image(),
+            "name": "shotgun_6.png",
+            "loc": {"x": 0, "y": 0},
+            "ready": 0
+          },
+          "shotgun7": {
+            "img": new Image(),
+            "name": "shotgun_7.png",
             "loc": {"x": 0, "y": 0},
             "ready": 0
           }
@@ -622,10 +643,27 @@
               "player.shotgun1",
               "player.shotgun2",
               "player.shotgun3",
-              "player.shotgun4"
+              "player.shotgun4",
+              "player.shotgun5",
+              "player.shotgun6",
+              "player.shotgun7"
             ])
             .then(function(sprites) {
               sprites.player.shotgun0.ready = 1;
+              sprites.animations.playerWeapon = [
+                sprites.player.shotgun0,
+                sprites.player.shotgun1,
+                sprites.player.shotgun2,
+                sprites.player.shotgun0,
+                sprites.player.shotgun3,
+                sprites.player.shotgun4,
+                sprites.player.shotgun5,
+                sprites.player.shotgun6,
+                sprites.player.shotgun7,
+                sprites.player.shotgun5,
+                sprites.player.shotgun3,
+                sprites.player.shotgun0,
+              ];
             })
 
             // setup theme music
@@ -726,30 +764,23 @@
       "animateShooting": function(self) {
         if (self.keyState.SPC & 1 && !self.intervals.animShooting) {
           self.intervals.animShooting = setInterval(function() {
-            self.assets.sprites.player["shotgun" + self.player.anim.sprite.index.toString()].ready = 0;
-            self.player.anim.sprite.index =
-              self.player.anim.sprite.reverse & 1
-                ? self.player.anim.sprite.index === 2
-                  ? 0
-                  : self.player.anim.sprite.index - 1
-                : self.player.anim.sprite.index + 1;
-            self.assets.sprites.player["shotgun" + self.player.anim.sprite.index.toString()].ready = 1;
-            if (Object.keys(self.assets.sprites.player).length - 1 === self.player.anim.sprite.index) {
-              self.player.anim.sprite.reverse = 1;
-            } else if (self.player.anim.sprite.index === 0) {
-              self.player.anim.sprite.reverse = 0;
+            self.assets.sprites.animations.playerWeapon[self.player.anim.sprite].ready = 0;
+            self.player.anim.sprite += 1;
+            self.assets.sprites.animations.playerWeapon[self.player.anim.sprite].ready = 1;
+            if (self.assets.sprites.animations.playerWeapon.length - 1 === self.player.anim.sprite) {
+              self.player.anim.sprite = 0;
               clearInterval(self.intervals.animShooting);
               self.intervals.animShooting = undefined;
               return;
             }
-            if (self.player.anim.sprite.index === 1) { // if shooting frame, increase lighting
+            if (self.player.anim.sprite === 1) { // if shooting frame, increase lighting
               self.DRAW_DIST = 150 * self.mRows;
               self.assets.background = self.util.render.background(self);
             } else {
               self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
               self.assets.background = self.util.render.background(self);
             }
-          }, 150);
+          }, 125);
         }
       },
       "interactWDoor": function(self) {
