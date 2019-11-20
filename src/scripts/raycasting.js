@@ -775,7 +775,10 @@
               self.intervals.animShooting = undefined;
               return;
             }
-            if (self.player.anim.sprite === 1) { // if shooting frame, increase lighting
+            if (
+              self.player.anim.sprite === 1 ||
+              self.player.anim.sprite === 2
+            ) { // if shooting frame, increase lighting
               self.DRAW_DIST = 150 * self.mRows;
               self.assets.background = self.util.render.background(self);
             } else {
