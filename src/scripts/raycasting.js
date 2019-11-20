@@ -457,10 +457,10 @@
             let previousHit;
             let currentHit;
             for (let iCol = 0; iCol < self.mCols; iCol += 1) {
-              const ray   = {
+              const ray = {
                 "angle": self.player.angle - self.FOV * 0.5 + (iCol / self.mCols) * self.FOV
               };
-              ray.dir     = {
+              ray.dir = {
                 "x": Math.cos(ray.angle),
                 "y": Math.sin(ray.angle)
               };
@@ -485,17 +485,18 @@
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                 if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
-                  hitV           = 1;
-                  distToWall     = sqrDrawDist;
+                  hitV = 1;
+                  distToWall = sqrDrawDist;
                 } else if (sample === "#" || sample === "V") {
                   const pHit = {               // TODO: ∨ make 0.5 dynamic
                     "x": traceV.x + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) : 0),
                     "y": traceV.y + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) * ray.slope : 0)
                   };
                   if(sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
-                    distToWall     = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
-                    hitV           = 1;
-                    currentHit     = "vertical";
+                    currentHit = "vertical";
+                    distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
+                    distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
+                    hitV = 1;
                   }
                 }
                 traceV.x += stepV.x;
@@ -519,17 +520,18 @@
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                 if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
                   hitH = 1;
-                  distToWall     = distToWall ? distToWall : sqrDrawDist;
+                  distToWall = distToWall ? distToWall : sqrDrawDist;
                 } else if (sample === "#" || sample === "H") {
                   const pHit = {               // TODO: ∨ make 0.5 dynamic
                     "x": traceH.x + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) / ray.slope : 0),
                     "y": traceH.y + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) : 0)
                   };
                   if(sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
-                    const hitDist  = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
+                    let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
+                    hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
                     if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
-                      distToWall   = hitDist;
-                      currentHit   = "horizontal";
+                      currentHit = "horizontal";
+                      distToWall = hitDist;
                     }
                     hitH = 1;
                   }
