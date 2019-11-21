@@ -477,10 +477,13 @@
               traceV.x     = right ? Math.ceil(self.player.x) : Math.floor(self.player.x);
               traceV.y     = self.player.y + (traceV.x - self.player.x) * ray.slope;
               let hitV     = 0;
-              while ((hitV & 1) === 0 && traceV.x >= 0 && traceV.x < self.nCols &&
-                                         traceV.y >= 0 && traceV.y < self.nRows) {
+              while (
+                (hitV & 1) === 0 &&
+                traceV.x > 0 && traceV.x < self.nCols &&
+                traceV.y >= 0 && traceV.y < self.nRows
+              ) {
                 const sampleMap = {
-                  "x": Math.floor(traceV.x + (right ? 0 : -1)),
+                  "x": Math.floor(traceV.x + ((right & 1) ? 0 : -1)),
                   "y": Math.floor(traceV.y)
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
@@ -498,7 +501,7 @@
                     distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
                     hitV = 1;
                   }
-                }
+                } else if (sample === "H") { hitV = 1; }
                 traceV.x += stepV.x;
                 traceV.y += stepV.y;
               }
@@ -511,11 +514,14 @@
               traceH.y     = up ? Math.floor(self.player.y) : Math.ceil(self.player.y);
               traceH.x     = self.player.x + (traceH.y - self.player.y) / ray.slope;
               let hitH     = 0;
-              while ((hitH & 1) === 0 && traceH.x >= 0 && traceH.x < self.nCols &&
-                                         traceH.y >= 0 && traceH.y < self.nRows) {
+              while (
+                (hitH & 1) === 0 &&
+                traceH.x >= 0 && traceH.x < self.nCols &&
+                traceH.y > 0 && traceH.y < self.nRows
+              ) {
                 const sampleMap = {
                   "x": Math.floor(traceH.x),
-                  "y": Math.floor(traceH.y + (up ? -1 : 0))
+                  "y": Math.floor(traceH.y + ((up & 1) ? -1 : 0))
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
                 if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
@@ -529,13 +535,19 @@
                   if(sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
                     let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
                     hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
-                    if ((hitV & 1) === 0 || distToWall > hitDist || (distToWall === hitDist && previousHit === "horizontal")) {
+
+                    // if current horizontal hit is closer than current vertical hit
+                    if (
+                      (hitV & 1) === 0 || distToWall === undefined ||
+                      distToWall > hitDist ||
+                      (distToWall === hitDist && previousHit === "horizontal")
+                    ) {
                       currentHit = "horizontal";
                       distToWall = hitDist;
                     }
                     hitH = 1;
                   }
-                }
+                } else if (sample === "V") { hitH = 1; }
                 traceH.x += stepH.x;
                 traceH.y += stepH.y;
               }
