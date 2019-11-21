@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 11.15.2019
+  Last updated: 11.20.2019
 ================================================================
 */
 
@@ -179,9 +179,7 @@
     "intervals": {},
     "const": {
       "math": {
-        // TODO:
-        // ----
-        // Make sin/cos && sqrt tables for optimization
+        // TODO: Make sin/cos && sqrt tables for optimization
         "sqrt3": Math.sqrt(3),
       },
       "minimapColors": {
@@ -882,7 +880,7 @@
         self.util.render.sprites(self, self.assets.sprites);
 
         // TODO: add portals dynamically by reading from the map
-        self.exec.addPortal(self, 10, 62, 9, 22, Math.PI * 0.5);
+        self.exec.addPortal(self, 10, 62.5, 9, 22.5, Math.PI * 0.5);
         self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
 
         // display stats
