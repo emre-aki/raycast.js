@@ -491,11 +491,16 @@
                   hitV = 1;
                   distToWall = sqrDrawDist;
                 } else if (sample === "#" || sample === "V") {
-                  const pHit = {               // TODO: ∨ make 0.5 dynamic
-                    "x": traceV.x + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) : 0),
-                    "y": traceV.y + (sample === "V" ? (0.5 * ((right & 1) ? 1 : -1)) * ray.slope : 0)
+                  const pHit = {
+                    "x": sample === "V"
+                      ? sampleMap.x + 0.5 // TODO: make 0.5 more dynamic
+                      : traceV.x,
+                    "y": traceV.y +
+                      (sample === "V"
+                        ? (sampleMap.x + 0.5 - traceV.x) * ray.slope // TODO: make 0.5 more dynamic
+                        : 0)
                   };
-                  if(sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
+                  if (sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
                     currentHit = "vertical";
                     distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
                     distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
@@ -528,11 +533,16 @@
                   hitH = 1;
                   distToWall = distToWall ? distToWall : sqrDrawDist;
                 } else if (sample === "#" || sample === "H") {
-                  const pHit = {               // TODO: ∨ make 0.5 dynamic
-                    "x": traceH.x + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) / ray.slope : 0),
-                    "y": traceH.y + (sample === "H" ? (0.5 * ((up & 1) ? -1 : 1)) : 0)
+                  const pHit = {
+                    "x": traceH.x +
+                      (sample === "H"
+                        ? (sampleMap.y + 0.5 - traceH.y) / ray.slope // TODO: make 0.5 more dynamic
+                        : 0),
+                    "y": sample === "H"
+                      ? sampleMap.y + 0.5 // TODO: make 0.5 more dynamic
+                      : traceH.y,
                   };
-                  if(sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
+                  if (sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
                     let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
                     hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
 
@@ -768,7 +778,7 @@
                                             : self.player.anim.walking.index === -1 * self.player.anim.walking.apex
                                               ? 0
                                               : self.player.anim.walking.reverse;
-        self.assets.background = self.util.render.background(self);
+          self.assets.background = self.util.render.background(self);
         } else {
           self.player.z = self.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
@@ -845,7 +855,6 @@
       "animateDoor": function(self, door) {
         if (!door.interval) {
           door.interval = setInterval(function(){
-            //console.log(door);
             door.state += ((door.reverse & 1) === 0 ? -1 : 1);
             if (door.state === 0) {
               clearInterval(door.interval);
