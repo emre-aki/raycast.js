@@ -672,6 +672,7 @@
             ])
             .then(function(sprites) {
               sprites.player.shotgun0.ready = 1;
+              sprites.player.shotgun6.loc.x = 0;
               sprites.animations.playerWeapon = [
                 sprites.player.shotgun0,
                 sprites.player.shotgun1,
