@@ -60,11 +60,11 @@
       "angle": window.__player__.ANGLE,
       "anim": {
         "walking": {"index": 0, "reverse": 0, "apex": 10},
-        "sprite": 0,
+        "shooting": {"index": -1},
       },
       "x": window.__player__.X,
       "y": window.__player__.Y,
-      "z": window.__player__.Z
+      "z": window.__player__.Z // re-initialized at setup
     },
     "assets": {
       "sprites": {
@@ -234,9 +234,8 @@
               doors[x.toString() + "_" + y.toString()] = {
                 "loc": {"x": x, "y": y},
                 "state": 10, // 0: open, 10: closed
-                "reverse": 0,
-                "interval": undefined,
-                "timeout": undefined,
+                "animating": 0,
+                "timeout": undefined
               };
             }
           }
@@ -276,6 +275,39 @@
                    (!!options.family ? options.family : "Courier");
         ctx.fillStyle = options.color || "#000000";
         ctx.fillText(text, x, y);
+      },
+      "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
+        // private domain
+        let iFrame = 0;
+        const id = "anim_" + Object.keys(self.intervals).length.toString();
+        const cleanUp = function() {
+          clearInterval(self.intervals[id]);
+          delete self.intervals[id];
+          if (onEnd) {
+            onEnd();
+          }
+        };
+        const animate = function() {
+          if (shouldEnd && shouldEnd(iFrame)) {
+            cleanUp();
+          } else {
+            onFrame(iFrame);
+          }
+          iFrame += 1;
+        };
+
+        // public domain
+        return {
+          "start": function() {
+            self.intervals[id] = setInterval(animate, interval);
+          },
+          "cancel": function() {
+            cleanUp();
+          },
+          "isAnimating": function() {
+            return !!self.intervals[id];
+          }
+        };
       },
       "render": {
         "sprites": function(self, sprites) {
@@ -767,9 +799,11 @@
           self.player.y = memoPos[1];
         }
 
-        // TODO: move to a separate function, e.g. `animateWalking`
         // walking animation
-        if (self.player.x !== memoPos[0] || self.player.y !== memoPos[1]) {
+        self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos);
+      },
+      "animateWalking": function(self, newPos, prevPos) {
+        if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
           self.player.z += (self.player.anim.walking.reverse & 1) ? -1 : 1;
           self.player.anim.walking.index = self.player.z - self.PLAYER_HEIGHT;
           self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
@@ -784,29 +818,30 @@
           self.assets.background = self.util.render.background(self);
         }
       },
-      "animateShooting": function(self) {
-        if (self.keyState.SPC & 1 && !self.intervals.animShooting) {
-          self.intervals.animShooting = setInterval(function() {
-            self.assets.sprites.animations.playerWeapon[self.player.anim.sprite].ready = 0;
-            self.player.anim.sprite += 1;
-            self.assets.sprites.animations.playerWeapon[self.player.anim.sprite].ready = 1;
-            if (self.assets.sprites.animations.playerWeapon.length - 1 === self.player.anim.sprite) {
-              self.player.anim.sprite = 0;
-              clearInterval(self.intervals.animShooting);
-              self.intervals.animShooting = undefined;
-              return;
-            }
-            if (
-              self.player.anim.sprite === 1 ||
-              self.player.anim.sprite === 2
-            ) { // if shooting frame, increase lighting
-              self.DRAW_DIST = 150 * self.mRows;
+      "animateShooting": function(self) { // self.util.render.player
+        if ((self.keyState.SPC & 1) && (self.player.anim.shooting.index < 0)) {
+          self.player.anim.shooting.index = 0;
+          self.util.animation(
+            self,
+            function(i) { // onFrame
+              const activeIdx = i + 1;
+              self.DRAW_DIST = (activeIdx === 1 || activeIdx === 2) // if shooting frame, increase lighting
+                ? 150 * self.mRows
+                : self.const.DRAW_DIST * self.mRows;
               self.assets.background = self.util.render.background(self);
-            } else {
-              self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
-              self.assets.background = self.util.render.background(self);
+
+              self.assets.sprites.animations.playerWeapon[i].ready = 0;
+              self.assets.sprites.animations.playerWeapon[activeIdx].ready = 1;
+              self.player.anim.shooting.index = activeIdx; // needed to lighten up the floor
+            },                                             // during shooting frames
+            140,
+            function(i) { // shouldEnd
+              return i === self.assets.sprites.animations.playerWeapon.length - 1;
+            },
+            function() {  // onEnd
+              self.player.anim.shooting.index = -1;
             }
-          }, 125);
+          ).start();
         }
       },
       "interactWDoor": function(self) {
@@ -852,24 +887,31 @@
         }
       },
       "animateDoor": function(self, door) {
-        if (!door.interval) {
-          door.interval = setInterval(function(){
-            door.state += ((door.reverse & 1) === 0 ? -1 : 1);
-            if (door.state === 0) {
-              clearInterval(door.interval);
-              door.interval = undefined;
-              door.reverse = 1;
-              door.timeout = setTimeout(function() {
-                self.exec.tryAndCloseDoor(self, door);
-              }, self.const.DOOR_RESET_DELAY);
-            } else if (door.state === 10) {
-              door.reverse = 0;
-              clearTimeout(door.timeout);
-              clearInterval(door.interval);
-              door.timeout = undefined;
-              door.interval = undefined;
+        if ((door.animating & 1) === 0) {
+          door.animating = 1;
+          const state = {"reverse": door.state === 0 ? 1 : 0};
+          self.util.animation(
+            self,
+            function() { // onFrame
+              door.state += ((state.reverse & 1) === 0 ? -1 : 1);
+            },
+            self.const.DOOR_ANIM_INTERVAL,
+            function() { // shouldEnd
+              return (state.reverse & 1) && door.state === 10 ||
+                (state.reverse & 1) === 0 && door.state === 0;
+            },
+            function() { // onEnd
+              door.animating = 0;
+              if (door.state === 0) {
+                door.timeout = setTimeout(function() {
+                  self.exec.tryAndCloseDoor(self, door);
+                }, self.const.DOOR_RESET_DELAY);
+              } else {
+                clearTimeout(door.timeout);
+                door.timeout = undefined;
+              }
             }
-          }, self.const.DOOR_ANIM_INTERVAL);
+          ).start();
         }
       },
       "gameLoop": function(self, deltaT) {
