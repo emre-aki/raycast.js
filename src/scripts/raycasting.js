@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 11.20.2019
+  Last updated: 12.16.2019
 ================================================================
 */
 
@@ -70,6 +70,18 @@
       "sprites": {
         "animations": {
           "playerWeapon": [] // initialized at setup
+        },
+        "menu": {
+          "skull0": {
+            "img": new Image(),
+            "name": "menu_skull_0.png",
+            "ready": 0
+          },
+          "skull1": {
+            "img": new Image(),
+            "name": "menu_skull_1.png",
+            "ready": 0
+          }
         },
         "player": {
           "shotgun0": {
@@ -130,8 +142,10 @@
               return acc[curr];
             }, self.assets.sprites);
             sprite.img.onload = function() {
-              sprite.loc.x = (self.res[0] - sprite.img.width) * 0.5;
-              sprite.loc.y = self.res[1] - sprite.img.height;
+              if (sprite.loc) {
+                sprite.loc.x = (self.res[0] - sprite.img.width) * 0.5;
+                sprite.loc.y = self.res[1] - sprite.img.height;
+              }
               loadSprite(i + 1, resolve, reject);
             };
             sprite.img.onerror = function() {
@@ -310,11 +324,77 @@
         };
       },
       "render": {
+        "loading": function(self) {
+          const numStates = 4;
+          const render = function(iFrame) {
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, self.res[0], self.res[1]);
+            self.util.print(
+              "Loading" + new Array(iFrame % numStates).fill(".").join(""),
+              (self.res[0] - 150) * 0.5,
+              self.res[1] * 0.5,
+              {"size": 36, "color": "#FFFFFF"}
+            );
+          }
+          return self.util.animation(
+            self,
+            function(i) { render(i); },
+            375
+          );
+        },
+        "titleScreen": function(self, onEnd) {
+          const render = function(iFrame) {
+            const state = iFrame % 2;
+            ctx.fillStyle = "#000000";
+            ctx.fillRect(0, 0, self.res[0], self.res[1]);
+            if (state === 1) {
+              self.util.print(
+                "Press any key to start",
+                (self.res[0] - 212) * 0.5,
+                (self.res[1] - 16) * 0.5,
+                {"size": 16, "color": "#FFFFFF"}
+              );
+            }
+            self.util.render.sprites(self, {
+              "skull0": {
+                "img": self.assets.sprites.menu.skull0.img,
+                "ready": (state + 1) % 2,
+                "loc": [
+                  {"x": self.res[0] * 0.5 - 150, "y": (self.res[1] - 56) * 0.5},
+                  {"x": self.res[0] * 0.5 + 120, "y": (self.res[1] - 56) * 0.5}
+                ]
+              },
+              "skull1": {
+                "img": self.assets.sprites.menu.skull1.img,
+                "ready": state,
+                "loc": [
+                  {"x": self.res[0] * 0.5 - 150, "y": (self.res[1] - 56) * 0.5},
+                  {"x": self.res[0] * 0.5 + 120, "y": (self.res[1] - 56) * 0.5}
+                ]
+              },
+            });
+          };
+          return self.util.animation(
+            self,
+            function(i) { render(i); },
+            375,
+            undefined,
+            onEnd
+          );
+        },
         "sprites": function(self, sprites) {
           for (key in sprites) {
             if (!!sprites[key].img) {
               if (!!sprites[key].img.src && sprites[key].ready & 1) {
-                ctx.drawImage(sprites[key].img, sprites[key].loc.x, sprites[key].loc.y);
+                const sprite = sprites[key];
+                if (Array.isArray(sprite.loc)) {
+                  for (let i = 0; i < sprite.loc.length; i += 1) {
+                    const loc = sprite.loc[i];
+                    ctx.drawImage(sprite.img, loc.x, loc.y);
+                  }
+                } else {
+                  ctx.drawImage(sprite.img, sprite.loc.x, sprite.loc.y);
+                }
               }
             } else {
               self.util.render.sprites(self, sprites[key]);
@@ -656,14 +736,8 @@
     "exec": {
       "setup": function(self) {
         // render loading screen
-        ctx.fillStyle = "#000000";
-        ctx.fillRect(0, 0, self.res[0], self.res[1]);
-        self.util.print(
-          "Loading...",
-          Math.floor(self.res[0] / 2) - 155,
-          Math.floor(self.res[1] / 2),
-          {"color": "#FFFFFF", "size": 60}
-        );
+        const animLoading = self.util.render.loading(self);
+        animLoading.start();
 
         // setup game variables
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
@@ -700,7 +774,9 @@
               "player.shotgun4",
               "player.shotgun5",
               "player.shotgun6",
-              "player.shotgun7"
+              "player.shotgun7",
+              "menu.skull0",
+              "menu.skull1"
             ])
             .then(function(sprites) {
               sprites.player.shotgun0.ready = 1;
@@ -726,7 +802,14 @@
               return self.assets.themes.setup(self, "main");
             })
             .then(function(theme) {
-              resolve(theme);
+              return theme;
+            })
+
+            // resolve setup
+            .then(function() {
+              resolve({
+                "loading": animLoading
+              });
             });
         });
       },
@@ -818,7 +901,7 @@
           self.assets.background = self.util.render.background(self);
         }
       },
-      "animateShooting": function(self) { // self.util.render.player
+      "animateShooting": function(self) {
         if ((self.keyState.SPC & 1) && (self.player.anim.shooting.index < 0)) {
           self.player.anim.shooting.index = 0;
           self.util.animation(
@@ -937,15 +1020,26 @@
         );
       }
     },
-    "start": function() {
-      const self = this;
+    "run": function(self) {
       let tsStart = new Date();
-      self.intervals.game = setInterval(function() {
-        // main game loop--reiterates ~30 times a second
-        const tsEnd = new Date();
+      self.intervals.game = setInterval(function() { // main game loop:
+        const tsEnd = new Date();                    // reiterates ~30 times in a sec
         self.exec.gameLoop(self, tsEnd - tsStart);
         tsStart = tsEnd;
       }, 1000 / self.FPS);
+    },
+    "start": function(resolution) {
+      const self = this;
+      resolution.loading.cancel();
+      const animTitleScreen = self.util.render.titleScreen(self, function() {
+        document.removeEventListener("keydown", runContainer);
+      });
+      const runContainer = function() {
+        self.run(self);
+        animTitleScreen.cancel();
+      };
+      animTitleScreen.start();
+      document.addEventListener("keydown", runContainer);
     }
   };
   game.exec.setup(game).then(game.start.bind(game));
