@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 12.16.2019
+  Last updated: 12.18.2019
 ================================================================
 */
 
@@ -292,8 +292,13 @@
       },
       "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
         // private domain
+        const uid = function(candidate) {
+          return self.intervals[candidate]
+            ? uid(candidate + "_1")
+            : candidate;
+        };
         let iFrame = 0;
-        const id = "anim_" + Object.keys(self.intervals).length.toString();
+        const id = uid(arguments.callee.caller.name);
         const cleanUp = function() {
           clearInterval(self.intervals[id]);
           delete self.intervals[id];
