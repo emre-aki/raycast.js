@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 01.10.2020
+  Last updated: 01.21.2020
 ================================================================
 */
 
@@ -838,34 +838,40 @@
       },
       "movePlayer": function(self) {
         const memoPos = [self.player.x, self.player.y];
-        const wallMargin = 0.25;
-        const margin = {"x": 0, "y": 0};
+        const vecPlayer = [
+          Math.sign(Math.cos(self.player.angle)), 
+          Math.sign(Math.sin(self.player.angle))
+        ];
+        const margin = {"x": 2 * self.STEP_SIZE, "y": 2 * self.STEP_SIZE};
 
         // update position in the map
         if (self.keyState.W & 1) {
           self.player.x += Math.cos(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.sin(self.player.angle) * self.STEP_SIZE;
-          margin.x = wallMargin * (Math.cos(self.player.angle) > 0 ? 1 : -1);
-          margin.y = wallMargin * (Math.sin(self.player.angle) > 0 ? 1 : -1);
-        } if (self.keyState.A & 1) {
-          self.player.angle -= 0.05;
+          margin.x *= vecPlayer[0];
+          margin.y *= vecPlayer[1];
         } if (self.keyState.S & 1) {
           self.player.x -= Math.cos(self.player.angle) * self.STEP_SIZE;
           self.player.y -= Math.sin(self.player.angle) * self.STEP_SIZE;
-          margin.x = wallMargin * (Math.cos(self.player.angle) > 0 ? -1 : 1);
-          margin.y = wallMargin * (Math.sin(self.player.angle) > 0 ? -1 : 1);
-        } if (self.keyState.D & 1) {
-          self.player.angle += 0.05;
+          margin.x *= -1 * vecPlayer[0];
+          margin.y *= -1 * vecPlayer[1];
         } if (self.keyState.Q & 1) {
           self.player.x += Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y -= Math.cos(self.player.angle) * self.STEP_SIZE;
-          margin.x = wallMargin * (Math.sin(self.player.angle) > 0 ? 1 : -1);
-          margin.y = wallMargin * (Math.cos(self.player.angle) > 0 ? -1 : 1);
+          margin.x *= vecPlayer[1];
+          margin.y *= -1 * vecPlayer[0];
         } if (self.keyState.E & 1) {
           self.player.x -= Math.sin(self.player.angle) * self.STEP_SIZE;
           self.player.y += Math.cos(self.player.angle) * self.STEP_SIZE;
-          margin.x = wallMargin * (Math.sin(self.player.angle) > 0 ? -1 : 1);
-          margin.y = wallMargin * (Math.cos(self.player.angle) > 0 ? 1 : -1);
+          margin.x *= -1 * vecPlayer[1];
+          margin.y *= vecPlayer[0];
+        }
+        
+        // rotate player in-place
+        if (self.keyState.D & 1) {
+          self.player.angle += 0.05;
+        } if (self.keyState.A & 1) {
+          self.player.angle -= 0.05;
         }
 
         // collision detection
