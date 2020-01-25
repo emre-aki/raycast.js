@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 01.21.2020
+  Last updated: 01.25.2020
 ================================================================
 */
 
@@ -370,6 +370,16 @@
         };
       },
       "render": {
+        "stats": function(self, deltaT) {
+          self.util.print(
+            "X: " + Math.floor(self.player.x) + " Y: " + Math.floor(self.player.y) +
+            " | α: " + self.util.rad2Deg(self.player.angle).toFixed(1) + " deg" +
+            " | FPS: " + (1000 / deltaT).toFixed(1),
+            5,
+            15,
+            {"size": 14, "color": "#FF0000"}
+          );
+        },
         "loading": function(self) {
           const numStates = 4;
           const render = function(iFrame) {
@@ -828,7 +838,6 @@
     },
     "exec": {
       "setup": function(self) {
-        // render loading screen
         const animLoading = self.util.render.loading(self);
         animLoading.start();
 
@@ -1018,7 +1027,6 @@
                 ? 150 * self.mRows
                 : self.const.DRAW_DIST * self.mRows;
               self.assets.background = self.util.render.background(self);
-
               self.assets.sprites.animations.playerWeapon[i].ready = 0;
               self.assets.sprites.animations.playerWeapon[activeIdx].ready = 1;
               self.player.anim.shooting.index = activeIdx; // needed to lighten up the floor
@@ -1115,15 +1123,7 @@
         self.exec.addPortal(self, 10, 62.5, 9, 22.5, Math.PI * 0.5);
         self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
 
-        // display stats
-        self.util.print(
-          "X: " + Math.floor(self.player.x) + " Y: " + Math.floor(self.player.y) +
-          " | α: " + self.util.rad2Deg(self.player.angle).toFixed(1) + " deg" +
-          " | FPS: " + (1000 / deltaT).toFixed(1),
-          5,
-          15,
-          {"size": 14}
-        );
+        self.util.render.stats(self, deltaT);
       }
     },
     "run": function(self) {
