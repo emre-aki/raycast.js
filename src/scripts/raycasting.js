@@ -29,6 +29,7 @@
     "__dirname__": "./scripts/",
     "__file__": "./scripts/raycasting.js",
     "__sprites__": "./assets/sprites/",
+    "__textures__": "./assets/textures/",
     "__audio__": "./assets/audio/"
   };
   const game = {
@@ -158,6 +159,34 @@
           });
         }
       },
+      "textures": {
+        "background": {
+          "img": new Image(),
+          "buffer": [],
+          "name":  "sbox_1.png"
+        },
+        "setup": function(self, keys) { // never heard of `Promise.all`???
+          const loadTexture = function(i, resolve, reject) {
+            if (i === keys.length) {
+              return resolve(self.assets.textures);
+            }
+            const texture = keys[i].split(".").reduce(function(acc, curr) {
+              return acc[curr];
+            }, self.assets.textures);
+            texture.img.onload = function() {
+              texture.buffer = self.util.bufferify(texture.img);
+              loadTexture(i + 1, resolve, reject);
+            };
+            texture.img.onerror = function() {
+              reject(texture);
+            };
+            texture.img.src = fs.__textures__ + texture.name;
+          };
+          return new Promise(function(resolve, reject) {
+            loadTexture(0, resolve, reject);
+          });
+        }
+      },
       "themes": {
         "main": {
           "audio": new Audio(),
@@ -219,6 +248,14 @@
         multiplier = multiplier ? multiplier : 1;
         const pseudoDist = ((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)) * multiplier * multiplier;
         return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
+      },
+      "bufferify": function(img) {
+        const buffCanvas = document.createElement("canvas");
+        const buffCtx = buffCanvas.getContext("2d");
+        buffCanvas.width = img.width;
+        buffCanvas.height = img.height;
+        buffCtx.drawImage(img, 0, 0);
+        return buffCtx.getImageData(0, 0, img.width, img.height).data;
       },
       "handleAsyncKeyState": function(self, type, key) {
         if (key === 87) {
