@@ -411,23 +411,16 @@
                 {"size": 16, "color": "#FFFFFF"}
               );
             }
+            // render sprites immediately
             self.util.render.sprites(self, {
-              "skull0": {
-                "img": self.assets.sprites.menu.skull0.img,
-                "ready": (state + 1) % 2,
+              "skull": {
+                "img": self.assets.sprites.menu["skull" + state.toString()].img,
+                "ready": 1,
                 "loc": [
                   {"x": self.res[0] * 0.5 - 150, "y": (self.res[1] - 56) * 0.5},
                   {"x": self.res[0] * 0.5 + 120, "y": (self.res[1] - 56) * 0.5}
                 ]
-              },
-              "skull1": {
-                "img": self.assets.sprites.menu.skull1.img,
-                "ready": state,
-                "loc": [
-                  {"x": self.res[0] * 0.5 - 150, "y": (self.res[1] - 56) * 0.5},
-                  {"x": self.res[0] * 0.5 + 120, "y": (self.res[1] - 56) * 0.5}
-                ]
-              },
+              }
             });
           };
           return self.util.animation(
