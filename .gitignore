@@ -13,3 +13,6 @@ screenshots/*
 
 # pip
 pip-selfcheck.json
+
+# misc.
+*.zip

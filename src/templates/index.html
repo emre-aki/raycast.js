@@ -1,23 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <link rel="shortcut icon" href="{{ url_for('static', filename='assets/favicon.ico') }}" />
     <title>Raycasting | By Emre Akı</title>
     <style type="text/css">
-        body {
-            background-color: #101010; 
-            text-align: center;
-        }
-        #canvas {
-            border: 5px solid #000000;
-        }
+      body {
+        background-color: #101010;
+        text-align: center;
+      }
+      #canvas {
+        border: 5px solid #000000;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <canvas id="canvas" height="600px" width="800px"></canvas>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/player.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/map.js') }}"></script>
     <script type="text/javascript" src="{{ url_for('static', filename='scripts/raycasting.js') }}"></script>
-</body>
+  </body>
 </html>
