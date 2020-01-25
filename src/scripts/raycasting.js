@@ -239,6 +239,10 @@
       "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
     "util": {
+      "getVerticalShift": function(self) {
+        return self.player.anim.walking.index *
+          (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows);
+      },
       "rad2Deg": function(rad) {
         const rad360 = 6.28319;
         const radToDeg = 57.2958;
@@ -562,11 +566,52 @@
             ctx.translate(-1 * offset.x, -1 * offset.y);
           }
         },
+        "skybox": function(self) {
+          const texSkybox = self.assets.textures.background.img;
+          const pps = texSkybox.width / 90;
+          const verticalShift = self.util.getVerticalShift(self);
+          const offset = {
+            "x": Math.floor(
+              self.util.rad2Deg(self.player.angle - self.FOV * 0.5) * pps %
+              texSkybox.width 
+            ),
+            "y": Math.floor(
+              self.DRAW_TILE_SIZE.y * 
+              (self.player.anim.walking.apex - verticalShift * self.mRows)
+            )
+          };
+          const hSkybox = Math.floor(self.res[1] * (0.5 + verticalShift));
+          ctx.drawImage(
+            texSkybox,
+            offset.x,
+            offset.y,
+            self.res[0],
+            texSkybox.height - offset.y,
+            0,
+            0,
+            self.res[0],
+            hSkybox
+          );
+          if (offset.x + self.res[0] - texSkybox.width > 0) {
+            ctx.drawImage(
+              texSkybox,
+              0,
+              offset.y,
+              offset.x + self.res[0] - texSkybox.width,
+              texSkybox.height - offset.y,
+              texSkybox.width - offset.x,
+              0,
+              offset.x + self.res[0] - texSkybox.width,
+              hSkybox
+            );
+          }
+        },
         "background": function(self) {
-          const centerVertical = 0.5 + self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows);
-          const interval = self.const.RATIO_DRAW_DIST_TO_BACKGROUND * self.mRows / self.DRAW_DIST;
+          const mapTileUnitSize = self.mRows;
+          const centerVertical = 0.5 + self.util.getVerticalShift(self);
+          const interval = self.const.RATIO_DRAW_DIST_TO_BACKGROUND * mapTileUnitSize / self.DRAW_DIST;
           const gradient = ctx.createLinearGradient(0, 0, 0, self.res[1]);
-          gradient.addColorStop(0, "#558888");
+          gradient.addColorStop(0, "#00000000");
           gradient.addColorStop(centerVertical - interval, "#000000");
           gradient.addColorStop(centerVertical, "#000000");
           gradient.addColorStop(centerVertical + interval, "#000000");
@@ -606,6 +651,7 @@
         "frame": {
           "rasterized": function(self) {
             // draw background
+            self.util.render.skybox(self);
             ctx.fillStyle = self.assets.background;
             ctx.fillRect(0, 0, self.res[0], self.res[1]);
 
@@ -842,6 +888,13 @@
                 sprites.player.shotgun3,
                 sprites.player.shotgun0,
               ];
+            })
+
+            // setup textures
+            .then(function() {
+              return self.assets.textures.setup(self, [
+                "background",
+              ]);
             })
 
             // setup theme music
