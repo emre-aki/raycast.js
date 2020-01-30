@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 01.25.2020
+  Last updated: 01.30.2020
 ================================================================
 */
 
@@ -573,7 +573,7 @@
           const texSkybox = self.assets.textures.background.img;
           const pps = texSkybox.width / 90;
           const verticalShift = self.util.getVerticalShift(self);
-          const offset = {
+          const offsetTex = {
             "x": Math.floor(
               self.util.rad2Deg(self.player.angle - self.FOV * 0.5) * pps %
               texSkybox.width 
@@ -584,29 +584,36 @@
             )
           };
           const hSkybox = Math.floor(self.res[1] * (0.5 + verticalShift));
+
+          // initial draw
+          let offsetScreenX = 0;
           ctx.drawImage(
             texSkybox,
-            offset.x,
-            offset.y,
-            self.res[0],
-            texSkybox.height - offset.y,
+            offsetTex.x,
+            offsetTex.y,
+            self.res[0] - offsetScreenX,
+            texSkybox.height - offsetTex.y,
+            offsetScreenX,
             0,
-            0,
-            self.res[0],
+            self.res[0] - offsetScreenX,
             hSkybox
           );
-          if (offset.x + self.res[0] - texSkybox.width > 0) {
+          offsetScreenX += texSkybox.width - offsetTex.x;
+
+          // complementary draws
+          while (offsetScreenX < self.res[0]) {
             ctx.drawImage(
               texSkybox,
               0,
-              offset.y,
-              offset.x + self.res[0] - texSkybox.width,
-              texSkybox.height - offset.y,
-              texSkybox.width - offset.x,
+              offsetTex.y,
+              self.res[0] - offsetScreenX,
+              texSkybox.height - offsetTex.y,
+              offsetScreenX,
               0,
-              offset.x + self.res[0] - texSkybox.width,
+              self.res[0] - offsetScreenX,
               hSkybox
-            );
+            );            
+            offsetScreenX += texSkybox.width;
           }
         },
         "background": function(self) {
