@@ -18,21 +18,31 @@ This little project was inspired by a video on YouTube posted by a fellow season
 - `pip`
 - `virtualenv`
 
-Upon downloading the source files, navigate to the root folder and run the command below to create a brand-new virtualenv to work on.
+> Because the dev server is written in Python using Flask, I recommend setting the project up in a `virtualenv` to avoid fiddling around with the system Python.
 
-`$ virtualenv <name_of_the_virtual_env> -p python3.7`
+Before anything, create a brand-new virtualenv to work on.
 
-Don't forget to activate the virtualenv you've just created.
+```bash
+$ virtualenv <name_of_the_virtual_env> -p python3.7
+```
 
-`$ source bin/activate`
+`cd` into the virtualenv you've just created and run the command below to activate it.
 
-Then, using pip, install the dependencies.
+```bash
+$ source bin/activate
+```
 
-`$ pip install -r requirements.txt`
+After cloning the repository inside your virtualenv, navigate to the root folder and install the dependencies using `pip`.
+
+```bash
+$ pip install -r requirements.txt
+```
 
 Once all the dependencies are installed, you can start up a Flask development server with:
 
-`$ python3.7 src/serve.py`
+```bash
+$ python3.7 src/serve.py
+```
 
 ### Live Demo
 
