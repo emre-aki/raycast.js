@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 01.30.2020
+  Last updated: 02.01.2020
 ================================================================
 */
 
@@ -170,7 +170,7 @@
         }
       },
       "textures": {
-        "background": {
+        "skybox": {
           "img": new Image(),
           "buffer": [],
           "name":  "sbox_1.png"
@@ -580,7 +580,7 @@
           }
         },
         "skybox": function(self) {
-          const texSkybox = self.assets.textures.background.img;
+          const texSkybox = self.assets.textures.skybox.img;
           const pps = texSkybox.width / 90;
           const verticalShift = self.util.getVerticalShift(self);
           const offsetTex = {
@@ -911,7 +911,7 @@
             // setup textures
             .then(function() {
               return self.assets.textures.setup(self, [
-                "background",
+                "skybox",
               ]);
             })
 
