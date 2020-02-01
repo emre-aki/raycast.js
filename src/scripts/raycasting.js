@@ -125,6 +125,12 @@
             "img": new Image(),
             "name": "shotgun_6.png",
             "loc": {"x": 0, "y": 0},
+            "setLoc": function(self, sprite) {
+              return {
+                "x": 0,
+                "y": self.res[1] - sprite.img.height
+              };
+            },
             "ready": 0
           },
           "shotgun7": {
@@ -143,7 +149,11 @@
               return acc[curr];
             }, self.assets.sprites);
             sprite.img.onload = function() {
-              if (sprite.loc) {
+              if (sprite.setLoc && sprite.loc) {
+                const loc = sprite.setLoc(self, sprite);
+                sprite.loc.x = loc.x;
+                sprite.loc.y = loc.y;
+              } else if (sprite.loc) {
                 sprite.loc.x = (self.res[0] - sprite.img.width) * 0.5;
                 sprite.loc.y = self.res[1] - sprite.img.height;
               }
@@ -882,7 +892,6 @@
             ])
             .then(function(sprites) {
               sprites.player.shotgun0.ready = 1;
-              sprites.player.shotgun6.loc.x = 0;
               sprites.animations.playerWeapon = [
                 sprites.player.shotgun0,
                 sprites.player.shotgun1,
