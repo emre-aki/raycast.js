@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.01.2020
+  Last updated: 02.04.2020
 ================================================================
 */
 
@@ -61,7 +61,7 @@
       "angle": window.__player__.ANGLE,
       "anim": {
         "walking": {"index": 0, "reverse": 0, "apex": 10},
-        "shooting": {"index": -1},
+        "shooting": {"index": -1, "animating": 0},
       },
       "x": window.__player__.X,
       "y": window.__player__.Y,
@@ -70,74 +70,89 @@
     "assets": {
       "sprites": {
         "animations": {
-          "playerWeapon": [] // initialized at setup
-        },
-        "menu": {
-          "skull0": {
-            "img": new Image(),
-            "name": "menu_skull_0.png",
-            "ready": 0
-          },
-          "skull1": {
-            "img": new Image(),
-            "name": "menu_skull_1.png",
-            "ready": 0
+          "playerWeapon": {
+            "superShotgun": [] // initialized at setup
           }
         },
-        "player": {
-          "shotgun0": {
+        "menu": {
+          "skull": {
             "img": new Image(),
-            "name": "shotgun_0.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun1": {
+            "name": "menu_skull.png",
+            "frames": [
+              {
+                "offset": 0,
+                "width": 30,
+                "height": 34
+              },
+              {
+                "offset": 30,
+                "width": 30,
+                "height": 34
+              }
+            ]
+          }
+        },
+        "playerWeapons": {
+          "superShotgun": {
             "img": new Image(),
-            "name": "shotgun_1.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun2": {
-            "img": new Image(),
-            "name": "shotgun_2.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun3": {
-            "img": new Image(),
-            "name": "shotgun_3.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun4": {
-            "img": new Image(),
-            "name": "shotgun_4.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun5": {
-            "img": new Image(),
-            "name": "shotgun_5.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
-          },
-          "shotgun6": {
-            "img": new Image(),
-            "name": "shotgun_6.png",
-            "loc": {"x": 0, "y": 0},
-            "setLoc": function(self, sprite) {
-              return {
-                "x": 0,
-                "y": self.res[1] - sprite.img.height
-              };
-            },
-            "ready": 0
-          },
-          "shotgun7": {
-            "img": new Image(),
-            "name": "shotgun_7.png",
-            "loc": {"x": 0, "y": 0},
-            "ready": 0
+            "name": "super_shotgun.png",
+            "activeFrames": [], // initialized at setup
+            "frames": [
+              {
+                "offset": 0,
+                "width": 118,
+                "height": 108,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 118,
+                "width": 110,
+                "height": 74,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 228,
+                "width": 130,
+                "height": 92,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 358,
+                "width": 166,
+                "height": 206,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 524,
+                "width": 242,
+                "height": 260,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 766,
+                "width": 162,
+                "height": 160,
+                "locOnScreen": {"x": 0, "y": 0}
+              },
+              {
+                "offset": 928,
+                "width": 402,
+                "height": 126,
+                "locOnScreen": {"x": 0, "y": 0},
+                "setLocOnScreen": function(self, frame) {
+                  return {
+                    "x": 0,
+                    "y": self.res[1] - frame.height * 0.75
+                  };
+                }
+              },
+              {
+                "offset": 1330,
+                "width": 176,
+                "height": 102,
+                "locOnScreen": {"x": 0, "y": 0}
+              }
+            ]
           }
         },
         "setup": function(self, keys) {
@@ -149,13 +164,17 @@
               return acc[curr];
             }, self.assets.sprites);
             sprite.img.onload = function() {
-              if (sprite.setLoc && sprite.loc) {
-                const loc = sprite.setLoc(self, sprite);
-                sprite.loc.x = loc.x;
-                sprite.loc.y = loc.y;
-              } else if (sprite.loc) {
-                sprite.loc.x = (self.res[0] - sprite.img.width) * 0.5;
-                sprite.loc.y = self.res[1] - sprite.img.height;
+              if (sprite.frames) {
+                sprite.frames.forEach(function(frame) {
+                  if (frame.setLocOnScreen && frame.locOnScreen) {
+                    const locOnScreen = frame.setLocOnScreen(self, frame);
+                    frame.locOnScreen.x = locOnScreen.x;
+                    frame.locOnScreen.y = locOnScreen.y;
+                  } else if (frame.locOnScreen) {
+                    frame.locOnScreen.x = (self.res[0] - frame.width) * 0.5;
+                    frame.locOnScreen.y = self.res[1] - frame.height * 0.75;
+                  }
+                });
               }
               loadSprite(i + 1, resolve, reject);
             };
@@ -243,6 +262,9 @@
         ".": "#55555599",
         "-": "#55555599"
       },
+      "WEAPONS": {
+        "SUPER_SHOTGUN": "superShotgun"
+      },
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
@@ -270,6 +292,41 @@
         buffCanvas.height = img.height;
         buffCtx.drawImage(img, 0, 0);
         return buffCtx.getImageData(0, 0, img.width, img.height).data;
+      },
+      "clone": function(obj) {
+        const __clone = function(object) {
+          const cloned = Array.isArray(object) ? [] : {};
+          for (key in object) {
+            const prop = object[key];
+            if (typeof(prop) === typeof({})) {
+              cloned[key] = __clone(prop);
+            } else {
+              cloned[key] = prop;
+            }
+          }
+          return cloned;
+        };
+        return __clone(obj);
+      },
+      "merge": function(self) {
+        const __merge = function(current, accumulator) {
+          const local = self.util.clone(accumulator);
+          for (key in current) {
+            const prop = current[key];
+            if (typeof(prop) === typeof({})) {
+              local[key] = __merge(prop, Array.isArray(prop) ? [] : {});
+            } else {
+              local[key] = prop;
+            }
+          }
+          return local;
+        };
+        const args = Array.prototype.slice.call(arguments);
+        let merged = {};
+        for (let i = 1; i < args.length; i += 1) {
+          merged = __merge(args[i], merged);
+        }
+        return merged;
       },
       "handleAsyncKeyState": function(self, type, key) {
         if (key === 87) {
@@ -424,12 +481,9 @@
             // render sprites immediately
             self.util.render.sprites(self, {
               "skull": {
-                "img": self.assets.sprites.menu["skull" + state.toString()].img,
-                "ready": 1,
-                "loc": [
-                  {"x": self.res[0] * 0.5 - 150, "y": (self.res[1] - 56) * 0.5},
-                  {"x": self.res[0] * 0.5 + 120, "y": (self.res[1] - 56) * 0.5}
-                ]
+                "img": self.assets.sprites.menu.skull.img,
+                "frames": [self.assets.sprites.menu.skull.frames[state]],
+                "activeFrames": [0]
               }
             });
           };
@@ -443,20 +497,44 @@
         },
         "sprites": function(self, sprites) {
           for (key in sprites) {
-            if (!!sprites[key].img) {
-              if (!!sprites[key].img.src && sprites[key].ready & 1) {
-                const sprite = sprites[key];
-                if (Array.isArray(sprite.loc)) {
-                  for (let i = 0; i < sprite.loc.length; i += 1) {
-                    const loc = sprite.loc[i];
-                    ctx.drawImage(sprite.img, loc.x, loc.y);
+            const spriteObj = sprites[key];
+            if (!!spriteObj.img) {
+              if (!!spriteObj.activeFrames) {
+                const sprite = spriteObj.img;
+                for (let index = 0; index < spriteObj.activeFrames.length; index += 1) {
+                  const frame = spriteObj.frames[spriteObj.activeFrames[index]];
+                  if (Array.isArray(frame.locOnScreen)) {
+                    for (let iLoc = 0; iLoc < frame.locOnScreen.length; iLoc += 1) {
+                      const locOnScreen = frame.locOnScreen[iLoc];
+                      ctx.drawImage(
+                        sprite,
+                        frame.offset,
+                        sprite.height - frame.height,
+                        frame.width,
+                        frame.height,
+                        locOnScreen.x,
+                        locOnScreen.y,
+                        frame.width,
+                        frame.height
+                      );
+                    }
+                  } else {
+                    ctx.drawImage(
+                      sprite,
+                      frame.offset,
+                      sprite.height - frame.height,
+                      frame.width,
+                      frame.height,
+                      frame.locOnScreen.x,
+                      frame.locOnScreen.y,
+                      frame.width,
+                      frame.height
+                    );
                   }
-                } else {
-                  ctx.drawImage(sprite.img, sprite.loc.x, sprite.loc.y);
                 }
               }
             } else {
-              self.util.render.sprites(self, sprites[key]);
+              self.util.render.sprites(self, spriteObj);
             }
           }
         },
@@ -860,6 +938,7 @@
         };
         self.PLAYER_HEIGHT = self.mRows * 0.5;
         self.player.z = self.PLAYER_HEIGHT;
+        self.player.weaponDrawn = self.const.WEAPONS.SUPER_SHOTGUN;
 
         // setup background
         self.assets.background = self.util.render.background(self);
@@ -879,33 +958,32 @@
         return new Promise(function(resolve, reject) {
           // setup sprites
           self.assets.sprites.setup(self, [
-              "player.shotgun0",
-              "player.shotgun1",
-              "player.shotgun2",
-              "player.shotgun3",
-              "player.shotgun4",
-              "player.shotgun5",
-              "player.shotgun6",
-              "player.shotgun7",
-              "menu.skull0",
-              "menu.skull1"
-            ])
+            "playerWeapons." + self.player.weaponDrawn,
+            "menu.skull",
+          ])
             .then(function(sprites) {
-              sprites.player.shotgun0.ready = 1;
-              sprites.animations.playerWeapon = [
-                sprites.player.shotgun0,
-                sprites.player.shotgun1,
-                sprites.player.shotgun2,
-                sprites.player.shotgun0,
-                sprites.player.shotgun3,
-                sprites.player.shotgun4,
-                sprites.player.shotgun5,
-                sprites.player.shotgun6,
-                sprites.player.shotgun7,
-                sprites.player.shotgun5,
-                sprites.player.shotgun3,
-                sprites.player.shotgun0,
-              ];
+              sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
+              sprites.animations.playerWeapon[self.player.weaponDrawn] = 
+                [1, 2, 0, 3, 4, 5, 6, 7, 5, 3, 0];
+              sprites.menu.skull.frames = sprites.menu.skull.frames
+                .map(function(frame) {
+                  return self.util.merge(
+                    self,
+                    frame,
+                    {
+                      "locOnScreen": [
+                        {
+                          "x": self.res[0] * 0.5 - 150, 
+                          "y": (self.res[1] - 56) * 0.5
+                        },
+                        {
+                          "x": self.res[0] * 0.5 + 120, 
+                          "y": (self.res[1] - 56) * 0.5
+                        }
+                      ]
+                    }
+                  );
+                });
             })
 
             // setup textures
@@ -1026,26 +1104,33 @@
         }
       },
       "animateShooting": function(self) {
-        if ((self.keyState.SPC & 1) && (self.player.anim.shooting.index < 0)) {
-          self.player.anim.shooting.index = 0;
+        if (
+          (self.keyState.SPC & 1) && 
+          (self.player.anim.shooting.animating & 1) === 0
+        ) {
+          const animationFrames = self.assets.sprites.__animations.playerWeapon[
+            self.player.weaponDrawn
+          ];
+          self.player.anim.shooting.animating = 1;
           self.util.animation(
             self,
             function(i) { // onFrame
-              const activeIdx = i + 1;
-              self.DRAW_DIST = (activeIdx === 1 || activeIdx === 2) // if shooting frame, increase lighting
+              self.DRAW_DIST = (i === 0 || i === 1) // if shooting frame, increase lighting
                 ? 150 * self.mRows
                 : self.const.DRAW_DIST * self.mRows;
               self.assets.background = self.util.render.background(self);
-              self.assets.sprites.animations.playerWeapon[i].ready = 0;
-              self.assets.sprites.animations.playerWeapon[activeIdx].ready = 1;
-              self.player.anim.shooting.index = activeIdx; // needed to lighten up the floor
-            },                                             // during shooting frames
+              self.assets.sprites.playerWeapons[
+                self.player.weaponDrawn
+              ].activeFrames = [animationFrames[i]];
+              self.player.anim.shooting.index = i; // needed to lighten up the floor
+            },                                     // during shooting frames
             140,
             function(i) { // shouldEnd
-              return i === self.assets.sprites.animations.playerWeapon.length - 1;
+              return i === animationFrames.length;
             },
             function() {  // onEnd
               self.player.anim.shooting.index = -1;
+              self.player.anim.shooting.animating = 0;
             }
           ).start();
         }
