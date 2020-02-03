@@ -999,9 +999,6 @@
             .then(function() {
               return self.assets.themes.__setup(self, "main");
             })
-            .then(function(theme) {
-              return theme;
-            })
 
             // resolve setup
             .then(function() {
