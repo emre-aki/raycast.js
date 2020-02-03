@@ -69,11 +69,6 @@
     },
     "assets": {
       "sprites": {
-        "animations": {
-          "playerWeapon": {
-            "superShotgun": [] // initialized at setup
-          }
-        },
         "menu": {
           "skull": {
             "img": new Image(),
@@ -155,7 +150,12 @@
             ]
           }
         },
-        "setup": function(self, keys) {
+        "__animations": {
+          "playerWeapon": {
+            "superShotgun": [] // initialized at setup
+          }
+        },
+        "__setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
             if (i === keys.length) {
               return resolve(self.assets.sprites);
@@ -194,7 +194,7 @@
           "buffer": [],
           "name":  "sbox_1.png"
         },
-        "setup": function(self, keys) { // never heard of `Promise.all`???
+        "__setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
             if (i === keys.length) {
               return resolve(self.assets.textures);
@@ -222,7 +222,7 @@
           "name": "theme.mp3",
           "status": "INIT"
         },
-        "setup": function(self, path) {
+        "__setup": function(self, path) {
           const theme = path.split(".").reduce(function(acc, curr) {
             return acc[curr];
           }, self.assets.themes);
@@ -497,44 +497,46 @@
         },
         "sprites": function(self, sprites) {
           for (key in sprites) {
-            const spriteObj = sprites[key];
-            if (!!spriteObj.img) {
-              if (!!spriteObj.activeFrames) {
-                const sprite = spriteObj.img;
-                for (let index = 0; index < spriteObj.activeFrames.length; index += 1) {
-                  const frame = spriteObj.frames[spriteObj.activeFrames[index]];
-                  if (Array.isArray(frame.locOnScreen)) {
-                    for (let iLoc = 0; iLoc < frame.locOnScreen.length; iLoc += 1) {
-                      const locOnScreen = frame.locOnScreen[iLoc];
+            if (key[0] !== "_") {
+              const spriteObj = sprites[key];
+              if (!!spriteObj.img) {
+                if (!!spriteObj.activeFrames) {
+                  const sprite = spriteObj.img;
+                  for (let index = 0; index < spriteObj.activeFrames.length; index += 1) {
+                    const frame = spriteObj.frames[spriteObj.activeFrames[index]];
+                    if (Array.isArray(frame.locOnScreen)) {
+                      for (let iLoc = 0; iLoc < frame.locOnScreen.length; iLoc += 1) {
+                        const locOnScreen = frame.locOnScreen[iLoc];
+                        ctx.drawImage(
+                          sprite,
+                          frame.offset,
+                          sprite.height - frame.height,
+                          frame.width,
+                          frame.height,
+                          locOnScreen.x,
+                          locOnScreen.y,
+                          frame.width,
+                          frame.height
+                        );
+                      }
+                    } else {
                       ctx.drawImage(
                         sprite,
                         frame.offset,
                         sprite.height - frame.height,
                         frame.width,
                         frame.height,
-                        locOnScreen.x,
-                        locOnScreen.y,
+                        frame.locOnScreen.x,
+                        frame.locOnScreen.y,
                         frame.width,
                         frame.height
                       );
                     }
-                  } else {
-                    ctx.drawImage(
-                      sprite,
-                      frame.offset,
-                      sprite.height - frame.height,
-                      frame.width,
-                      frame.height,
-                      frame.locOnScreen.x,
-                      frame.locOnScreen.y,
-                      frame.width,
-                      frame.height
-                    );
                   }
                 }
+              } else {
+                self.util.render.sprites(self, spriteObj);
               }
-            } else {
-              self.util.render.sprites(self, spriteObj);
             }
           }
         },
@@ -957,13 +959,13 @@
         // async ops.
         return new Promise(function(resolve, reject) {
           // setup sprites
-          self.assets.sprites.setup(self, [
+          self.assets.sprites.__setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull",
           ])
             .then(function(sprites) {
               sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
-              sprites.animations.playerWeapon[self.player.weaponDrawn] = 
+              sprites.__animations.playerWeapon[self.player.weaponDrawn] = 
                 [1, 2, 0, 3, 4, 5, 6, 7, 5, 3, 0];
               sprites.menu.skull.frames = sprites.menu.skull.frames
                 .map(function(frame) {
@@ -988,14 +990,14 @@
 
             // setup textures
             .then(function() {
-              return self.assets.textures.setup(self, [
+              return self.assets.textures.__setup(self, [
                 "skybox",
               ]);
             })
 
             // setup theme music
             .then(function() {
-              return self.assets.themes.setup(self, "main");
+              return self.assets.themes.__setup(self, "main");
             })
             .then(function(theme) {
               return theme;
