@@ -293,40 +293,49 @@
         buffCtx.drawImage(img, 0, 0);
         return buffCtx.getImageData(0, 0, img.width, img.height).data;
       },
-      "clone": function(obj) {
-        const __clone = function(object) {
-          const cloned = Array.isArray(object) ? [] : {};
-          for (key in object) {
-            const prop = object[key];
-            if (typeof(prop) === typeof({})) {
-              cloned[key] = __clone(prop);
-            } else {
-              cloned[key] = prop;
+      "deepcopy": function(obj) {
+        const clone = function(object) {
+          const cloned = Array.isArray(object) 
+            ? [] 
+            : typeof({}) === typeof(object)
+              ? {}
+              : object;
+          for (const key in object) {
+            if (object.hasOwnProperty(key)) {
+              const prop = object[key];
+              if (typeof(prop) === typeof({})) {
+                cloned[key] = clone(prop);
+              } else {
+                cloned[key] = prop;
+              }
             }
           }
           return cloned;
         };
-        return __clone(obj);
+        return clone(obj);
       },
       "merge": function(self) {
-        const __merge = function(current, accumulator) {
-          const local = self.util.clone(accumulator);
-          for (key in current) {
-            const prop = current[key];
-            if (typeof(prop) === typeof({})) {
-              local[key] = __merge(prop, Array.isArray(prop) ? [] : {});
-            } else {
-              local[key] = prop;
+        const mergeTwo = function(accumulator, current) {
+          const local = self.util.deepcopy(accumulator) || 
+            (Array.isArray(current) ? [] : {});
+          for (const key in current) {
+            if (current.hasOwnProperty(key)) {
+              const prop = current[key];
+              if (typeof(prop) === typeof({})) {
+                local[key] = mergeTwo(local[key], current[key]);
+              } else {
+                local[key] = prop;
+              }
             }
           }
           return local;
         };
-        const args = Array.prototype.slice.call(arguments);
-        let merged = {};
-        for (let i = 1; i < args.length; i += 1) {
-          merged = __merge(args[i], merged);
-        }
-        return merged;
+        return Array.prototype.slice.call(arguments, 1).reduce(
+          function(acc, curr) {
+            return mergeTwo(acc, curr); 
+          }, 
+          {}
+        );
       },
       "handleAsyncKeyState": function(self, type, key) {
         if (key === 87) {
@@ -496,8 +505,8 @@
           );
         },
         "sprites": function(self, sprites) {
-          for (key in sprites) {
-            if (key[0] !== "_") {
+          for (const key in sprites) {
+            if (key[0] !== "_" && sprites.hasOwnProperty(key)) {
               const spriteObj = sprites[key];
               if (!!spriteObj.img) {
                 if (!!spriteObj.activeFrames) {
