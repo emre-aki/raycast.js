@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.04.2020
+  Last updated: 02.06.2020
 ================================================================
 */
 
@@ -88,71 +88,62 @@
           }
         },
         "playerWeapons": {
-          "superShotgun": {
+          "shotgun": {
             "img": new Image(),
-            "name": "super_shotgun.png",
+            "name": "shotgun.png",
             "activeFrames": [], // initialized at setup
             "frames": [
               {
+                "width": 158,
+                "height": 120,
                 "offset": 0,
-                "width": 118,
-                "height": 108,
                 "locOnScreen": {"x": 0, "y": 0}
               },
               {
-                "offset": 118,
-                "width": 110,
-                "height": 74,
+                "width": 158,
+                "height": 146,
+                "offset": 158,
                 "locOnScreen": {"x": 0, "y": 0}
               },
               {
-                "offset": 228,
-                "width": 130,
-                "height": 92,
+                "width": 158,
+                "height": 164,
+                "offset": 316,
                 "locOnScreen": {"x": 0, "y": 0}
               },
               {
-                "offset": 358,
-                "width": 166,
-                "height": 206,
-                "locOnScreen": {"x": 0, "y": 0}
-              },
-              {
-                "offset": 524,
-                "width": 242,
-                "height": 260,
-                "locOnScreen": {"x": 0, "y": 0}
-              },
-              {
-                "offset": 766,
-                "width": 162,
-                "height": 160,
-                "locOnScreen": {"x": 0, "y": 0}
-              },
-              {
-                "offset": 928,
-                "width": 402,
-                "height": 126,
+                "width": 238,
+                "height": 242,
+                "offset": 474,
                 "locOnScreen": {"x": 0, "y": 0},
                 "setLocOnScreen": function(self, frame) {
-                  return {
-                    "x": 0,
-                    "y": self.res[1] - frame.height * 0.75
-                  };
+                  return {"x": 0, "y": self.res[1] - frame.height}; 
                 }
               },
               {
-                "offset": 1330,
-                "width": 176,
-                "height": 102,
-                "locOnScreen": {"x": 0, "y": 0}
+                "width": 174,
+                "height": 302,
+                "offset": 712,
+                "locOnScreen": {"x": 0, "y": 0},
+                "setLocOnScreen": function(self, frame) { 
+                  return {"x": 0, "y": self.res[1] - frame.height}; 
+                }
+              },
+              {
+                "width": 226,
+                "height": 262,
+                "offset": 886,
+                "locOnScreen": {"x": 0, "y": 0},
+                "setLocOnScreen": function(self, frame) { 
+                  return {"x": 0, "y": self.res[1] - frame.height}; 
+                }
               }
             ]
           }
         },
         "__animations": {
           "playerWeapon": {
-            "superShotgun": [] // initialized at setup
+            "shotgun": [] // initialized at setup
           }
         },
         "__setup": function(self, keys) {
@@ -263,7 +254,7 @@
         "-": "#55555599"
       },
       "WEAPONS": {
-        "SUPER_SHOTGUN": "superShotgun"
+        "SHOTGUN": "shotgun"
       },
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
@@ -949,7 +940,7 @@
         };
         self.PLAYER_HEIGHT = self.mRows * 0.5;
         self.player.z = self.PLAYER_HEIGHT;
-        self.player.weaponDrawn = self.const.WEAPONS.SUPER_SHOTGUN;
+        self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
 
         // setup background
         self.assets.background = self.util.render.background(self);
@@ -975,7 +966,7 @@
             .then(function(sprites) {
               sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
               sprites.__animations.playerWeapon[self.player.weaponDrawn] = 
-                [1, 2, 0, 3, 4, 5, 6, 7, 5, 3, 0];
+                [1, 2, 0, 3, 4, 5, 4, 3, 0];
               sprites.menu.skull.frames = sprites.menu.skull.frames
                 .map(function(frame) {
                   return self.util.merge(
@@ -1132,7 +1123,7 @@
               ].activeFrames = [animationFrames[i]];
               self.player.anim.shooting.index = i; // needed to lighten up the floor
             },                                     // during shooting frames
-            140,
+            120,
             function(i) { // shouldEnd
               return i === animationFrames.length;
             },
