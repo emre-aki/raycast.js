@@ -3,6 +3,8 @@ bin/*
 include/*
 lib/*
 screenshots/*
+src/assets/sprites/*/*
+src/assets/textures/*/*
 
 # dotfiles
 .DS_Store
