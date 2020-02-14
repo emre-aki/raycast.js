@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.06.2020
+  Last updated: 02.14.2020
 ================================================================
 */
 
@@ -261,6 +261,46 @@
       "DRAW_DIST": 90,
       "RATIO_DRAW_DIST_TO_BACKGROUND": 1.25 // 5 * 0.25
     },
+    "api": {
+      "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
+        // private domain
+        const uid = function(candidate) {
+          return self.intervals[candidate]
+            ? uid(candidate + "_1")
+            : candidate;
+        };
+        let iFrame = 0;
+        const id = uid(arguments.callee.caller.name);
+        const cleanUp = function() {
+          clearInterval(self.intervals[id]);
+          delete self.intervals[id];
+          if (onEnd) {
+            onEnd();
+          }
+        };
+        const animate = function() {
+          if (shouldEnd && shouldEnd(iFrame)) {
+            cleanUp();
+          } else {
+            onFrame(iFrame);
+          }
+          iFrame += 1;
+        };
+
+        // public domain
+        return {
+          "start": function() {
+            self.intervals[id] = setInterval(animate, interval);
+          },
+          "cancel": function() {
+            cleanUp();
+          },
+          "isAnimating": function() {
+            return !!self.intervals[id];
+          }
+        };
+      },
+    },
     "util": {
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
@@ -398,44 +438,6 @@
         ctx.fillStyle = options.color || "#000000";
         ctx.fillText(text, x, y);
       },
-      "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
-        // private domain
-        const uid = function(candidate) {
-          return self.intervals[candidate]
-            ? uid(candidate + "_1")
-            : candidate;
-        };
-        let iFrame = 0;
-        const id = uid(arguments.callee.caller.name);
-        const cleanUp = function() {
-          clearInterval(self.intervals[id]);
-          delete self.intervals[id];
-          if (onEnd) {
-            onEnd();
-          }
-        };
-        const animate = function() {
-          if (shouldEnd && shouldEnd(iFrame)) {
-            cleanUp();
-          } else {
-            onFrame(iFrame);
-          }
-          iFrame += 1;
-        };
-
-        // public domain
-        return {
-          "start": function() {
-            self.intervals[id] = setInterval(animate, interval);
-          },
-          "cancel": function() {
-            cleanUp();
-          },
-          "isAnimating": function() {
-            return !!self.intervals[id];
-          }
-        };
-      },
       "render": {
         "stats": function(self, deltaT) {
           self.util.print(
@@ -459,7 +461,7 @@
               {"size": 36, "color": "#FFFFFF"}
             );
           }
-          return self.util.animation(
+          return self.api.animation(
             self,
             function(i) { render(i); },
             375
@@ -487,7 +489,7 @@
               }
             });
           };
-          return self.util.animation(
+          return self.api.animation(
             self,
             function(i) { render(i); },
             375,
@@ -1111,7 +1113,7 @@
             self.player.weaponDrawn
           ];
           self.player.anim.shooting.animating = 1;
-          self.util.animation(
+          self.api.animation(
             self,
             function(i) { // onFrame
               self.DRAW_DIST = (i === 0 || i === 1) // if shooting frame, increase lighting
@@ -1180,7 +1182,7 @@
         if ((door.animating & 1) === 0) {
           door.animating = 1;
           const state = {"reverse": door.state === 0 ? 1 : 0};
-          self.util.animation(
+          self.api.animation(
             self,
             function() { // onFrame
               door.state += ((state.reverse & 1) === 0 ? -1 : 1);
