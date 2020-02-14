@@ -731,7 +731,7 @@
           ctx.fillStyle = "blue";
           ctx.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            Math.floor((self.mRows * 0.5 + (self.player.anim.walking.index * (self.VIEW_DIST - self.DRAW_DIST) / self.DRAW_DIST)) * self.DRAW_TILE_SIZE.y),
+            Math.floor(self.res[1] * (0.5 + self.util.getVerticalShift(self))),
             self.DRAW_TILE_SIZE.x,
             hLine
           );
