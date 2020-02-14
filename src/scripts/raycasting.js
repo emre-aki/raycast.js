@@ -369,6 +369,11 @@
           {}
         );
       },
+      "coords2Key": function() {
+        return arguments.length === 1
+          ? arguments[0].x.toString() + "_" + arguments[0].y.toString()
+          : arguments[0].toString() + "_" + arguments[1].toString();
+      },
       "handleAsyncKeyState": function(self, type, key) {
         if (key === 87) {
           self.keyState.W = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.W;
@@ -394,7 +399,7 @@
           for (let x = 0; x < self.nCols; x += 1) {
             const sample = self.map[(self.nCols + self.offsetLinebr) * y + x];
             if (sample === "H" || sample === "V") {
-              doors[x.toString() + "_" + y.toString()] = {
+              doors[self.util.coords2Key(x, y)] = {
                 "loc": {"x": x, "y": y},
                 "state": 10, // 0: open, 10: closed
                 "animating": 0,
@@ -797,6 +802,7 @@
                   hitV = 1;
                   distToWall = sqrDrawDist;
                 } else if (sample === "#" || sample === "V") {
+                  const hitKey = self.util.coords2Key(sampleMap);
                   const pHit = {
                     "x": sample === "V"
                       ? sampleMap.x + 0.5 // TODO: make 0.5 more dynamic
@@ -806,7 +812,7 @@
                         ? (sampleMap.x + 0.5 - traceV.x) * ray.slope // TODO: make 0.5 more dynamic
                         : 0)
                   };
-                  if (sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
+                  if (sample === "#" || sample === "V" && sampleMap.y + (self.doors[hitKey].state * 0.1) > pHit.y) {
                     currentHit = "vertical";
                     hitV = 1;
                     distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
@@ -839,6 +845,7 @@
                   hitH = 1;
                   distToWall = distToWall ? distToWall : sqrDrawDist;
                 } else if (sample === "#" || sample === "H") {
+                  const hitKey = self.util.coords2Key(sampleMap);
                   const pHit = {
                     "x": traceH.x +
                       (sample === "H"
@@ -848,7 +855,7 @@
                       ? sampleMap.y + 0.5 // TODO: make 0.5 more dynamic
                       : traceH.y,
                   };
-                  if (sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
+                  if (sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[hitKey].state * 0.1) < pHit.x) {
                     let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
                     hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
 
@@ -1069,19 +1076,19 @@
         const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
         if ((sampleX === "#") ||
             ((sampleX === "V" || sampleX === "H") &&
-             (self.doors[stepX.x.toString() + "_" + stepX.y.toString()].state > 0))) {
+             (self.doors[self.util.coords2Key(stepX)].state > 0))) {
           self.player.x = memoPos[0];
         }
         if ((sampleY === "#") ||
             ((sampleY === "V" || sampleY === "H") &&
-             (self.doors[stepY.x.toString() + "_" + stepY.y.toString()].state > 0))) {
+             (self.doors[self.util.coords2Key(stepY)].state > 0))) {
           self.player.y = memoPos[1];
         }
         const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
         const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
         if ((sampleXY === "#") ||
             ((sampleXY === "V" || sampleXY === "H") &&
-             (self.doors[stepXY.x.toString() + "_" + stepXY.y.toString()].state > 0))) {
+             (self.doors[self.util.coords2Key(stepXY)].state > 0))) {
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
@@ -1163,9 +1170,9 @@
           };
           const sampleH = self.map[(self.nCols + self.offsetLinebr) * sampleMapH.y + sampleMapH.x];
           if (sampleV === "V") {
-            self.exec.animateDoor(self, self.doors[sampleMapV.x.toString() + "_" + sampleMapV.y.toString()]);
+            self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapV)]);
           } else if (sampleH === "H") {
-            self.exec.animateDoor(self, self.doors[sampleMapH.x.toString() + "_" + sampleMapH.y.toString()]);
+            self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapH)]);
           }
         }
       },
