@@ -764,7 +764,7 @@
             let currentHit;
             for (let iCol = 0; iCol < self.mCols; iCol += 1) {
               const ray = {
-                "angle": self.player.angle - self.FOV * 0.5 + (iCol / self.mCols) * self.FOV
+                "angle": Math.atan((-1 * self.mCols * 0.5 + iCol) / self.VIEW_DIST) + self.player.angle
               };
               ray.dir = {
                 "x": Math.cos(ray.angle),
