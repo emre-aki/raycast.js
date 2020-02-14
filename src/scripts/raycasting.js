@@ -36,6 +36,7 @@
     "res": [800, 600],
     "FPS": 60,
     "FOV": Math.PI / 3,
+    "MAP_TILE_SIZE": 600,
     "DRAW_TILE_SIZE": {}, // initialized in setup
     "DRAW_DIST": -1,      // initialized in setup
     "STEP_SIZE": 0.2,
@@ -792,7 +793,7 @@
                   "y": Math.floor(traceV.y)
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
+                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitV = 1;
                   distToWall = sqrDrawDist;
                 } else if (sample === "#" || sample === "V") {
@@ -807,9 +808,9 @@
                   };
                   if (sample === "#" || sample === "V" && sampleMap.y + (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) > pHit.y) {
                     currentHit = "vertical";
-                    distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
-                    distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
                     hitV = 1;
+                    distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
+                    distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
                   }
                 } else if (sample === "H") { hitV = 1; }
                 traceV.x += stepV.x;
@@ -834,7 +835,7 @@
                   "y": Math.floor(traceH.y + ((up & 1) ? -1 : 0))
                 };
                 const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.mRows) > sqrDrawDist) {
+                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitH = 1;
                   distToWall = distToWall ? distToWall : sqrDrawDist;
                 } else if (sample === "#" || sample === "H") {
@@ -848,7 +849,7 @@
                       : traceH.y,
                   };
                   if (sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[sampleMap.x.toString() + "_" + sampleMap.y.toString()].state * 0.1) < pHit.x) {
-                    let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.mRows);
+                    let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
                     hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
 
                     // if current horizontal hit is closer than current vertical hit
@@ -935,7 +936,7 @@
 
         // setup game variables
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
-        self.DRAW_DIST = self.const.DRAW_DIST * self.mRows;
+        self.DRAW_DIST = self.const.DRAW_DIST * self.MAP_TILE_SIZE;
         self.DRAW_TILE_SIZE = {
           "x": self.res[0] / self.mCols,
           "y": self.res[1] / self.mRows
@@ -1117,8 +1118,8 @@
             self,
             function(i) { // onFrame
               self.DRAW_DIST = (i === 0 || i === 1) // if shooting frame, increase lighting
-                ? 150 * self.mRows
-                : self.const.DRAW_DIST * self.mRows;
+                ? 150 * self.MAP_TILE_SIZE
+                : self.const.DRAW_DIST * self.MAP_TILE_SIZE;
               self.assets.background = self.util.render.background(self);
               self.assets.sprites.playerWeapons[
                 self.player.weaponDrawn
