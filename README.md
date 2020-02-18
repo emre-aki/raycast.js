@@ -52,11 +52,13 @@ You can check out the live demo [here](https://raycasting-demo.herokuapp.com)!
 - Use keys `W` and `S` on your keyboard to move forwards and backwards, respectively.
 - Key `A` rotates player counter-clockwise, and key `D` rotates player clockwise. 
 - Use keys `Q` and `E` to strafe left and right, respectively.
+- Use keys `↑` and `↓` to look up and down, respectively.
 - Use `SPACE` to shoot.
 - Use `ENTER` to open/close doors.
 
 ### Features
 - Walking animation
+- Ability to look up & down
 - Skybox rendering
 - Shading with distance
 - Doors

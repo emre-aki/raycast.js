@@ -49,7 +49,9 @@
       "Q": 0,
       "E": 0,
       "SPC": 0,
-      "RTN": 0
+      "RTN": 0,
+      "ARW_UP": 0,
+      "ARW_DOWN": 0
     },
     "map": window.__map__.MAP,
     "mRows": 600,
@@ -64,6 +66,7 @@
         "walking": {"index": 0, "reverse": 0, "apex": 10},
         "shooting": {"index": -1, "animating": 0},
       },
+      "tilt": 0,
       "x": window.__player__.X,
       "y": window.__player__.Y,
       "z": window.__player__.Z // re-initialized at setup
@@ -257,6 +260,7 @@
       "WEAPONS": {
         "SHOTGUN": "shotgun"
       },
+      "MAX_TILT": 150,
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
@@ -305,7 +309,8 @@
     "util": {
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
-          (self.DRAW_DIST - self.VIEW_DIST) / (self.DRAW_DIST * self.mRows);
+          (self.DRAW_DIST - self.VIEW_DIST) / (self.DRAW_DIST * self.mRows) -
+          self.player.tilt / self.mRows;
       },
       "rad2Deg": function(rad) {
         const rad360 = 6.28319;
@@ -391,6 +396,10 @@
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
         } else if (key === 13) {
           self.keyState.RTN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.RTN;
+        } else if (key === 38) {
+          self.keyState.ARW_UP = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_UP;
+        } else if (key === 40) {
+          self.keyState.ARW_DOWN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_DOWN;
         }
       },
       "getDoors": function(self) {
@@ -681,6 +690,7 @@
               (self.player.anim.walking.apex + verticalShift * self.mRows)
             )
           };
+          offsetTex.y = offsetTex.y < 0 ? 0 : offsetTex.y;
           const hSkybox = Math.floor(self.res[1] * (0.5 - verticalShift));
 
           // initial draw
@@ -886,7 +896,8 @@
               // draw vertical strip of wall
               ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
               const hWall = self.mRows * self.VIEW_DIST / distToWall;
-              const hCeil = (distToWall - self.VIEW_DIST) * (self.mRows - self.player.z) / distToWall;
+              const hCeil = (distToWall - self.VIEW_DIST) * 
+                (self.mRows - self.player.z) / distToWall + self.player.tilt;
               const hFloor = self.mRows - hCeil - hWall;
               ctx.fillRect(
                 self.DRAW_TILE_SIZE.x * iCol,
@@ -1067,6 +1078,17 @@
           self.player.angle += 0.05;
         } if (self.keyState.A & 1) {
           self.player.angle -= 0.05;
+        }
+
+        // tilt player's head
+         if (self.keyState.ARW_UP) {
+           self.player.tilt = self.player.tilt < self.const.MAX_TILT 
+            ? self.player.tilt + 5 
+            : self.player.tilt;
+         } if (self.keyState.ARW_DOWN) {
+          self.player.tilt = self.player.tilt > -1 * self.const.MAX_TILT
+            ? self.player.tilt - 5 
+            : self.player.tilt;
         }
 
         // collision detection
