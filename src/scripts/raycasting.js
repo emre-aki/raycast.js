@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.14.2020
+  Last updated: 02.16.2020
 ================================================================
 */
 
@@ -305,7 +305,7 @@
     "util": {
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
-          (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows);
+          (self.DRAW_DIST - self.VIEW_DIST) / (self.DRAW_DIST * self.mRows);
       },
       "rad2Deg": function(rad) {
         const rad360 = 6.28319;
@@ -678,10 +678,10 @@
             ),
             "y": Math.floor(
               self.DRAW_TILE_SIZE.y * 
-              (self.player.anim.walking.apex - verticalShift * self.mRows)
+              (self.player.anim.walking.apex + verticalShift * self.mRows)
             )
           };
-          const hSkybox = Math.floor(self.res[1] * (0.5 + verticalShift));
+          const hSkybox = Math.floor(self.res[1] * (0.5 - verticalShift));
 
           // initial draw
           let offsetScreenX = 0;
@@ -716,7 +716,7 @@
         },
         "background": function(self) {
           const mapTileUnitSize = self.mRows;
-          const centerVertical = 0.5 + self.util.getVerticalShift(self);
+          const centerVertical = 0.5 - self.util.getVerticalShift(self);
           const interval = self.const.RATIO_DRAW_DIST_TO_BACKGROUND * mapTileUnitSize / self.DRAW_DIST;
           const gradient = ctx.createLinearGradient(0, 0, 0, self.res[1]);
           gradient.addColorStop(0, "#00000000");
@@ -737,7 +737,7 @@
           ctx.fillStyle = "blue";
           ctx.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            Math.floor(self.res[1] * (0.5 + self.util.getVerticalShift(self))),
+            Math.floor(self.res[1] * (0.5 - self.util.getVerticalShift(self))),
             self.DRAW_TILE_SIZE.x,
             hLine
           );
