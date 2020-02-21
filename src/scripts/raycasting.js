@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.16.2020
+  Last updated: 02.20.2020
 ================================================================
 */
 
@@ -1081,14 +1081,10 @@
         }
 
         // tilt player's head
-         if (self.keyState.ARW_UP) {
-           self.player.tilt = self.player.tilt < self.const.MAX_TILT 
-            ? self.player.tilt + 5 
-            : self.player.tilt;
-         } if (self.keyState.ARW_DOWN) {
-          self.player.tilt = self.player.tilt > -1 * self.const.MAX_TILT
-            ? self.player.tilt - 5 
-            : self.player.tilt;
+        if (self.keyState.ARW_UP) {
+           self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
+        } if (self.keyState.ARW_DOWN) {
+          self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
         }
 
         // collision detection
