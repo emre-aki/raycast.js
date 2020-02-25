@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.20.2020
+  Last updated: 02.25.2020
 ================================================================
 */
 
@@ -187,7 +187,7 @@
         "skybox": {
           "img": new Image(),
           "buffer": [],
-          "name":  "sbox_1.png"
+          "name":  "sbox.png"
         },
         "__setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
