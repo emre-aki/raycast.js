@@ -565,122 +565,57 @@
             }
           }
         },
-        "minimap": {
-          "dynamic": function(self, offset, tileSize, R, fullDyn) {
-            for (let y = -1 * R; y < R; y += 1) {
-              const rRow = Math.round(Math.sqrt(R * R - y * y)); // might use polar coordinates as an alternative
-              for (let x = -1 * rRow; x < rRow; x += 1) {
-                const rRay       = fullDyn ? Math.sqrt(x * x + y * y) : 0;
-                const aRay       = fullDyn ? Math.atan2(y, x) : 0;
-                const pMapSample = {
-                  "x": fullDyn
-                    ? Math.floor(self.player.x + Math.round(Math.cos(self.player.angle + aRay + Math.PI * 0.5) * rRay))
-                    : Math.floor(self.player.x + x),
-                  "y": fullDyn
-                    ? Math.floor(self.player.y + Math.round(Math.sin(self.player.angle + aRay + Math.PI * 0.5) * rRay))
-                    : Math.floor(self.player.y + y)
-                };
-                const pTransformMM = {
-                  "x": offset.x + x * tileSize,
-                  "y": offset.y + y * tileSize
-                };
-                if (
-                  pMapSample.x >= 0 && pMapSample.x < self.nCols &&
-                  pMapSample.y >= 0 && pMapSample.y < self.nRows
-                ) {
-                  const mapSample = self.map[(self.nCols + self.offsetLinebr) * pMapSample.y + pMapSample.x];
-                  ctx.fillStyle = self.const.minimapColors[mapSample];
-                } else { // render map out of bounds
-                  ctx.fillStyle = self.const.minimapColors["#"];
-                }
-                ctx.fillRect(pTransformMM.x, pTransformMM.y, tileSize, tileSize);
+        "minimap": function(self, offsetX, offsetY) {
+          const R = self.const.R_MINIMAP;
+          const tileSize = self.const.TILE_SIZE_MINIMAP;
+
+          minimapCanvasCtx.fillStyle = "#000000";
+          minimapCanvasCtx.beginPath();
+          minimapCanvasCtx.arc(R * tileSize, R * tileSize, R * tileSize, 0, 2 * Math.PI);
+          minimapCanvasCtx.fill();
+
+          minimapCanvasCtx.globalCompositeOperation = "source-atop";
+          for (let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
+            for (let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
+              const sampleMap = {
+                "x": Math.floor(self.player.x) + offsetCol,
+                "y": Math.floor(self.player.y) + offsetRow,
+              };
+              const translateMap = {
+                "x": (R + offsetCol) * tileSize,
+                "y": (R + offsetRow) * tileSize,
+              };
+              if (
+                sampleMap.x >= 0 && sampleMap.x < self.nCols &&
+                sampleMap.y >= 0 && sampleMap.y < self.nRows
+              ) {
+                const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
+                minimapCanvasCtx.fillStyle = self.const.minimapColors[sample];
+              } else { // render map out-of-bounds
+                minimapCanvasCtx.fillStyle = self.const.minimapColors["#"];
               }
+              minimapCanvasCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
             }
-            const caretPos = {
-              "a": {
-                "x": fullDyn
-                  ? offset.x + 0.5 * tileSize
-                  : offset.x + (Math.cos(self.player.angle) + 0.5) * tileSize,
-                "y": fullDyn
-                  ? offset.y - 0.5 * tileSize
-                  : offset.y + (Math.sin(self.player.angle) + 0.5) * tileSize
-              },
-              "b": {
-                "x": fullDyn
-                  ? offset.x + 0.5 * (1 - self.const.math.sqrt3) * tileSize
-                  : offset.x + (Math.cos(self.player.angle + (2 * Math.PI) / 3) + 0.5) * tileSize,
-                "y": fullDyn
-                  ? offset.y + 1 * tileSize
-                  : offset.y + (Math.sin(self.player.angle + (2 * Math.PI) / 3) + 0.5) * tileSize
-              },
-              "c": {
-                "x": fullDyn
-                  ? offset.x + 0.5 * (1 + self.const.math.sqrt3) * tileSize
-                  : offset.x + (Math.cos(self.player.angle + (4 * Math.PI) / 3) + 0.5) * tileSize,
-                "y": fullDyn
-                  ? offset.y + 1 * tileSize
-                  : offset.y + (Math.sin(self.player.angle + (4 * Math.PI) / 3) + 0.5) * tileSize
-              }
-            };
-            self.util.drawCaret(
-              ctx,
-              caretPos.a,
-              caretPos.b,
-              caretPos.c,
-              {"border": {"color": "#000000", "thickness": 2}}
-            );
-          },
-          "easy": function(self, offsetX, offsetY) {
-            const R = self.const.R_MINIMAP;
-            const tileSize = self.const.TILE_SIZE_MINIMAP;
-
-            minimapCanvasCtx.fillStyle = "#000000";
-            minimapCanvasCtx.beginPath();
-            minimapCanvasCtx.arc(R * tileSize, R * tileSize, R * tileSize, 0, 2 * Math.PI);
-            minimapCanvasCtx.fill();
-
-            minimapCanvasCtx.globalCompositeOperation = "source-atop";
-            for (let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
-              for (let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
-                const sampleMap = {
-                  "x": Math.floor(self.player.x) + offsetCol,
-                  "y": Math.floor(self.player.y) + offsetRow,
-                };
-                const translateMap = {
-                  "x": (R + offsetCol) * tileSize,
-                  "y": (R + offsetRow) * tileSize,
-                };
-                if (
-                  sampleMap.x >= 0 && sampleMap.x < self.nCols &&
-                  sampleMap.y >= 0 && sampleMap.y < self.nRows
-                ) {
-                  const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                  minimapCanvasCtx.fillStyle = self.const.minimapColors[sample];
-                } else { // render map out-of-bounds
-                  minimapCanvasCtx.fillStyle = self.const.minimapColors["#"];
-                }
-                minimapCanvasCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
-              }
-            }
-            self.util.drawCaret(
-              minimapCanvasCtx,
-              {"x": (R + 0.5 + Math.cos(self.player.angle)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.angle)) * tileSize},
-              {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 4 / 3)) * tileSize},
-              {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 2 / 3)) * tileSize},
-              {"border": {"color": "#000000", "thickness": 2}}
-            );
-
-            ctx.fillStyle = "#101010";
-            ctx.beginPath();
-            ctx.arc(offsetX, offsetY, (R + 1) * tileSize, 0, 2 * Math.PI);
-            ctx.fill();
-
-            ctx.translate(offsetX, offsetY);
-            ctx.rotate(-1 * Math.PI * 0.5 - self.player.angle);
-            ctx.drawImage(minimapCanvas, -1 * R * tileSize, -1 * R * tileSize, minimapCanvas.width, minimapCanvas.height);
-            ctx.rotate(Math.PI * 0.5 + self.player.angle);
-            ctx.translate(-1 * offsetX, -1 * offsetY);
           }
+          
+          self.util.drawCaret(
+            minimapCanvasCtx,
+            {"x": (R + 0.5 + Math.cos(self.player.angle)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.angle)) * tileSize},
+            {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 4 / 3)) * tileSize},
+            {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 2 / 3)) * tileSize},
+            {"border": {"color": "#000000", "thickness": 2}}
+          );
+
+          ctx.fillStyle = "#101010";
+          ctx.beginPath();
+          ctx.arc(offsetX, offsetY, (R + 1) * tileSize, 0, 2 * Math.PI);
+          ctx.fill();
+
+          ctx.translate(offsetX, offsetY);
+          ctx.rotate(-1 * Math.PI * 0.5 - self.player.angle);
+          ctx.drawImage(minimapCanvas, -1 * R * tileSize, -1 * R * tileSize, minimapCanvas.width, minimapCanvas.height);
+          ctx.rotate(Math.PI * 0.5 + self.player.angle);
+          ctx.translate(-1 * offsetX, -1 * offsetY);
         },
         "skybox": function(self) {
           const texSkybox = self.assets.textures.skybox.img;
@@ -936,8 +871,8 @@
               }
             }
 
-            // display mini-map
-            self.util.render.minimap.easy(
+            // render mini-map
+            self.util.render.minimap(
               self,
               self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
               self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
