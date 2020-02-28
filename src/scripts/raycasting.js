@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.25.2020
+  Last updated: 02.28.2020
 ================================================================
 */
 
@@ -503,8 +503,7 @@
                 {"size": 16, "color": "#FFFFFF"}
               );
             }
-            // render sprites immediately
-            self.util.render.sprites(self, {
+            self.util.render.sprites(self, { // render sprites immediately
               "skull": {
                 "img": self.assets.sprites.menu.skull.img,
                 "frames": [self.assets.sprites.menu.skull.frames[state]],
@@ -983,34 +982,34 @@
       },
       "movePlayer": function(self) {
         const memoPos = [self.player.x, self.player.y];
-        const vecPlayer = [
-          Math.sign(Math.cos(self.player.angle)), 
-          Math.sign(Math.sin(self.player.angle))
-        ];
-        const margin = {"x": 2 * self.STEP_SIZE, "y": 2 * self.STEP_SIZE};
+        const dir = {
+          "x": Math.cos(self.player.angle),
+          "y": Math.sin(self.player.angle)
+        };
+        const displacement = {"x": 0, "y": 0};
+        const marginToWall = {"x": 0, "y": 0};
+        const MARGIN = 0.5;
 
-        // update position in the map
+        // calculate displacement vector
         if (self.keyState.W & 1) {
-          self.player.x += Math.cos(self.player.angle) * self.STEP_SIZE;
-          self.player.y += Math.sin(self.player.angle) * self.STEP_SIZE;
-          margin.x *= vecPlayer[0];
-          margin.y *= vecPlayer[1];
+          displacement.x += dir.x;
+          displacement.y += dir.y;
         } if (self.keyState.S & 1) {
-          self.player.x -= Math.cos(self.player.angle) * self.STEP_SIZE;
-          self.player.y -= Math.sin(self.player.angle) * self.STEP_SIZE;
-          margin.x *= -1 * vecPlayer[0];
-          margin.y *= -1 * vecPlayer[1];
+          displacement.x -= dir.x;
+          displacement.y -= dir.y;
         } if (self.keyState.Q & 1) {
-          self.player.x += Math.sin(self.player.angle) * self.STEP_SIZE;
-          self.player.y -= Math.cos(self.player.angle) * self.STEP_SIZE;
-          margin.x *= vecPlayer[1];
-          margin.y *= -1 * vecPlayer[0];
+          displacement.x += dir.y;
+          displacement.y -= dir.x;
         } if (self.keyState.E & 1) {
-          self.player.x -= Math.sin(self.player.angle) * self.STEP_SIZE;
-          self.player.y += Math.cos(self.player.angle) * self.STEP_SIZE;
-          margin.x *= -1 * vecPlayer[1];
-          margin.y *= vecPlayer[0];
+          displacement.x -= dir.y;
+          displacement.y += dir.x;
         }
+        
+        // update player position & calculate wall margin
+        self.player.x += displacement.x * self.STEP_SIZE;
+        self.player.y += displacement.y * self.STEP_SIZE;
+        marginToWall.x = Math.sign(displacement.x) * MARGIN;
+        marginToWall.y = Math.sign(displacement.y) * MARGIN;
         
         // rotate player in-place
         if (self.keyState.D & 1) {
@@ -1027,19 +1026,27 @@
         }
 
         // collision detection
-        const stepX = {"x": Math.floor(self.player.x + margin.x), "y": Math.floor(memoPos[1])};
-        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + margin.y)};
+        const stepX = {"x": Math.floor(self.player.x + marginToWall.x), "y": Math.floor(memoPos[1])};
+        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + marginToWall.y)};
         const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
         const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
         if ((sampleX === "#") ||
             ((sampleX === "V" || sampleX === "H") &&
              (self.doors[self.util.coords2Key(stepX)].state > 0))) {
-          self.player.x = memoPos[0];
+          self.player.x = marginToWall.x > 0 // heading east
+              ? stepX.x - marginToWall.x
+              : marginToWall.x < 0           // heading west
+                ? stepX.x + 1 - marginToWall.x
+                : memoPos[0];                // not moving
         }
         if ((sampleY === "#") ||
             ((sampleY === "V" || sampleY === "H") &&
              (self.doors[self.util.coords2Key(stepY)].state > 0))) {
-          self.player.y = memoPos[1];
+          self.player.y = marginToWall.y > 0 // heading south
+              ? stepY.y - marginToWall.y
+              : marginToWall.y < 0           // heading north
+                ? stepY.y + 1 - marginToWall.y
+                : memoPos[1];                // not moving
         }
         const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
         const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
