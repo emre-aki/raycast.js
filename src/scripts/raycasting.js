@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 02.28.2020
+  Last updated: 04.07.2020
 ================================================================
 */
 
@@ -83,6 +83,7 @@
           "skull": {
             "img": new Image(),
             "name": "menu_skull.png",
+            "activeFrames": [], // initialized at title screen
             "frames": [
               {
                 "offset": 0,
@@ -151,12 +152,12 @@
             ]
           }
         },
-        "__animations": {
+        "animations": {
           "playerWeapon": {
             "shotgun": [] // initialized at setup
           }
         },
-        "__setup": function(self, keys) {
+        "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
             if (i === keys.length) {
               return resolve(self.assets.sprites);
@@ -195,7 +196,7 @@
           "buffer": [],
           "name":  "sbox.png"
         },
-        "__setup": function(self, keys) { // never heard of `Promise.all`???
+        "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
             if (i === keys.length) {
               return resolve(self.assets.textures);
@@ -223,7 +224,7 @@
           "name": "theme.mp3",
           "status": "INIT"
         },
-        "__setup": function(self, path) {
+        "setup": function(self, path) {
           const theme = path.split(".").reduce(function(acc, curr) {
             return acc[curr];
           }, self.assets.themes);
@@ -503,13 +504,8 @@
                 {"size": 16, "color": "#FFFFFF"}
               );
             }
-            self.util.render.sprites(self, { // render sprites immediately
-              "skull": {
-                "img": self.assets.sprites.menu.skull.img,
-                "frames": [self.assets.sprites.menu.skull.frames[state]],
-                "activeFrames": [0]
-              }
-            });
+            self.assets.sprites.menu.skull.activeFrames = [state];
+            self.util.render.globalSprite(self.assets.sprites.menu.skull);
           };
           return self.api.animation(
             self,
@@ -519,48 +515,40 @@
             onEnd
           );
         },
-        "sprites": function(self, sprites) {
-          for (const key in sprites) {
-            if (key[0] !== "_" && sprites.hasOwnProperty(key)) {
-              const spriteObj = sprites[key];
-              if (!!spriteObj.img) {
-                if (!!spriteObj.activeFrames) {
-                  const sprite = spriteObj.img;
-                  for (let index = 0; index < spriteObj.activeFrames.length; index += 1) {
-                    const frame = spriteObj.frames[spriteObj.activeFrames[index]];
-                    if (Array.isArray(frame.locOnScreen)) {
-                      for (let iLoc = 0; iLoc < frame.locOnScreen.length; iLoc += 1) {
-                        const locOnScreen = frame.locOnScreen[iLoc];
-                        ctx.drawImage(
-                          sprite,
-                          frame.offset,
-                          sprite.height - frame.height,
-                          frame.width,
-                          frame.height,
-                          locOnScreen.x,
-                          locOnScreen.y,
-                          frame.width,
-                          frame.height
-                        );
-                      }
-                    } else {
-                      ctx.drawImage(
-                        sprite,
-                        frame.offset,
-                        sprite.height - frame.height,
-                        frame.width,
-                        frame.height,
-                        frame.locOnScreen.x,
-                        frame.locOnScreen.y,
-                        frame.width,
-                        frame.height
-                      );
-                    }
-                  }
-                }
-              } else {
-                self.util.render.sprites(self, spriteObj);
+        "globalSprite": function(sprite) {
+          const img = sprite.img;
+          const frames = sprite.frames;
+          const activeFrames = sprite.activeFrames;
+          for (let iFrame = 0; iFrame < activeFrames.length; iFrame += 1) {
+            const frame = frames[activeFrames[iFrame]];
+            const locOnScreen = frame.locOnScreen;
+            if (Array.isArray(locOnScreen)) {
+              for (let iLoc = 0; iLoc < locOnScreen.length; iLoc += 1) {
+                const loc = locOnScreen[iLoc];
+                ctx.drawImage(
+                  img,
+                  frame.offset,
+                  img.height - frame.height,
+                  frame.width,
+                  frame.height,
+                  loc.x,
+                  loc.y,
+                  frame.width,
+                  frame.height
+                );
               }
+            } else {
+              ctx.drawImage(
+                img,
+                frame.offset,
+                img.height - frame.height,
+                frame.width,
+                frame.height,
+                locOnScreen.x,
+                locOnScreen.y,
+                frame.width,
+                frame.height
+              );
             }
           }
         },
@@ -918,13 +906,13 @@
         // async ops.
         return new Promise(function(resolve, reject) {
           // setup sprites
-          self.assets.sprites.__setup(self, [
+          self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull",
           ])
             .then(function(sprites) {
               sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
-              sprites.__animations.playerWeapon[self.player.weaponDrawn] = 
+              sprites.animations.playerWeapon[self.player.weaponDrawn] =
                 [1, 2, 0, 3, 4, 5, 4, 3, 0];
               sprites.menu.skull.frames = sprites.menu.skull.frames
                 .map(function(frame) {
@@ -949,14 +937,14 @@
 
             // setup textures
             .then(function() {
-              return self.assets.textures.__setup(self, [
+              return self.assets.textures.setup(self, [
                 "skybox",
               ]);
             })
 
             // setup theme music
             .then(function() {
-              return self.assets.themes.__setup(self, "main");
+              return self.assets.themes.setup(self, "main");
             })
 
             // resolve setup
@@ -1004,7 +992,7 @@
           displacement.x -= dir.y;
           displacement.y += dir.x;
         }
-        
+
         // update player position & calculate wall margin
         self.player.x += displacement.x * self.STEP_SIZE;
         self.player.y += displacement.y * self.STEP_SIZE;
@@ -1081,7 +1069,7 @@
           (self.keyState.SPC & 1) && 
           (self.player.anim.shooting.animating & 1) === 0
         ) {
-          const animationFrames = self.assets.sprites.__animations.playerWeapon[
+          const animationFrames = self.assets.sprites.animations.playerWeapon[
             self.player.weaponDrawn
           ];
           self.player.anim.shooting.animating = 1;
@@ -1182,9 +1170,9 @@
         self.util.render.frame.rasterized(self);
 
         self.exec.movePlayer(self);
-        self.exec.animateShooting(self);
         self.exec.interactWDoor(self);
-        self.util.render.sprites(self, self.assets.sprites);
+        self.exec.animateShooting(self);
+        self.util.render.globalSprite(self.assets.sprites.playerWeapons[self.player.weaponDrawn]);
 
         // TODO: add portals dynamically by reading from the map
         self.exec.addPortal(self, 10, 62.5, 9, 22.5, Math.PI * 0.5);
