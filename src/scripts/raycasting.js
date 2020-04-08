@@ -83,7 +83,8 @@
           "skull": {
             "img": new Image(),
             "name": "menu_skull.png",
-            "activeFrames": [], // initialized at title screen
+            "activeFrames": [0],
+            // `locOnScreen` initialized at setup
             "frames": [
               {
                 "offset": 0,
@@ -102,7 +103,7 @@
           "shotgun": {
             "img": new Image(),
             "name": "shotgun.png",
-            "activeFrames": [], // initialized at setup
+            "activeFrames": [0],
             "frames": [
               {
                 "width": 158,
@@ -153,7 +154,8 @@
           }
         },
         "animations": {
-          "playerWeapons": {"shotgun": []} // initialized at setup
+          "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
+          "menu": {"skull": [0, 1]}
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
@@ -489,11 +491,12 @@
           );
         },
         "titleScreen": function(self, onEnd) {
+          const animationFrames = self.assets.sprites.animations.menu.skull;
           const render = function(iFrame) {
-            const state = iFrame % 2;
+            const i = iFrame % animationFrames.length;
             ctx.fillStyle = "#000000";
             ctx.fillRect(0, 0, self.res[0], self.res[1]);
-            if (state === 1) {
+            if (i === 1) {
               self.util.print(
                 "Press any key to start",
                 (self.res[0] - 212) * 0.5,
@@ -501,12 +504,12 @@
                 {"size": 16, "color": "#FFFFFF"}
               );
             }
-            self.assets.sprites.menu.skull.activeFrames = [state];
+            self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
             self.util.render.globalSprite(self.assets.sprites.menu.skull);
           };
           return self.api.animation(
             self,
-            function(i) { render(i); },
+            function(iFrame) { render(iFrame); },
             375,
             undefined,
             onEnd
@@ -908,9 +911,6 @@
             "menu.skull"
           ])
             .then(function(sprites) {
-              sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
-              sprites.animations.playerWeapons[self.player.weaponDrawn] =
-                [1, 2, 0, 3, 4, 5, 4, 3, 0];
               sprites.menu.skull.frames = sprites.menu.skull.frames
                 .map(function(frame) {
                   return self.util.merge(
