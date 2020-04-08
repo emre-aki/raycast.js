@@ -280,7 +280,9 @@
         const uid = function(candidate) {
           return self.intervals[candidate]
             ? uid(candidate + "_1")
-            : candidate;
+            : candidate
+              ? candidate
+              : "(anonymous)";
         };
         let iFrame = 0;
         const id = uid(arguments.callee.caller.name);
