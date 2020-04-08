@@ -871,8 +871,11 @@
     },
     "exec": {
       "setup": function(self) {
-        const animLoading = self.util.render.loading(self);
-        animLoading.start();
+        const resolution = {};
+
+        // render loading screen
+        resolution.loading = self.util.render.loading(self);
+        resolution.loading.start();
 
         // setup game variables
         self.VIEW_DIST = (self.mCols * 0.5) / Math.tan(self.FOV * 0.5);
@@ -946,7 +949,7 @@
 
             // resolve setup
             .then(function() {
-              resolve({"loading": animLoading});
+              resolve(resolution);
             });
         });
       },
@@ -1186,7 +1189,10 @@
     },
     "start": function(resolution) {
       const self = this;
+
+      // quit loading animation
       resolution.loading.cancel();
+
       const animTitleScreen = self.util.render.titleScreen(self, function() {
         document.removeEventListener("keydown", runContainer);
       });
