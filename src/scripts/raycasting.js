@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 04.07.2020
+  Last updated: 04.08.2020
 ================================================================
 */
 
@@ -153,9 +153,7 @@
           }
         },
         "animations": {
-          "playerWeapon": {
-            "shotgun": [] // initialized at setup
-          }
+          "playerWeapons": {"shotgun": []} // initialized at setup
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
@@ -250,11 +248,10 @@
         }
       }
     },
-    "intervals": {},
+    "intervals": {}, // used to store global intervals
     "const": {
       "math": {
         // TODO: Make sin/cos && sqrt tables for optimization
-        "sqrt3": Math.sqrt(3),
       },
       "minimapColors": {
         "#": "#101010",
@@ -515,43 +512,6 @@
             onEnd
           );
         },
-        "globalSprite": function(sprite) {
-          const img = sprite.img;
-          const frames = sprite.frames;
-          const activeFrames = sprite.activeFrames;
-          for (let iFrame = 0; iFrame < activeFrames.length; iFrame += 1) {
-            const frame = frames[activeFrames[iFrame]];
-            const locOnScreen = frame.locOnScreen;
-            if (Array.isArray(locOnScreen)) {
-              for (let iLoc = 0; iLoc < locOnScreen.length; iLoc += 1) {
-                const loc = locOnScreen[iLoc];
-                ctx.drawImage(
-                  img,
-                  frame.offset,
-                  img.height - frame.height,
-                  frame.width,
-                  frame.height,
-                  loc.x,
-                  loc.y,
-                  frame.width,
-                  frame.height
-                );
-              }
-            } else {
-              ctx.drawImage(
-                img,
-                frame.offset,
-                img.height - frame.height,
-                frame.width,
-                frame.height,
-                locOnScreen.x,
-                locOnScreen.y,
-                frame.width,
-                frame.height
-              );
-            }
-          }
-        },
         "minimap": function(self, offsetX, offsetY) {
           const R = self.const.R_MINIMAP;
           const tileSize = self.const.TILE_SIZE_MINIMAP;
@@ -693,6 +653,43 @@
             self.DRAW_TILE_SIZE.x,
             hLine
           );
+        },
+        "globalSprite": function(sprite) {
+          const img = sprite.img;
+          const frames = sprite.frames;
+          const activeFrames = sprite.activeFrames;
+          for (let iFrame = 0; iFrame < activeFrames.length; iFrame += 1) {
+            const frame = frames[activeFrames[iFrame]];
+            const locOnScreen = frame.locOnScreen;
+            if (Array.isArray(locOnScreen)) {
+              for (let iLoc = 0; iLoc < locOnScreen.length; iLoc += 1) {
+                const loc = locOnScreen[iLoc];
+                ctx.drawImage(
+                  img,
+                  frame.offset,
+                  img.height - frame.height,
+                  frame.width,
+                  frame.height,
+                  loc.x,
+                  loc.y,
+                  frame.width,
+                  frame.height
+                );
+              }
+            } else {
+              ctx.drawImage(
+                img,
+                frame.offset,
+                img.height - frame.height,
+                frame.width,
+                frame.height,
+                locOnScreen.x,
+                locOnScreen.y,
+                frame.width,
+                frame.height
+              );
+            }
+          }
         },
         "frame": {
           "rasterized": function(self) {
@@ -908,11 +905,11 @@
           // setup sprites
           self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
-            "menu.skull",
+            "menu.skull"
           ])
             .then(function(sprites) {
               sprites.playerWeapons[self.player.weaponDrawn].activeFrames = [0];
-              sprites.animations.playerWeapon[self.player.weaponDrawn] =
+              sprites.animations.playerWeapons[self.player.weaponDrawn] =
                 [1, 2, 0, 3, 4, 5, 4, 3, 0];
               sprites.menu.skull.frames = sprites.menu.skull.frames
                 .map(function(frame) {
@@ -949,9 +946,7 @@
 
             // resolve setup
             .then(function() {
-              resolve({
-                "loading": animLoading
-              });
+              resolve({"loading": animLoading});
             });
         });
       },
@@ -1069,7 +1064,7 @@
           (self.keyState.SPC & 1) && 
           (self.player.anim.shooting.animating & 1) === 0
         ) {
-          const animationFrames = self.assets.sprites.animations.playerWeapon[
+          const animationFrames = self.assets.sprites.animations.playerWeapons[
             self.player.weaponDrawn
           ];
           self.player.anim.shooting.animating = 1;
