@@ -284,11 +284,8 @@
       "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
         // private domain
         const uid = function(candidate) {
-          return self.intervals[candidate]
-            ? uid(candidate + "_1")
-            : candidate
-              ? candidate
-              : "(anonymous)";
+          const cand = candidate || "(anonymous)";
+          return self.intervals[cand] ? uid(cand + "_1") : cand;
         };
         let iFrame = 0;
         const id = uid(arguments.callee.caller.name);
