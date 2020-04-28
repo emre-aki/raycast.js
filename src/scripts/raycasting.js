@@ -69,8 +69,8 @@
     "player": {
       "angle": window.__player__.ANGLE,
       "anim": {
-        "walking": {"index": 0, "reverse": 0, "apex": 10},
         "shooting": {"index": -1, "animating": 0},
+        "walking": {"index": 0, "reverse": 0, "apex": 20}
       },
       "tilt": 0,
       "x": window.__player__.X,
@@ -317,6 +317,15 @@
       },
     },
     "util": {
+      "getWalkingPlayerHeight": function(self) {
+        const walkingState = self.player.anim.walking;
+        const index = walkingState.index + (walkingState.reverse ? 1 : -1);
+        walkingState.reverse = index === -1 * walkingState.apex ? 1 : index === 0
+          ? 0
+          : walkingState.reverse;
+        walkingState.index = index;
+        return self.PLAYER_HEIGHT + index;
+      },
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
           (self.DRAW_DIST - self.VIEW_DIST) / (self.DRAW_DIST * self.mRows) -
@@ -1052,19 +1061,12 @@
       },
       "animateWalking": function(self, newPos, prevPos) {
         if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
-          self.player.z += (self.player.anim.walking.reverse & 1) ? -1 : 1;
-          self.player.anim.walking.index = self.player.z - self.PLAYER_HEIGHT;
-          self.player.anim.walking.reverse = self.player.anim.walking.index === self.player.anim.walking.apex
-                                            ? 1
-                                            : self.player.anim.walking.index === -1 * self.player.anim.walking.apex
-                                              ? 0
-                                              : self.player.anim.walking.reverse;
-          self.assets.background = self.util.render.background(self);
+          self.player.z = self.util.getWalkingPlayerHeight(self);
         } else {
           self.player.z = self.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
-          self.assets.background = self.util.render.background(self);
         }
+        self.assets.background = self.util.render.background(self);
       },
       "animateShooting": function(self) {
         if (
