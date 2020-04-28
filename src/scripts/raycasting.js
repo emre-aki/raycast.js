@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 04.08.2020
+  Last updated: 04.28.2020
 ================================================================
 */
 
@@ -30,7 +30,7 @@
   // minimap canvas used for rendering the bird's-eye view of the map
   const minimapCanvas = document.createElement("canvas");
   const minimapCanvasCtx = minimapCanvas.getContext("2d");
-    
+
   const fs = {
     "__dirname__": "./scripts/",
     "__file__": "./scripts/raycasting.js",
@@ -109,25 +109,25 @@
                 "width": 158,
                 "height": 120,
                 "offset": 0,
-                "locOnScreen": {"x": 0, "y": 0}
+                "locOnScreen": {"x": 0, "y": 0},       // initialized at setup
               },
               {
                 "width": 158,
                 "height": 146,
                 "offset": 158,
-                "locOnScreen": {"x": 0, "y": 0}
+                "locOnScreen": {"x": 0, "y": 0} // initialized at setup
               },
               {
                 "width": 158,
                 "height": 164,
                 "offset": 316,
-                "locOnScreen": {"x": 0, "y": 0}
+                "locOnScreen": {"x": 0, "y": 0} // initialized at setup
               },
               {
                 "width": 238,
                 "height": 242,
                 "offset": 474,
-                "locOnScreen": {"x": 0, "y": 0},
+                "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) {
                   return {"x": 0, "y": self.res[1] - frame.height}; 
                 }
@@ -136,7 +136,7 @@
                 "width": 174,
                 "height": 302,
                 "offset": 712,
-                "locOnScreen": {"x": 0, "y": 0},
+                "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) { 
                   return {"x": 0, "y": self.res[1] - frame.height}; 
                 }
@@ -145,7 +145,7 @@
                 "width": 226,
                 "height": 262,
                 "offset": 886,
-                "locOnScreen": {"x": 0, "y": 0},
+                "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) { 
                   return {"x": 0, "y": self.res[1] - frame.height}; 
                 }
@@ -718,6 +718,7 @@
               ray.slope   = ray.dir.y / ray.dir.x;
               const up    = ray.dir.y < 0 ? 1 : 0;
               const right = ray.dir.x > 0 ? 1 : 0;
+
               let distToWall;
 
               // vertical wall detection
@@ -910,7 +911,7 @@
 
         // async ops.
         return new Promise(function(resolve, reject) {
-          // setup sprites
+          // setup sprites // TODO: why strings? - why not objects themselves?
           self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull"
@@ -937,7 +938,7 @@
                 });
             })
 
-            // setup textures
+            // setup textures // TODO: why strings? - why not objects themselves?
             .then(function() {
               return self.assets.textures.setup(self, [
                 "skybox",
@@ -1013,7 +1014,7 @@
           self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
         }
 
-        // collision detection
+        // collision detection - START
         const stepX = {"x": Math.floor(self.player.x + marginToWall.x), "y": Math.floor(memoPos[1])};
         const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + marginToWall.y)};
         const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
@@ -1044,6 +1045,7 @@
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
+        // collision detection - END
 
         // walking animation
         self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos);
@@ -1085,7 +1087,7 @@
               ].activeFrames = [animationFrames[i]];
               self.player.anim.shooting.index = i; // needed to lighten up the floor
             },                                     // during shooting frames
-            120,
+            120, // TODO: read from weapon const
             function(i) { // shouldEnd
               return i === animationFrames.length;
             },
