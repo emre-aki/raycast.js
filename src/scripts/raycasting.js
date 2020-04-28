@@ -70,7 +70,8 @@
       "angle": window.__player__.ANGLE,
       "anim": {
         "shooting": {"index": -1, "animating": 0},
-        "walking": {"index": 0, "reverse": 0, "apex": 20}
+        "walking": {"index": 0, "reverse": 0, "apex": 20},
+        "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
       },
       "tilt": 0,
       "x": window.__player__.X,
@@ -110,6 +111,7 @@
                 "height": 120,
                 "offset": 0,
                 "locOnScreen": {"x": 0, "y": 0},       // initialized at setup
+                "defaultLocOnScreen": {"x": 0, "y": 0} // initialized at setup
               },
               {
                 "width": 158,
@@ -175,6 +177,10 @@
                   } else if (frame.locOnScreen) {
                     frame.locOnScreen.x = (self.res[0] - frame.width) * 0.5;
                     frame.locOnScreen.y = self.res[1] - frame.height * 0.75;
+                  }
+                  if (frame.locOnScreen && frame.defaultLocOnScreen) {
+                    frame.defaultLocOnScreen.x = frame.locOnScreen.x;
+                    frame.defaultLocOnScreen.y = frame.locOnScreen.y;
                   }
                 });
               }
@@ -325,6 +331,16 @@
           : walkingState.reverse;
         walkingState.index = index;
         return self.PLAYER_HEIGHT + index;
+      },
+      "getWeaponBob": function(self) {
+        const bobState = self.player.anim.weaponBob;
+        const x = bobState.index + (bobState.reverse ? -1 : 1);
+        const y = -1 * x * x;
+        bobState.reverse = x === bobState.apex ? 1 : x === -1 * bobState.apex
+          ? 0
+          : bobState.reverse;
+        bobState.index = x;
+        return {"x": 4 * x, "y": y};
       },
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
@@ -1060,11 +1076,24 @@
         self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos);
       },
       "animateWalking": function(self, newPos, prevPos) {
+        const defaultWeaponFrame = self.assets.sprites.playerWeapons[self.player.weaponDrawn].frames[0];
+        const defaultLocOnScreen = defaultWeaponFrame.defaultLocOnScreen;
         if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
+          // animate head tilt
           self.player.z = self.util.getWalkingPlayerHeight(self);
+          
+          // animate weapon bob
+          if (self.player.anim.shooting.index < 0) {
+            const bob = self.util.getWeaponBob(self);
+            defaultWeaponFrame.locOnScreen.x = defaultLocOnScreen.x + bob.x;
+            defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y + bob.y;
+          }
         } else {
           self.player.z = self.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
+          defaultWeaponFrame.locOnScreen.x = defaultLocOnScreen.x;
+          defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y;
+          self.player.anim.weaponBob = {"index": 0, "reverse": 0, "apex": self.player.anim.weaponBob.apex};
         }
         self.assets.background = self.util.render.background(self);
       },
