@@ -62,6 +62,7 @@ You can check out the live demo [here](https://raycasting-demo.herokuapp.com)!
 - Skybox rendering
 - Shading with distance
 - Doors
+- Mini-map display
 
 ### TODOs
 - Texture-mapping

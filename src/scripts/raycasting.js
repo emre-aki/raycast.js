@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 04.28.2020
+  Last updated: 05.20.2020
 ================================================================
 */
 
@@ -273,6 +273,7 @@
         "SHOTGUN": "shotgun"
       },
       "MAX_TILT": 150,
+      "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
       "DRAW_DIST": 90,
@@ -1102,7 +1103,10 @@
           const animationFrames = self.assets.sprites.animations.playerWeapons[
             self.player.weaponDrawn
           ];
+
+          // prevent launching simultaneous instances of the shooting animation
           self.player.anim.shooting.animating = 1;
+          
           self.api.animation(
             self,
             function(i) { // onFrame
@@ -1115,7 +1119,7 @@
               ].activeFrames = [animationFrames[i]];
               self.player.anim.shooting.index = i; // needed to lighten up the floor
             },                                     // during shooting frames
-            120, // TODO: read from weapon const
+            self.const.SHOOTING_ANIM_INTERVAL[self.player.weaponDrawn],
             function(i) { // shouldEnd
               return i === animationFrames.length;
             },
