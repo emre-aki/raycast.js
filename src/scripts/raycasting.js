@@ -18,7 +18,7 @@
 
     https://youtu.be/xW8skO7MFYw
 
-  Last updated: 05.20.2020
+  Last updated: 05.26.2020
 ================================================================
 */
 
@@ -1042,29 +1042,37 @@
         const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + marginToWall.y)};
         const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
         const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
-        if ((sampleX === "#") ||
-            ((sampleX === "V" || sampleX === "H") &&
-             (self.doors[self.util.coords2Key(stepX)].state > 0))) {
+
+        // if moving horizontally causes collision with a solid wall/semi-open door/diagonal wall
+        if (
+          sampleX === "#" ||
+          (sampleX === "V" && 
+            self.doors[self.util.coords2Key(stepX)].state > 0)
+        ) {
           self.player.x = marginToWall.x > 0 // heading east
-              ? stepX.x - marginToWall.x
-              : marginToWall.x < 0           // heading west
-                ? stepX.x + 1 - marginToWall.x
-                : memoPos[0];                // not moving
+            ? stepX.x - marginToWall.x
+            : marginToWall.x < 0             // heading west
+              ? stepX.x + 1 - marginToWall.x
+              : memoPos[0];                  // not moving
         }
-        if ((sampleY === "#") ||
-            ((sampleY === "V" || sampleY === "H") &&
-             (self.doors[self.util.coords2Key(stepY)].state > 0))) {
+
+        // if moving vertically causes collision with a solid wall/semi-open door/diagonal wall
+        if (
+          sampleY === "#" ||
+          (sampleY === "H" &&
+            self.doors[self.util.coords2Key(stepY)].state > 0)
+        ) {
           self.player.y = marginToWall.y > 0 // heading south
-              ? stepY.y - marginToWall.y
-              : marginToWall.y < 0           // heading north
-                ? stepY.y + 1 - marginToWall.y
-                : memoPos[1];                // not moving
+            ? stepY.y - marginToWall.y
+            : marginToWall.y < 0             // heading north
+              ? stepY.y + 1 - marginToWall.y
+              : memoPos[1];                  // not moving
         }
+
+        // prevent phasing through corners
         const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
         const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
-        if ((sampleXY === "#") ||
-            ((sampleXY === "V" || sampleXY === "H") &&
-             (self.doors[self.util.coords2Key(stepXY)].state > 0))) {
+        if (sampleXY === "#") {
           self.player.x = memoPos[0];
           self.player.y = memoPos[1];
         }
@@ -1106,7 +1114,7 @@
 
           // prevent launching simultaneous instances of the shooting animation
           self.player.anim.shooting.animating = 1;
-          
+
           self.api.animation(
             self,
             function(i) { // onFrame
