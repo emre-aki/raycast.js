@@ -14,34 +14,20 @@ This little project was inspired by a video on YouTube posted by a fellow season
 
 ### Setting up
 #### Requirements
-- Python (preferably 3.7)
-- `pip`
-- `virtualenv`
+- Node.js
+- `ejs`
+- `express`
 
-> Because the dev server is written in Python using Flask, I recommend setting the project up in a `virtualenv` to avoid fiddling around with the system Python.
-
-Before anything, create a brand-new virtualenv to work on.
+After cloning the repository, navigate to the root folder and install the dependencies using `npm`.
 
 ```bash
-$ virtualenv <name_of_the_virtual_env> -p python3.7
+$ npm install
 ```
 
-`cd` into the virtualenv you've just created and run the command below to activate it.
+Once all the dependencies are installed, you can start up an Express development server with:
 
 ```bash
-$ source bin/activate
-```
-
-After cloning the repository inside your virtualenv, navigate to the root folder and install the dependencies using `pip`.
-
-```bash
-$ pip install -r requirements.txt
-```
-
-Once all the dependencies are installed, you can start up a Flask development server with:
-
-```bash
-$ python3.7 src/serve.py
+$ npm run start
 ```
 
 ### Live Demo

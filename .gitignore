@@ -1,20 +1,12 @@
 # directories
-bin/*
-include/*
-lib/*
+node_modules/*
 screenshots/*
-src/assets/sprites/*/*
-src/assets/textures/*/*
 
 # dotfiles
 .DS_Store
 .Python
-
-# editor files
 *.sublime-workspace
-
-# pip
-pip-selfcheck.json
 
 # misc.
 *.zip
+Procfile
