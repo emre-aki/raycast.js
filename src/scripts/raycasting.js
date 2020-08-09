@@ -1,52 +1,70 @@
-/*
-================================================================
-                    Raycasting on Canvas
-                              by
-                       Emre Akı, 2018.
-
-    This is a simple implementation of the once-popular 3-D
-  rendering technique known as "ray-casting" which was featured
-  in the video game Wolfenstein 3D.
-
-    All of the rendering is carried out within a single 800x600
-  canvas for the sake of simplicity at ~60 frames per second.
-
-    This little project was inspired by a video on YouTube posted
-  by a fellow seasoned programmer who goes by the name 'javidx9.'
-  You can follow the link below to refer to his tutorial of
-  ray-casting done entirely on a command-line window!
-
-    https://youtu.be/xW8skO7MFYw
-
-  Last updated: 05.26.2020
-================================================================
-*/
+/*******************************************************************
+ *                       Raycasting.js                             *
+ *                            by                                   *
+ *                      Emre Akı, 2018.                            *
+ *                                                                 *
+ *   This is an implementation of the once-popular 3-D rendering   *
+ * technique known as "ray-casting" which was famously featured in *
+ * 1991's popular video game hit Wolfenstein 3D.                   *
+ *                                                                 *
+ *   All of the rendering is carried out within a single 512x384   *
+ * canvas at ~24 frames per second. The rendering at its core is   *
+ * basically comprised of vertical slices of wall textures and     *
+ * per-pixel rendered ceiling and floor textures--all of which at  *
+ * constant Z. An offscreen frame buffer is utilized to optimize   *
+ * per-pixel rendering.                                            *
+ *                                                                 *
+ *   This little project was inspired by a video on YouTube posted *
+ * by a fellow seasoned programmer who goes by the name 'javidx9.' *
+ * You can follow the link below to refer to his tutorial of       *
+ * ray-casting done entirely on a command-line window!             *
+ *                                                                 *
+ *   https://youtu.be/xW8skO7MFYw                                  *
+ *                                                                 *
+ *   Features include:                                             *
+ *     - Texture-mapped walls, floors & ceilings                   *
+ *     - Alpha blending                                            *
+ *     - Panoramic skybox                                          *
+ *     - Shading with distance                                     *
+ *     - Doors                                                     *
+ *     - Diagonal walls                                            *
+ *     - Ability to look up & down                                 *
+ *     - Walking animation & weapon bobbing                        *
+ *     - Mini-map display                                          *
+ *                                                                 *
+ * Last updated: 08.05.2020                                        *
+ *******************************************************************/
 
 (function() {
   // game canvas
   const canvas = document.getElementById("canvas");
   const ctx = canvas.getContext("2d");
 
+  // offscreen canvas used for buffering the frame
+  const offscreenBuffer = document.createElement("canvas");
+  const offscreenBufferCtx = offscreenBuffer.getContext("2d");
+  let offscreenBufferW, offscreenBufferH, offscreenBufferData; // initialized at setup
+
   // minimap canvas used for rendering the bird's-eye view of the map
   const minimapCanvas = document.createElement("canvas");
   const minimapCanvasCtx = minimapCanvas.getContext("2d");
 
   const fs = {
-    "__dirname__": "./scripts/",
-    "__file__": "./scripts/raycasting.js",
-    "__sprites__": "./assets/sprites/",
-    "__textures__": "./assets/textures/",
-    "__audio__": "./assets/audio/"
+    "__dirname__": "/scripts/",
+    "__file__": "/scripts/raycasting.js",
+    "__sprites__": "/assets/sprites/",
+    "__textures__": "/assets/textures/",
+    "__audio__": "/assets/audio/"
   };
   const game = {
-    "res": [800, 600],
-    "FPS": 60,
-    "FOV": Math.PI / 3,
-    "MAP_TILE_SIZE": 600,
-    "DRAW_TILE_SIZE": {}, // initialized in setup
+    "res": [512, 384],
+    "FPS": 24,
+    "FOV": Math.PI / 3, // < Math.PI
+    "MAP_TILE_SIZE": 192, // TODO: move to self.const
+    "DRAW_TILE_SIZE": {}, // initialized in setup // TODO: move to self.const
     "DRAW_DIST": -1,      // initialized in setup
-    "STEP_SIZE": 0.2,
-    "PLAYER_HEIGHT": 0,   // initialized in setup
+    "STEP_SIZE": 0.2,     // TODO: move to self.const
+    "PLAYER_HEIGHT": 0,   // initialized in setup // TODO: move to self.const
     "keyState": {
       "W": 0,
       "A": 0,
@@ -60,17 +78,17 @@
       "ARW_DOWN": 0
     },
     "map": window.__map__.MAP,
-    "mRows": 600,
-    "mCols": 800,
+    "mapLegend": window.__map__.LEGEND,
+    "mRows": 192,
+    "mCols": 256,
     "nRows": window.__map__.N_ROWS,
     "nCols": window.__map__.N_COLS,
-    "offsetLinebr": window.__map__.OFFSET_LINEBR,
     "doors": {},
     "player": {
       "angle": window.__player__.ANGLE,
       "anim": {
         "shooting": {"index": -1, "animating": 0},
-        "walking": {"index": 0, "reverse": 0, "apex": 20},
+        "walking": {"index": 0, "reverse": 0, "apex": 8},
         "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
       },
       "tilt": 0,
@@ -184,6 +202,12 @@
                   }
                 });
               }
+              if (Array.isArray(sprite.buffer)) {
+                sprite.buffer = self.util.bufferify(sprite.img);
+                sprite.width = sprite.img.width;
+                sprite.height = sprite.img.height;
+                delete sprite.img;
+              }
               loadSprite(i + 1, resolve, reject);
             };
             sprite.img.onerror = function() {
@@ -197,10 +221,131 @@
         }
       },
       "textures": {
-        "skybox": {
-          "img": new Image(),
-          "buffer": [],
-          "name":  "sbox.png"
+        "floor": {
+          "stone": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "floor_brownstone.png"
+          },
+          "teleporter": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "portal.png"
+          },
+          "manhole": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "manhole.png"
+          }
+        },
+        "ceil": {
+          "skybox": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name":  "sbox.png"
+          },
+          "lights": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "ceil_lights.png"
+          }
+        },
+        "wall": {
+          "default": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wall_mossy.png",
+            "vertical": {
+              "width": 128,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 128,
+              "height": 128,
+              "offset": 128
+            }
+          },
+          "alt": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wall_wood.png",
+            "vertical": {
+              "width": 64,
+              "height": 64,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 64,
+              "offset": 64
+            }
+          },
+          "alt_1": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wall_tech.png",
+            "vertical": {
+              "width": 128,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 128,
+              "height": 128,
+              "offset": 128
+            }
+          },
+          "door": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "door.png",
+            "vertical": {
+              "width": 64,
+              "height": 64,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 64,
+              "offset": 64
+            }
+          },
+          "doorDock": {
+            "img": new Image(),
+            "buffer": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "door_D.png",
+            "vertical": {
+              "width": 64,
+              "height": 64,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 64,
+              "offset": 64
+            }
+          }
         },
         "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
@@ -212,6 +357,9 @@
             }, self.assets.textures);
             texture.img.onload = function() {
               texture.buffer = self.util.bufferify(texture.img);
+              texture.width = texture.img.width;
+              texture.height = texture.img.height;
+              delete texture.img;
               loadTexture(i + 1, resolve, reject);
             };
             texture.img.onerror = function() {
@@ -261,23 +409,46 @@
       "math": {
         // TODO: Make sin/cos && sqrt tables for optimization
       },
-      "minimapColors": {
-        "#": "#101010",
-        "P": "#EB4034",
-        "V": "#264E73",
-        "H": "#264E73",
-        ".": "#55555599",
-        "-": "#55555599"
+      "TYPE_TILES": {
+        "FREE": 0,
+        "WALL": 1,
+        "WALL_DIAG": 2,
+        "V_DOOR": 3,
+        "H_DOOR": 4,
+        "TELEPORTER": 5,
+        "WORLD_OBJECT": 6
       },
-      "WEAPONS": {
-        "SHOTGUN": "shotgun"
+      "OFFSET_DIAG_WALLS": [
+        [[1, 0], [0, 1]], // #/
+        [[1, 1], [0, 0]], // \#
+        [[0, 1], [1, 0]], // /#
+        [[0, 0], [1, 1]]  // #\
+      ],
+      "MINIMAP_COLORS": [
+        "#55555599", // 0: FREE
+        "#101010",   // 1: WALL
+        "#FFFFFF",   // 2: WALL_DIAG
+        "#264E73",   // 3: V_DOOR
+        "#264E73",   // 4: H_DOOR
+        "#EB4034",   // 5: TELEPORTER
+        "#55555599", // 6: WORLD_OBJECT
+      ],
+      "LEGEND_TEXTURES": {
+        "WALL": ["default", "door", "doorDock", "alt", "alt_1"],
+        "CEIL": ["skybox", "lights"],
+        "FLOOR": ["stone", "teleporter", "manhole"]
       },
-      "MAX_TILT": 150,
+      "LEGEND_WORLD_OBJECTS": ["spDude0"],
+      "WEAPONS": {"SHOTGUN": "shotgun"},
+      "MAX_TILT": 80,
+      "FLOOR_CAST": 1,
       "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
-      "DRAW_DIST": 90,
-      "RATIO_DRAW_DIST_TO_BACKGROUND": 1, // 5 * 0.25
+      "MARGIN_TO_WALL": 0.5,
+      "DRAW_DIST": 15,
+      "H_MAX_WORLD": 192,
+      "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
     },
@@ -319,6 +490,14 @@
           }
         };
       },
+      "memo": function(data) {
+        let _data = data;
+
+        return {
+          "get": function() { return _data; },
+          "reset": function(data) { _data = data; }
+        };
+      }
     },
     "util": {
       "getWalkingPlayerHeight": function(self) {
@@ -342,7 +521,7 @@
       },
       "getVerticalShift": function(self) {
         return self.player.anim.walking.index *
-          (self.DRAW_DIST - self.VIEW_DIST) / (self.DRAW_DIST * self.mRows) -
+          (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows) +
           self.player.tilt / self.mRows;
       },
       "rad2Deg": function(rad) {
@@ -350,10 +529,34 @@
         const radToDeg = 57.2958;
         return (((rad + rad360) % rad360) * radToDeg + 360) % 360;
       },
+      "toFixed": function(nDigits) {
+        const cNDigits = Math.pow(10, nDigits);
+        return Math.round(this * cNDigits) / cNDigits;
+      },
       "eucDist": function(a, b, pseudo, multiplier) {
         multiplier = multiplier ? multiplier : 1;
         const pseudoDist = ((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)) * multiplier * multiplier;
         return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
+      },
+      "getIntersect": function(l0x0, l0y0, l0x1, l0y1, l1x0, l1y0, l1x1, l1y1) {
+        const deltaX0 = (l0x1 - l0x0).toFixedNum(5), deltaY0 = l0y1 - l0y0;
+        const deltaX1 = (l1x1 - l1x0).toFixedNum(5), deltaY1 = l1y1 - l1y0;
+        const m0 = deltaY0 / deltaX0, m1 = deltaY1 / deltaX1;
+
+        // early return if lines are parallel
+        if (m0 === m1) { return; }
+
+        if (deltaX0 === 0) {
+          const n1 = l1y1 - m1 * l1x1;
+          return [l0x1, m1 * l0x1 + n1];
+        } else if (deltaX1 === 0) {
+          const n0 = l0y1 - m0 * l0x1;
+          return [l1x1, m0 * l1x1 + n0];
+        } else {
+          const n0 = l0y1 - m0 * l0x1, n1 = l1y1 - m1 * l1x1;
+          const xI = (n1 - n0) / (m0 - m1);
+          return [xI, m0 * xI + n0];
+        }
       },
       "bufferify": function(img) {
         const buffCanvas = document.createElement("canvas");
@@ -439,8 +642,11 @@
         const doors = {};
         for (let y = 0; y < self.nRows; y += 1) {
           for (let x = 0; x < self.nCols; x += 1) {
-            const sample = self.map[(self.nCols + self.offsetLinebr) * y + x];
-            if (sample === "H" || sample === "V") {
+            const sample = self.map[self.nCols * y + x][self.mapLegend.TYPE_TILE];
+            if (
+              sample === self.const.TYPE_TILES.V_DOOR ||
+              sample === self.const.TYPE_TILES.H_DOOR
+            ) {
               doors[self.util.coords2Key(x, y)] = {
                 "loc": {"x": x, "y": y},
                 "state": 10, // 0: open, 10: closed
@@ -476,6 +682,91 @@
         ctx.stroke();
         ctx.fillStyle = color;
         ctx.fill();
+      },
+      "setOffscreenBufferDimensions": function(width, height) {
+        offscreenBufferW = width;
+        offscreenBufferH = height;
+        offscreenBuffer.width = offscreenBufferW;
+        offscreenBuffer.height = offscreenBufferH;
+        offscreenBufferData = offscreenBufferCtx
+          .getImageData(0, 0, offscreenBufferW, offscreenBufferH);
+      },
+      "clearRect": function(x, y, w, h) {
+        offscreenBufferCtx.clearRect(x, y, w, h);
+        offscreenBufferData = offscreenBufferCtx.getImageData(0, 0, offscreenBufferW, offscreenBufferH);
+      },
+      "fillRect": function(x, y, w, h, r, g, b, a) {
+        const X = Math.floor(x), Y = Math.floor(y);
+        const W = Math.ceil(w), H = Math.ceil(h);
+        const startX = Math.max(X, 0), startY = Math.max(Y, 0);
+        const endX = Math.min(X + W, offscreenBufferW), endY = Math.min(Y + H, offscreenBufferH);
+        for (let i = startX; i < endX; i += 1) {
+          for (let j = startY; j < endY; j += 1) {
+            const offPix   = 4 * (offscreenBufferW * j + i);
+            const pixRed   = offscreenBufferData.data[offPix];
+            const pixGreen = offscreenBufferData.data[offPix + 1];
+            const pixBlue  = offscreenBufferData.data[offPix + 2];
+            const pixAlpha = offscreenBufferData.data[offPix + 3] || 1;
+            const rBlend   = (a * 255) / pixAlpha;
+            const newRed   = (r * 255) * rBlend + pixRed * (1 - rBlend);
+            const newGreen = (g * 255) * rBlend + pixGreen * (1 - rBlend);
+            const newBlue  = (b * 255) * rBlend + pixBlue * (1 - rBlend);
+            offscreenBufferData.data[offPix] = newRed;
+            offscreenBufferData.data[offPix + 1] = newGreen;
+            offscreenBufferData.data[offPix + 2] = newBlue;
+            offscreenBufferData.data[offPix + 3] = 255;
+          }
+        }
+      },
+      "drawImage": function(imgData, sx, sy, sw, sh, dx, dy, dw, dh, options) {
+        const imgBuffer = imgData.buffer, imgWidth = imgData.width, imgHeight = imgData.height;
+        const SX = Math.floor(sx), SY = Math.floor(sy), SW = Math.ceil(sw), SH = Math.ceil(sh);
+        const DX = Math.floor(dx), DY = Math.floor(dy), DW = Math.ceil(dw), DH = Math.ceil(dh);
+        const shade = options && options.shade ? options.shade : 0;
+        const opacity = options && options.alpha ? options.alpha : 1;
+        const scaleX = DW / SW, scaleY = DH / SH;
+        let sX = SX, dX = DX, drawCol = scaleX;
+
+        // early return if destination is out of canvas bounds
+        if (DX + DW <= 0 || DY + DH <= 0) { return; }
+
+        while (sX < SX + SW && sX < imgWidth && dX < DX + DW && dX < offscreenBufferW) {
+          while (drawCol > 0 && dX < DX + DW && dX < offscreenBufferW) {
+            let sY = SY, dY = DY, drawRow = scaleY;
+            while (sY < SY + SH && sY < imgHeight && dY < DY + DH && dY < offscreenBufferH) {
+              while (drawRow > 0 && dY < DY + DH && dY < offscreenBufferH) {
+                if (sX >= 0 && sY >= 0 && dX >= 0 && dY >= 0) {
+                  const offIm    = 4 * (imgWidth * sY + sX);
+                  const offBuff  = 4 * (offscreenBufferW * dY + dX);
+                  const iRed     = imgBuffer[offIm];
+                  const iGreen   = imgBuffer[offIm + 1];
+                  const iBlue    = imgBuffer[offIm + 2];
+                  const iAlpha   = imgBuffer[offIm + 3];
+                  const bRed     = offscreenBufferData.data[offBuff];
+                  const bGreen   = offscreenBufferData.data[offBuff + 1];
+                  const bBlue    = offscreenBufferData.data[offBuff + 2];
+                  const bAlpha   = offscreenBufferData.data[offBuff + 3] || 255;
+                  const rBlend   = iAlpha * opacity / bAlpha;
+                  const newRed   = iRed * (1 - shade) * rBlend + bRed * (1 - rBlend);
+                  const newGreen = iGreen * (1 - shade) * rBlend + bGreen * (1 - rBlend);
+                  const newBlue  = iBlue * (1 - shade) * rBlend + bBlue * (1 - rBlend);
+                  offscreenBufferData.data[offBuff] = newRed;
+                  offscreenBufferData.data[offBuff + 1] = newGreen;
+                  offscreenBufferData.data[offBuff + 2] = newBlue;
+                  offscreenBufferData.data[offBuff + 3] = 255;
+                }
+                drawRow -= 1;
+                dY += 1;
+              }
+              drawRow += scaleY;
+              sY += 1;
+            }
+            drawCol -= 1;
+            dX += 1;
+          }
+          drawCol += scaleX;
+          sX += 1;
+        }
       },
       "print": function(text, x, y, options) {
         options = options || {};
@@ -564,10 +855,10 @@
                 sampleMap.x >= 0 && sampleMap.x < self.nCols &&
                 sampleMap.y >= 0 && sampleMap.y < self.nRows
               ) {
-                const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
-                minimapCanvasCtx.fillStyle = self.const.minimapColors[sample];
+                const sample = self.map[self.nCols * sampleMap.y + sampleMap.x][self.mapLegend.TYPE_TILE];
+                minimapCanvasCtx.fillStyle = self.const.MINIMAP_COLORS[sample];
               } else { // render map out-of-bounds
-                minimapCanvasCtx.fillStyle = self.const.minimapColors["#"];
+                minimapCanvasCtx.fillStyle = self.const.MINIMAP_COLORS[1];
               }
               minimapCanvasCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
             }
@@ -592,94 +883,34 @@
           ctx.rotate(Math.PI * 0.5 + self.player.angle);
           ctx.translate(-1 * offsetX, -1 * offsetY);
         },
-        "skybox": function(self) {
-          const texSkybox = self.assets.textures.skybox.img;
-          const pps = texSkybox.width / 90;
-          const verticalShift = self.util.getVerticalShift(self);
-          const offsetTex = {
-            "x": Math.floor(
-              self.util.rad2Deg(self.player.angle - self.FOV * 0.5) * pps %
-              texSkybox.width 
-            ),
-            "y": Math.floor(
-              self.DRAW_TILE_SIZE.y * 
-              (self.player.anim.walking.apex + verticalShift * self.mRows)
-            )
-          };
-          offsetTex.y = offsetTex.y < 0 ? 0 : offsetTex.y;
-          const hSkybox = Math.floor(self.res[1] * (0.5 - verticalShift));
-
-          // initial draw
-          let offsetScreenX = 0;
-          ctx.drawImage(
-            texSkybox,
-            offsetTex.x,
-            offsetTex.y,
-            self.res[0] - offsetScreenX,
-            texSkybox.height - offsetTex.y,
-            offsetScreenX,
-            0,
-            self.res[0] - offsetScreenX,
-            hSkybox
-          );
-          offsetScreenX += texSkybox.width - offsetTex.x;
-
-          // complementary draws
-          while (offsetScreenX < self.res[0]) {
-            ctx.drawImage(
-              texSkybox,
-              0,
-              offsetTex.y,
-              self.res[0] - offsetScreenX,
-              texSkybox.height - offsetTex.y,
-              offsetScreenX,
-              0,
-              self.res[0] - offsetScreenX,
-              hSkybox
-            );            
-            offsetScreenX += texSkybox.width;
-          }
-        },
-        "background": function(self) {
-          const mapTileUnitSize = self.mRows;
-          const centerVertical = 0.5 - self.util.getVerticalShift(self);
-          const interval = self.const.RATIO_DRAW_DIST_TO_BACKGROUND * mapTileUnitSize / self.DRAW_DIST;
-          const gradient = ctx.createLinearGradient(0, 0, 0, self.res[1]);
-          gradient.addColorStop(0, "#00000000");
-          gradient.addColorStop(centerVertical - interval, "#000000");
-          gradient.addColorStop(centerVertical, "#000000");
-          gradient.addColorStop(centerVertical + interval, "#000000");
-          gradient.addColorStop(1, "#333333");
-          return gradient;
-        },
         "wallBounds": function(self, iCol, hCeil, hWall, hLine) {
-          ctx.fillStyle = "red";
-          ctx.fillRect(
+          self.util.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            Math.floor(hCeil * self.DRAW_TILE_SIZE.y),
+            hCeil * self.DRAW_TILE_SIZE.y,
             self.DRAW_TILE_SIZE.x,
-            hLine
+            hLine,
+            1, 0, 0, 1
           );
-          ctx.fillStyle = "blue";
-          ctx.fillRect(
+          self.util.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            Math.floor(self.res[1] * (0.5 - self.util.getVerticalShift(self))),
+            self.res[1] * (0.5 + self.util.getVerticalShift(self)),
             self.DRAW_TILE_SIZE.x,
-            hLine
+            hLine,
+            0, 0, 1, 1
           );
-          ctx.fillStyle = "yellow";
-          ctx.fillRect(
+          self.util.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            Math.floor((hCeil + hWall) * self.DRAW_TILE_SIZE.y),
+            (hCeil + hWall) * self.DRAW_TILE_SIZE.y,
             self.DRAW_TILE_SIZE.x,
-            hLine
+            hLine,
+            1, 1, 0, 1
           );
-          ctx.fillStyle = "magenta";
-          ctx.fillRect(
+          self.util.fillRect(
             self.DRAW_TILE_SIZE.x * iCol,
-            Math.floor(self.DRAW_TILE_SIZE.y * (hCeil + hWall * 0.5)),
+            self.DRAW_TILE_SIZE.y * (hCeil + hWall * 0.5),
             self.DRAW_TILE_SIZE.x,
-            hLine
+            hLine,
+            1, 0, 1, 1
           );
         },
         "globalSprite": function(sprite) {
@@ -721,10 +952,10 @@
         },
         "frame": {
           "rasterized": function(self) {
-            // draw background
-            self.util.render.skybox(self);
-            ctx.fillStyle = self.assets.background;
-            ctx.fillRect(0, 0, self.res[0], self.res[1]);
+            // reset offscreen buffer
+            self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
+
+            const verticalShift = self.util.getVerticalShift(self);
 
             // raycasting
             const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
@@ -743,6 +974,8 @@
               const right = ray.dir.x > 0 ? 1 : 0;
 
               let distToWall;
+              let typeWall   = self.assets.textures.wall.default;
+              let offsetLeft = 0;
 
               // vertical wall detection
               const stepV  = {};
@@ -761,28 +994,75 @@
                   "x": Math.floor(traceV.x + ((right & 1) ? 0 : -1)),
                   "y": Math.floor(traceV.y)
                 };
-                const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
+                const sample = self.map[self.nCols * sampleMap.y + sampleMap.x];
+
+                // max. draw distance exceeded, break out of loop
                 if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitV = 1;
                   distToWall = sqrDrawDist;
-                } else if (sample === "#" || sample === "V") {
+                } 
+                
+                // did we hit some SOLID obstacle?
+                // like walls, doors, or diagonal walls
+                else if (
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG ||
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
+                ) {
                   const hitKey = self.util.coords2Key(sampleMap);
-                  const pHit = {
-                    "x": sample === "V"
-                      ? sampleMap.x + 0.5 // TODO: make 0.5 more dynamic
-                      : traceV.x,
-                    "y": traceV.y +
-                      (sample === "V"
-                        ? (sampleMap.x + 0.5 - traceV.x) * ray.slope // TODO: make 0.5 more dynamic
-                        : 0)
-                  };
-                  if (sample === "#" || sample === "V" && sampleMap.y + (self.doors[hitKey].state * 0.1) > pHit.y) {
+                  const pHit = {"x": traceV.x, "y": traceV.y};
+
+                  // calculate point hit on the map
+                  if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) {
+                    pHit.x = sampleMap.x + 0.5; // TODO: make `0.5` here more dynamic
+                    pHit.y += (sampleMap.x + 0.5 - traceV.x) * ray.slope;
+                  } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
+                    const pIntersect = self.util.getIntersect(
+                      self.player.x,
+                      self.player.y,
+                      traceV.x,
+                      traceV.y,
+                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][0],
+                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
+                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
+                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
+                    );
+                    pHit.x = pIntersect[0];
+                    pHit.y = pIntersect[1];
+                  }
+
+                  // collision test - whether or not we hit a wall (or door)
+                  if (
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG &&
+                    pHit.x >= sampleMap.x && pHit.x < sampleMap.x + 1 ||
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR &&
+                    sampleMap.y + self.doors[hitKey].state * 0.1 > pHit.y &&
+                    pHit.y < sampleMap.y + 1
+                  ) {
+                    const hitEast = pHit.x > sampleMap.x;
                     currentHit = "vertical";
                     hitV = 1;
-                    distToWall = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
-                    distToWall = distToWall > sqrDrawDist ? sqrDrawDist : distToWall;
+                    distToWall = Math.min(self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE), sqrDrawDist);
+
+                    // determine the type of the texture to draw on the hit side of the wall
+                    typeWall = sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL
+                      ? (self.map[self.nCols * sampleMap.y + sampleMap.x + (hitEast ? 1 : -1)][self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
+                        ? self.assets.textures.wall.doorDock
+                        : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitEast ? self.mapLegend.TEX_WALL_E : self.mapLegend.TEX_WALL_W]]])
+                      : self.assets.textures.wall.door;
+
+                    // determine how far from the left of the wall we should sample from the wall texture
+                    offsetLeft = pHit.y - sampleMap.y +
+                      (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
+                        ? (1 - self.doors[hitKey].state * 0.1)
+                        : 0);
                   }
-                } else if (sample === "H") { hitV = 1; }
+                }
+                
+                // if we hit a horizontal door, no need to continue progressing
+                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) { hitV = 1; }
+
                 traceV.x += stepV.x;
                 traceV.y += stepV.y;
               }
@@ -804,24 +1084,53 @@
                   "x": Math.floor(traceH.x),
                   "y": Math.floor(traceH.y + ((up & 1) ? -1 : 0))
                 };
-                const sample = self.map[(self.nCols + self.offsetLinebr) * sampleMap.y + sampleMap.x];
+                const sample = self.map[self.nCols * sampleMap.y + sampleMap.x];
+
+                // max. draw distance exceeded, break out of loop
                 if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitH = 1;
                   distToWall = distToWall ? distToWall : sqrDrawDist;
-                } else if (sample === "#" || sample === "H") {
+                } 
+                
+                // did we hit some SOLID obstacle?
+                // like walls, doors, or diagonal walls
+                else if (
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG ||
+                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
+                ) {
                   const hitKey = self.util.coords2Key(sampleMap);
-                  const pHit = {
-                    "x": traceH.x +
-                      (sample === "H"
-                        ? (sampleMap.y + 0.5 - traceH.y) / ray.slope // TODO: make 0.5 more dynamic
-                        : 0),
-                    "y": sample === "H"
-                      ? sampleMap.y + 0.5 // TODO: make 0.5 more dynamic
-                      : traceH.y,
-                  };
-                  if (sample === "#" || sample === "H" && sampleMap.x + 1 - (self.doors[hitKey].state * 0.1) < pHit.x) {
-                    let hitDist = self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE);
-                    hitDist = hitDist > sqrDrawDist ? sqrDrawDist : hitDist;
+                  const pHit = {"x": traceH.x, "y": traceH.y};
+
+                  // calculate point hit on the map
+                  if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) {
+                    pHit.x += (sampleMap.y + 0.5 - traceH.y) / ray.slope; // TODO: make `0.5` here more dynamic
+                    pHit.y = sampleMap.y + 0.5;
+                  } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
+                    const pIntersect = self.util.getIntersect(
+                      self.player.x,
+                      self.player.y,
+                      traceH.x,
+                      traceH.y,
+                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][0],
+                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
+                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
+                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
+                    );
+                    pHit.x = pIntersect[0];
+                    pHit.y = pIntersect[1];
+                  }
+
+                  // collision test - whether or not we hit a wall (or door)
+                  if (
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG &&
+                    pHit.y >= sampleMap.y && pHit.y < sampleMap.y + 1 ||
+                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR &&
+                    1 + sampleMap.x - self.doors[hitKey].state * 0.1 < pHit.x &&
+                    pHit.x < sampleMap.x + 1
+                  ) {
+                    const hitDist = Math.min(self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE), sqrDrawDist);
 
                     // if current horizontal hit is closer than current vertical hit
                     if (
@@ -829,12 +1138,30 @@
                       distToWall > hitDist ||
                       (distToWall === hitDist && previousHit === "horizontal")
                     ) {
+                      const hitSouth = pHit.y > sampleMap.y;
                       currentHit = "horizontal";
                       distToWall = hitDist;
+
+                      // determine the type of the texture to draw on the hit side of the wall
+                      typeWall = sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL
+                        ? (self.map[self.nCols * (sampleMap.y + (hitSouth ? 1 : -1)) + sampleMap.x][self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
+                          ? self.assets.textures.wall.doorDock
+                          : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitSouth ? self.mapLegend.TEX_WALL_S : self.mapLegend.TEX_WALL_N]]])
+                        : self.assets.textures.wall.door;
+
+                      // determine how far from the left of the wall we should sample from the wall texture
+                      offsetLeft = pHit.x - sampleMap.x -
+                        (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
+                          ? (1 - self.doors[hitKey].state * 0.1)
+                          : 0);
                     }
                     hitH = 1;
                   }
-                } else if (sample === "V") { hitH = 1; }
+                } 
+                
+                // if we hit a vertical door, no need to continue progressing
+                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) { hitH = 1; }
+
                 traceH.x += stepH.x;
                 traceH.y += stepH.y;
               }
@@ -847,35 +1174,185 @@
               // fix the fish-eye distortion
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
-              // draw vertical strip of wall
-              ctx.fillStyle = currentHit === "horizontal" ? "#016666" : "#01A1A1";
-              const hWall = self.mRows * self.VIEW_DIST / distToWall;
-              const hCeil = (distToWall - self.VIEW_DIST) * 
-                (self.mRows - self.player.z) / distToWall + self.player.tilt;
-              const hFloor = self.mRows - hCeil - hWall;
-              ctx.fillRect(
+              // calculate ceiling, floor and wall height for current column
+              const hCeil = ((self.const.H_MAX_WORLD - self.player.z) *
+                (distToWall - self.VIEW_DIST) / distToWall + self.player.tilt) -
+                self.const.CLIP_PROJ_EXTRA_CEIL;
+              const hFloor = self.player.z *
+                (distToWall - self.VIEW_DIST) / distToWall - self.player.tilt;
+              const hWall = self.mRows - hCeil - hFloor;
+
+              if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
+                // #region | floor-casting
+                for (let iR = 0; iR < hFloor; iR += 1) {
+                  const dFloorTile = (self.player.z * self.VIEW_DIST) / (self.player.z - (iR + self.player.tilt)) / Math.cos(ray.angle - self.player.angle);
+                  const pFloorTile = {
+                    "x": self.player.x + dFloorTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
+                    "y": self.player.y + dFloorTile * Math.sin(ray.angle) / self.MAP_TILE_SIZE
+                  };
+                  const pMapTile = {
+                    "x": Math.floor(pFloorTile.x),
+                    "y": Math.floor(pFloorTile.y)
+                  };
+                  const sampleFloorTile = self.map[self.nCols * pMapTile.y + pMapTile.x];
+                  const texFloor = self.assets.textures.floor[self.const.LEGEND_TEXTURES.FLOOR[sampleFloorTile[self.mapLegend.TYPE_FLOOR]]];
+                  const pTexFloor = {
+                    "x": (pFloorTile.x - pMapTile.x) * texFloor.width,
+                    "y": (pFloorTile.y - pMapTile.y) * texFloor.height
+                  };
+
+                  // draw floor texture
+                  self.util.drawImage(
+                    texFloor,
+                    pTexFloor.x,
+                    pTexFloor.y,
+                    1,
+                    1,
+                    self.DRAW_TILE_SIZE.x * iCol,
+                    self.DRAW_TILE_SIZE.y * (self.mRows - 1 - iR),
+                    self.DRAW_TILE_SIZE.x,
+                    self.DRAW_TILE_SIZE.y,
+                    {
+                      "shade":
+                        (
+                          self.player.anim.shooting.index === 0 ||
+                          self.player.anim.shooting.index === 1
+                            ? -1 * Math.abs(self.player.tilt)
+                            : (iR + self.player.tilt)
+                        ) / (self.mRows * (0.5 - verticalShift) + self.player.tilt)
+                    }
+                  );
+
+                  // gas
+                  if (window.GAS && dFloorTile * Math.cos(ray.angle - self.player.angle) > 2 * self.MAP_TILE_SIZE) {
+                    self.util.fillRect(
+                      self.DRAW_TILE_SIZE.x * iCol,
+                      self.DRAW_TILE_SIZE.y * (self.mRows - 1 - iR),
+                      self.DRAW_TILE_SIZE.x,
+                      self.DRAW_TILE_SIZE.y,
+                      0.5, 1, 0, 0.25
+                    );
+                  }
+                }
+                // #endregion
+
+                // #region | ceiling-casting
+                for (let iR = 0; iR < hCeil; iR += 1) {
+                  const dCeilTile =
+                    (self.player.z - self.const.H_MAX_WORLD) * self.VIEW_DIST /
+                    (self.player.z - self.const.H_MAX_WORLD +
+                      iR + self.const.CLIP_PROJ_EXTRA_CEIL - self.player.tilt) /
+                    Math.cos(ray.angle - self.player.angle);
+                  const pCeilTile = {
+                    "x": self.player.x + dCeilTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
+                    "y": self.player.y + dCeilTile * Math.sin(ray.angle) / self.MAP_TILE_SIZE
+                  };
+                  const pMapTile = {
+                    "x": Math.floor(pCeilTile.x),
+                    "y": Math.floor(pCeilTile.y)
+                  };
+                  const sampleCeilTile = self.map[self.nCols * pMapTile.y + pMapTile.x];
+                  const texCeil = self.assets.textures.ceil[self.const.LEGEND_TEXTURES.CEIL[sampleCeilTile[self.mapLegend.TYPE_CEIL]]];
+                  
+                  // draw ceiling texture
+                  if (sampleCeilTile[self.mapLegend.TYPE_CEIL]) {
+                    const pTexCeil = {
+                      "x": (pCeilTile.x - pMapTile.x) * texCeil.width,
+                      "y": (pCeilTile.y - pMapTile.y) * texCeil.height
+                    };
+                    self.util.drawImage(
+                      texCeil,
+                      pTexCeil.x,
+                      pTexCeil.y,
+                      1,
+                      1,
+                      self.DRAW_TILE_SIZE.x * iCol,
+                      self.DRAW_TILE_SIZE.y * iR,
+                      self.DRAW_TILE_SIZE.x,
+                      self.DRAW_TILE_SIZE.y,
+                      {
+                        "shade":
+                          (
+                            self.player.anim.shooting.index === 0 ||
+                            self.player.anim.shooting.index === 1
+                              ? -1 * Math.abs(self.player.tilt)
+                              : (iR - self.player.tilt)
+                          ) / (self.mRows * (0.5 + verticalShift) - self.player.tilt)
+                      }
+                    );
+
+                    // gas
+                    if (window.GAS && dCeilTile * Math.cos(ray.angle - self.player.angle) > 2 * self.MAP_TILE_SIZE) {
+                      self.util.fillRect(
+                        self.DRAW_TILE_SIZE.x * iCol,
+                        self.DRAW_TILE_SIZE.y * iR,
+                        self.DRAW_TILE_SIZE.x,
+                        self.DRAW_TILE_SIZE.y,
+                        0.5, 1, 0, 0.25
+                      );
+                    }
+                  }
+
+                  // draw skybox
+                  else {
+                    const pps = texCeil.width / 90; // repeats (x4) // TODO: don't calculate every time, cache instead
+                    const offsetX = (self.util.rad2Deg(ray.angle) * pps) % texCeil.width;
+                    const offsetY = (iR + self.player.anim.walking.apex + self.const.MAX_TILT - verticalShift * self.mRows) * self.DRAW_TILE_SIZE.y;
+                    self.util.drawImage(
+                      texCeil,
+                      offsetX,
+                      offsetY,
+                      1,
+                      1,
+                      self.DRAW_TILE_SIZE.x * iCol,
+                      self.DRAW_TILE_SIZE.y * iR,
+                      self.DRAW_TILE_SIZE.x,
+                      self.DRAW_TILE_SIZE.y,
+                      {
+                        "shade":
+                          (
+                            self.player.anim.shooting.index === 0 ||
+                            self.player.anim.shooting.index === 1
+                              ? -1 * Math.abs(self.player.tilt)
+                              : (iR - self.player.tilt)
+                          ) / (self.mRows * (0.5 + verticalShift) - self.player.tilt)
+                      }
+                    );
+                  }
+                }
+                // #endregion
+              }
+
+              // #region | draw vertical strip of wall
+              const texWall = typeWall;
+              const dataTexWall = texWall[currentHit || "vertical"];
+              self.util.drawImage(
+                texWall,
+                offsetLeft * dataTexWall.width + dataTexWall.offset,
+                texWall.height - dataTexWall.height,
+                1,
+                dataTexWall.height,
                 self.DRAW_TILE_SIZE.x * iCol,
                 self.DRAW_TILE_SIZE.y * hCeil,
                 self.DRAW_TILE_SIZE.x,
-                self.DRAW_TILE_SIZE.y * hWall
+                self.DRAW_TILE_SIZE.y * hWall,
+                {"shade": realDist / self.DRAW_DIST}
               );
 
-              // shade walls
-              ctx.globalAlpha = realDist / self.DRAW_DIST;
-              ctx.fillStyle = "#000000";
-              ctx.fillRect(
-                self.DRAW_TILE_SIZE.x * iCol,
-                self.DRAW_TILE_SIZE.y * (hCeil - 1),
-                self.DRAW_TILE_SIZE.x,
-                self.DRAW_TILE_SIZE.y * (hWall + 2)
-              );
+              // gas
+              if (window.GAS && distToWall > 2 * self.MAP_TILE_SIZE) {
+                self.util.fillRect(
+                  self.DRAW_TILE_SIZE.x * iCol,
+                  self.DRAW_TILE_SIZE.y * hCeil,
+                  self.DRAW_TILE_SIZE.x,
+                  self.DRAW_TILE_SIZE.y * hWall,
+                  0.5, 1, 0, 0.25
+                );
+              }
+              // #endregion
 
-              // TODO: floor-casting
-              //
-
-              // TODO: ceiling-casting
-              //
-              ctx.globalAlpha = 1;
+              // draw world-object sprites (if any)
+              /**/
 
               if (window.DEBUG_MODE === 1) {
                 self.util.render.wallBounds(
@@ -884,20 +1361,24 @@
               }
             }
 
+            ctx.putImageData(offscreenBufferData, 0, 0);
+
             // render mini-map
             self.util.render.minimap(
               self,
               self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
               self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
             );
-          },
-          "final": function() {}
+          }
         }
       }
     },
     "exec": {
       "setup": function(self) {
         const resolution = {};
+
+        // setup various utils
+        Number.prototype.toFixedNum = self.util.toFixed;
 
         // render loading screen
         resolution.loading = self.util.render.loading(self);
@@ -910,6 +1391,7 @@
           "x": self.res[0] / self.mCols,
           "y": self.res[1] / self.mRows
         };
+        self.const.CLIP_PROJ_EXTRA_CEIL = self.const.H_MAX_WORLD - self.mRows;
         self.PLAYER_HEIGHT = self.mRows * 0.5;
         self.player.z = self.PLAYER_HEIGHT;
         self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
@@ -917,9 +1399,6 @@
         // setup minimap
         minimapCanvas.width  = 2 * self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP;
         minimapCanvas.height = minimapCanvas.width;
-
-        // setup background
-        self.assets.background = self.util.render.background(self);
 
         // setup doors
         self.doors = self.util.getDoors(self);
@@ -964,8 +1443,49 @@
             // setup textures // TODO: why strings? - why not objects themselves?
             .then(function() {
               return self.assets.textures.setup(self, [
-                "skybox",
+                "ceil.skybox",
+                "ceil.lights",
+                "floor.stone",
+                "floor.teleporter",
+                "floor.manhole",
+                "wall.default",
+                "wall.alt",
+                "wall.alt_1",
+                "wall.door",
+                "wall.doorDock"
               ]);
+            })
+
+            // adapt skybox texture to current game resolution
+            // I know this seems a bit hacky, so don't judge me.
+            .then(function(textures) {
+              const texSky = textures.ceil.skybox;
+              const projectSkyH = self.res[1] * 0.5 +
+                (self.player.anim.walking.apex + self.const.MAX_TILT) *
+                self.DRAW_TILE_SIZE.y;
+              const projectSkyW = Math.floor(projectSkyH * texSky.width / texSky.height);
+              self.util.setOffscreenBufferDimensions(projectSkyW, projectSkyH);
+              self.util.drawImage(
+                texSky,
+                0,
+                0,
+                texSky.width,
+                texSky.height,
+                0,
+                0,
+                offscreenBufferW,
+                offscreenBufferH
+              );
+              texSky.buffer = new ImageData(
+                offscreenBufferData.data,
+                offscreenBufferW,
+                offscreenBufferH
+              ).data;
+              texSky.width = offscreenBufferW;
+              texSky.height = offscreenBufferH;
+            })
+            .then(function() {
+              self.util.setOffscreenBufferDimensions(self.res[0], self.res[1]);
             })
 
             // setup theme music
@@ -993,16 +1513,15 @@
         }
       },
       "movePlayer": function(self) {
-        const memoPos = [self.player.x, self.player.y];
+        // memoize current position
+        const memoPos = self.api.memo([self.player.x, self.player.y]);
+
+        // calculate displacement vector
         const dir = {
           "x": Math.cos(self.player.angle),
           "y": Math.sin(self.player.angle)
         };
         const displacement = {"x": 0, "y": 0};
-        const marginToWall = {"x": 0, "y": 0};
-        const MARGIN = 0.5;
-
-        // calculate displacement vector
         if (self.keyState.W & 1) {
           displacement.x += dir.x;
           displacement.y += dir.y;
@@ -1017,17 +1536,11 @@
           displacement.y += dir.x;
         }
 
-        // update player position & calculate wall margin
-        self.player.x += displacement.x * self.STEP_SIZE;
-        self.player.y += displacement.y * self.STEP_SIZE;
-        marginToWall.x = Math.sign(displacement.x) * MARGIN;
-        marginToWall.y = Math.sign(displacement.y) * MARGIN;
-        
         // rotate player in-place
         if (self.keyState.D & 1) {
-          self.player.angle += 0.05;
+          self.player.angle += 0.075;
         } if (self.keyState.A & 1) {
-          self.player.angle -= 0.05;
+          self.player.angle -= 0.075;
         }
 
         // tilt player's head
@@ -1037,49 +1550,64 @@
           self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
         }
 
-        // collision detection - START
-        const stepX = {"x": Math.floor(self.player.x + marginToWall.x), "y": Math.floor(memoPos[1])};
-        const stepY = {"x": Math.floor(memoPos[0]), "y": Math.floor(self.player.y + marginToWall.y)};
-        const sampleX = self.map[(self.nCols + self.offsetLinebr) * stepX.y + stepX.x];
-        const sampleY = self.map[(self.nCols + self.offsetLinebr) * stepY.y + stepY.x];
+        // calculate updated player position & wall margin
+        const paceX = displacement.x * self.STEP_SIZE;
+        const paceY = displacement.y * self.STEP_SIZE;
+        const marginToWall = {
+          "x": Math.sign(displacement.x) * self.const.MARGIN_TO_WALL,
+          "y": Math.sign(displacement.y) * self.const.MARGIN_TO_WALL
+        };
 
-        // if moving horizontally causes collision with a solid wall/semi-open door/diagonal wall
+        // #region | collision detection for horizontal movement
+        const stepX = {"x": Math.floor(self.player.x + paceX + marginToWall.x), "y": Math.floor(self.player.y)};
+        const sampleX = self.map[self.nCols * stepX.y + stepX.x];
+
+        // early return if out-of-map
+        if (!sampleX) { return; }
+
+        const tileX = sampleX[self.mapLegend.TYPE_TILE];
+
+        // collided with a solid wall/semi-open door/diagonal wall
         if (
-          sampleX === "#" ||
-          (sampleX === "V" && 
+          tileX === self.const.TYPE_TILES.WALL ||
+          tileX === self.const.TYPE_TILES.WALL_DIAG ||
+          (tileX === self.const.TYPE_TILES.V_DOOR &&
             self.doors[self.util.coords2Key(stepX)].state > 0)
         ) {
           self.player.x = marginToWall.x > 0 // heading east
             ? stepX.x - marginToWall.x
-            : marginToWall.x < 0             // heading west
-              ? stepX.x + 1 - marginToWall.x
-              : memoPos[0];                  // not moving
+            : stepX.x + 1 - marginToWall.x;  // heading west
+        } else {
+          self.player.x += paceX;
         }
+        // #endregion
 
-        // if moving vertically causes collision with a solid wall/semi-open door/diagonal wall
+        // #region | collision detection for vertical movement
+        const stepY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y + paceY + marginToWall.y)};
+        const sampleY = self.map[self.nCols * stepY.y + stepY.x];
+
+        // early return if out-of-map
+        if (!sampleY) { return; }
+
+        const tileY = sampleY[self.mapLegend.TYPE_TILE];
+
+        // collided with a solid wall/semi-open door/diagonal wall
         if (
-          sampleY === "#" ||
-          (sampleY === "H" &&
+          tileY === self.const.TYPE_TILES.WALL ||
+          tileY === self.const.TYPE_TILES.WALL_DIAG ||
+          (tileY === self.const.TYPE_TILES.H_DOOR &&
             self.doors[self.util.coords2Key(stepY)].state > 0)
         ) {
           self.player.y = marginToWall.y > 0 // heading south
             ? stepY.y - marginToWall.y
-            : marginToWall.y < 0             // heading north
-              ? stepY.y + 1 - marginToWall.y
-              : memoPos[1];                  // not moving
+            : stepY.y + 1 - marginToWall.y;  // heading north
+        } else {
+          self.player.y += paceY;
         }
-
-        // prevent phasing through corners
-        const stepXY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y)};
-        const sampleXY = self.map[(self.nCols + self.offsetLinebr) * stepXY.y + stepXY.x];
-        if (sampleXY === "#") {
-          self.player.x = memoPos[0];
-          self.player.y = memoPos[1];
-        }
-        // collision detection - END
+        // #endregion
 
         // walking animation
-        self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos);
+        self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos.get());
       },
       "animateWalking": function(self, newPos, prevPos) {
         const defaultWeaponFrame = self.assets.sprites.playerWeapons[self.player.weaponDrawn].frames[0];
@@ -1101,7 +1629,6 @@
           defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y;
           self.player.anim.weaponBob = {"index": 0, "reverse": 0, "apex": self.player.anim.weaponBob.apex};
         }
-        self.assets.background = self.util.render.background(self);
       },
       "animateShooting": function(self) {
         if (
@@ -1121,7 +1648,6 @@
               self.DRAW_DIST = (i === 0 || i === 1) // if shooting frame, increase lighting
                 ? 150 * self.MAP_TILE_SIZE
                 : self.const.DRAW_DIST * self.MAP_TILE_SIZE;
-              self.assets.background = self.util.render.background(self);
               self.assets.sprites.playerWeapons[
                 self.player.weaponDrawn
               ].activeFrames = [animationFrames[i]];
@@ -1154,7 +1680,8 @@
             "x": Math.floor(traceV.x - ((right & 1) > 0 ? 0 : 1)),
             "y": Math.floor(traceV.y)
           };
-          const sampleV = self.map[(self.nCols + self.offsetLinebr) * sampleMapV.y + sampleMapV.x];
+          const sampleV = self.map[self.nCols * sampleMapV.y + sampleMapV.x];
+          const tileV = sampleV ? sampleV[self.mapLegend.TYPE_TILE] : undefined;
           const traceH = {};
           traceH.y = (up & 1) > 0 ? Math.floor(self.player.y) : Math.ceil(self.player.y);
           traceH.x = self.player.x + (traceH.y - self.player.y) / slope;
@@ -1162,10 +1689,11 @@
             "x": Math.floor(traceH.x),
             "y": Math.floor(traceH.y - ((up & 1) > 0 ? 1 : 0))
           };
-          const sampleH = self.map[(self.nCols + self.offsetLinebr) * sampleMapH.y + sampleMapH.x];
-          if (sampleV === "V") {
+          const sampleH = self.map[self.nCols * sampleMapH.y + sampleMapH.x];
+          const tileH = sampleH ? sampleH[self.mapLegend.TYPE_TILE] : undefined;
+          if (tileV === self.const.TYPE_TILES.V_DOOR) {
             self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapV)]);
-          } else if (sampleH === "H") {
+          } else if (tileH === self.const.TYPE_TILES.H_DOOR) {
             self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapH)]);
           }
         }
@@ -1209,24 +1737,19 @@
         }
       },
       "gameLoop": function(self, deltaT) {
-        self.util.render.frame.rasterized(self);
-
         self.exec.movePlayer(self);
         self.exec.interactWDoor(self);
         self.exec.animateShooting(self);
+
+        self.util.render.frame.rasterized(self);
         self.util.render.globalSprite(self.assets.sprites.playerWeapons[self.player.weaponDrawn]);
-
-        // TODO: add portals dynamically by reading from the map
-        self.exec.addPortal(self, 10, 62.5, 9, 22.5, Math.PI * 0.5);
-        self.exec.addPortal(self, 62, 9, 21, 9.5, Math.PI);
-
         self.util.render.stats(self, deltaT);
       }
     },
     "run": function(self) {
       let tsStart = new Date();
       self.intervals.game = setInterval(function() { // main game loop:
-        const tsEnd = new Date();                    // reiterates ~30 times in a sec
+        const tsEnd = new Date();                    // reiterates ~24 times in a sec
         self.exec.gameLoop(self, tsEnd - tsStart);
         tsStart = tsEnd;
       }, 1000 / self.FPS);

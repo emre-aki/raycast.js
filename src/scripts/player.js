@@ -1,8 +1,8 @@
 (function() {
   window.__player__ = {
-    "X": 13,
-    "Y": 9.5,
+    "X": 6.5,
+    "Y": 3,
     "Z": 0,
-    "ANGLE": Math.PI
+    "ANGLE": Math.PI * 0.5
   };
 })();

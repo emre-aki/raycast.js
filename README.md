@@ -1,4 +1,4 @@
-Raycasting performed in an HTML5 canvas using nothing but plain Javascript 🌞🕶
+Raycasting performed in an HTML5 canvas using nothing but plain Javascript, with zero-dependencies! 🌞🕶
 
 # Raycasting.js
 
@@ -6,11 +6,11 @@ Raycasting performed in an HTML5 canvas using nothing but plain Javascript 🌞�
  ----------------------------------------- | ------------------------------------------
 <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS02.png?raw=true"></img> | <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS03.png?raw=true"></img>
 
-This is a simple implementation of the once-popular 3-D rendering technique known as "ray-casting" which was featured in the video game Wolfenstein 3D.
+This is an implementation of the once-popular 3-D rendering technique known as [raycasting](https://en.wikipedia.org/wiki/Ray_casting) which was famously featured in 1991's popular video game hit Wolfenstein 3D.
 
-All of the rendering is carried out within a single `800x600` canvas for the sake of simplicity at ~30 frames per second.
+All of the rendering is carried out within a single 512x384 canvas at ~24 frames per second. The rendering at its core is basically comprised of vertical slices of wall textures and per-pixel rendered ceiling and floor textures--all of which at constant Z. An offscreen frame buffer is utilized to optimize per-pixel rendering.
 
-This little project was inspired by a video on YouTube posted by a fellow seasoned programmer who goes by the name `javidx9`. You can follow [this link](https://youtu.be/xW8skO7MFYw) to refer to his tutorial of ray-casting done entirely on a command-line window!
+This little project was inspired by a video on YouTube posted by a fellow seasoned programmer who goes by the name 'javidx9.' You can follow [this link](https://youtu.be/xW8skO7MFYw) to refer to his tutorial of ray-casting done entirely on a command-line window!
 
 ### Setting up
 #### Requirements
@@ -32,7 +32,7 @@ $ npm run start
 
 ### Live Demo
 
-You can check out the live demo [here](https://raycasting-demo.herokuapp.com)!
+You can check out the live demo [here](https://emres-junkyard.herokuapp.com/raycasting-demo)!
 
 ### Controls
 - Use keys `W` and `S` on your keyboard to move forwards and backwards, respectively.
@@ -42,17 +42,18 @@ You can check out the live demo [here](https://raycasting-demo.herokuapp.com)!
 - Use `SPACE` to shoot.
 - Use `ENTER` to open/close doors.
 
-### Features
+### Features include
 - Walking animation
 - Ability to look up & down
-- Skybox rendering
-- Shading with distance
+- Texture-mapped walls, floors & ceiling
+- Alpha-blending
+- Skybox rendering for outdoors
+- Shading with depth
 - Doors
 - Mini-map display
 
 ### TODOs
-- Texture-mapping
-- World-object sprites
 - Diagonal walls
+- World-object sprites
 - Transparent walls
-- (Efficient) Floor-casting
+- *Pseudo portal-rendering*
