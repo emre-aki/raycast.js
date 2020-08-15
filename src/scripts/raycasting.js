@@ -1576,7 +1576,12 @@
         const sampleX = self.map[self.nCols * stepX.y + stepX.x];
 
         // early return if out-of-map
-        if (!sampleX) { return; }
+        if (
+          stepX.x < 0 || stepX.x >= self.nCols ||
+          stepX.y < 0 || stepX.y >= self.nRows
+        ) {
+          return;
+        }
 
         const tileX = sampleX[self.mapLegend.TYPE_TILE];
 
