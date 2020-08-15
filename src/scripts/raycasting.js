@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 08.05.2020                                        *
+ * Last updated: 08.15.2020                                        *
  *******************************************************************/
 
 (function() {

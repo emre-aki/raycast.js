@@ -30,6 +30,14 @@ Once all the dependencies are installed, you can start up an Express development
 $ npm run start
 ```
 
+### Map Editing
+
+Even though this is still mostly a WIP, if you would like to edit the game map to your liking, and do all sorts of crazy stuff, you can do so by using the integrated command-line level editor. Simply run the following command from the root of the project.
+
+```bash
+$ npm run leveledit
+```
+
 ### Live Demo
 
 You can check out the live demo [here](https://emres-junkyard.herokuapp.com/raycasting-demo)!
