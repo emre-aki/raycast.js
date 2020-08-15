@@ -519,10 +519,9 @@
         bobState.index = x;
         return {"x": 4 * x, "y": y};
       },
-      "getVerticalShift": function(self) {
-        return self.player.anim.walking.index *
-          (self.VIEW_DIST - self.DRAW_DIST) / (self.DRAW_DIST * self.mRows) +
-          self.player.tilt / self.mRows;
+      "getVerticalShift": function(self, deltaPlayerZ, deltaPlayerHeadTilt) {
+        return (deltaPlayerZ * (self.VIEW_DIST - self.DRAW_DIST) /
+          self.DRAW_DIST + deltaPlayerHeadTilt) / self.mRows;
       },
       "rad2Deg": function(rad) {
         const rad360 = 6.28319;
@@ -893,7 +892,11 @@
           );
           self.util.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
-            self.res[1] * (0.5 + self.util.getVerticalShift(self)),
+            self.res[1] * (0.5 + self.util.getVerticalShift(
+              self,
+              self.player.anim.walking.index,
+              self.player.tilt
+            )),
             self.DRAW_TILE_SIZE.x,
             hLine,
             0, 0, 1, 1
@@ -955,7 +958,11 @@
             // reset offscreen buffer
             self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
 
-            const verticalShift = self.util.getVerticalShift(self);
+            const verticalShift = self.util.getVerticalShift(
+              self,
+              self.player.anim.walking.index,
+              self.player.tilt
+            );
 
             // raycasting
             const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
