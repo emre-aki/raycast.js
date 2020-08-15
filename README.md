@@ -12,6 +12,7 @@ All of the rendering is carried out within a single 512x384 canvas at ~24 frames
 
 This little project was inspired by a video on YouTube posted by a fellow seasoned programmer who goes by the name 'javidx9.' You can follow [this link](https://youtu.be/xW8skO7MFYw) to refer to his tutorial of ray-casting done entirely on a command-line window!
 
+
 ### Setting up
 #### Requirements
 - Node.js
@@ -30,18 +31,6 @@ Once all the dependencies are installed, you can start up an Express development
 $ npm run start
 ```
 
-### Map Editing
-
-Even though this is still mostly a WIP, if you would like to edit the game map to your liking, and do all sorts of crazy stuff, you can do so by using the integrated command-line level editor. Simply run the following command from the root of the project.
-
-```bash
-$ npm run leveledit
-```
-
-### Live Demo
-
-You can check out the live demo [here](https://emres-junkyard.herokuapp.com/raycasting-demo)!
-
 ### Controls
 - Use keys `W` and `S` on your keyboard to move forwards and backwards, respectively.
 - Key `A` rotates player counter-clockwise, and key `D` rotates player clockwise. 
@@ -49,6 +38,20 @@ You can check out the live demo [here](https://emres-junkyard.herokuapp.com/rayc
 - Use keys `↑` and `↓` to look up and down, respectively.
 - Use `SPACE` to shoot.
 - Use `ENTER` to open/close doors.
+
+
+### Live Demo
+
+You can check out the live demo [here](https://emres-junkyard.herokuapp.com/raycasting-demo)!
+
+
+### Map Editing
+
+Even though this is still mostly a WIP, if you would like to edit the game map to your liking, and do all sorts of crazy stuff, you can do so by using the integrated command-line level editor. Simply run the following command from the root of the project.
+
+```bash
+$ npm run leveledit
+```
 
 ### Features include
 - Walking animation
