@@ -52,9 +52,9 @@
   const fs = {
     "__dirname__": "/scripts/",
     "__file__": "/scripts/raycasting.js",
-    "__sprites__": "/assets/sprites/",
-    "__textures__": "/assets/textures/",
-    "__audio__": "/assets/audio/"
+    "__sprites__": "/sprites/",
+    "__textures__": "/textures/",
+    "__audio__": "/audio/"
   };
   const game = {
     "res": [512, 384],

@@ -5,7 +5,8 @@ const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 
 express()
-  .use(express.static(ROOT))
+  .use(express.static(path.join(ROOT, "assets")))
+  .use("/scripts", express.static(path.join(ROOT, "scripts")))
   .set("view engine", "ejs")
   .set("views", path.join(ROOT, "templates"))
   .get("/", (req, res) => res.render("index"))
