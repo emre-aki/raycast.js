@@ -1221,12 +1221,10 @@
                     self.DRAW_TILE_SIZE.y,
                     {
                       "shade":
-                        (
-                          self.player.anim.shooting.index === 0 ||
-                          self.player.anim.shooting.index === 1
-                            ? -1 * Math.abs(self.player.tilt)
-                            : (iR + self.player.tilt)
-                        ) / (self.mRows * (0.5 - verticalShift) + self.player.tilt)
+                        self.player.anim.shooting.index === 0 ||
+                        self.player.anim.shooting.index === 1
+                          ? 0
+                          : dFloorTile / self.DRAW_DIST
                     }
                   );
 
@@ -1279,12 +1277,10 @@
                       self.DRAW_TILE_SIZE.y,
                       {
                         "shade":
-                          (
-                            self.player.anim.shooting.index === 0 ||
-                            self.player.anim.shooting.index === 1
-                              ? -1 * Math.abs(self.player.tilt)
-                              : (iR - self.player.tilt)
-                          ) / (self.mRows * (0.5 + verticalShift) - self.player.tilt)
+                          self.player.anim.shooting.index === 0 ||
+                          self.player.anim.shooting.index === 1
+                            ? 0
+                            : dCeilTile / self.DRAW_DIST
                       }
                     );
 
