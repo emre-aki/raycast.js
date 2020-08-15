@@ -1304,7 +1304,12 @@
                   else {
                     const pps = texCeil.width / 90; // repeats (x4) // TODO: don't calculate every time, cache instead
                     const offsetX = (self.util.rad2Deg(ray.angle) * pps) % texCeil.width;
-                    const offsetY = (iR + self.player.anim.walking.apex + self.const.MAX_TILT - verticalShift * self.mRows) * self.DRAW_TILE_SIZE.y;
+                    const offsetY = self.DRAW_TILE_SIZE.y * (iR +  (
+                      self.util.getVerticalShift(
+                        self,
+                        -1 * self.player.anim.walking.apex,
+                        self.const.MAX_TILT
+                      ) - verticalShift) * self.mRows);
                     self.util.drawImage(
                       texCeil,
                       offsetX,
@@ -1467,9 +1472,14 @@
             // I know this seems a bit hacky, so don't judge me.
             .then(function(textures) {
               const texSky = textures.ceil.skybox;
-              const projectSkyH = self.res[1] * 0.5 +
-                (self.player.anim.walking.apex + self.const.MAX_TILT) *
-                self.DRAW_TILE_SIZE.y;
+              const projectSkyH = Math.floor(
+                self.res[1] * 0.5 +
+                self.util.getVerticalShift(
+                  self,
+                  -1 * self.player.anim.walking.apex,
+                  self.const.MAX_TILT
+                ) * self.mRows * self.DRAW_TILE_SIZE.y
+              );
               const projectSkyW = Math.floor(projectSkyH * texSky.width / texSky.height);
               self.util.setOffscreenBufferDimensions(projectSkyW, projectSkyH);
               self.util.drawImage(
