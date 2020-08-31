@@ -557,6 +557,11 @@
           return [xI, m0 * xI + n0];
         }
       },
+      "isInside": {
+        "rectangle": function(xr, yr, w, h, x, y) {
+          return x >= xr && x < xr + w && y >= yr && y < yr + h;
+        }
+      },
       "bufferify": function(img) {
         const buffCanvas = document.createElement("canvas");
         const buffCtx = buffCanvas.getContext("2d");
@@ -1577,8 +1582,14 @@
 
         // early return if out-of-map
         if (
-          stepX.x < 0 || stepX.x >= self.nCols ||
-          stepX.y < 0 || stepX.y >= self.nRows
+          !self.util.isInside.rectangle(
+            0,
+            0,
+            self.nCols,
+            self.nRows,
+            stepX.x,
+            stepX.y
+          )
         ) {
           return;
         }
