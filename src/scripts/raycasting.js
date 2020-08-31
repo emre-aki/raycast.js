@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 08.15.2020                                        *
+ * Last updated: 08.31.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -1717,7 +1717,10 @@
         }
       },
       "tryAndCloseDoor": function(self, door) {
-        if (Math.floor(self.player.x) !== door.loc.x || Math.floor(self.player.y) !== door.loc.y) {
+        if (
+          Math.floor(self.player.x) !== door.loc.x ||
+          Math.floor(self.player.y) !== door.loc.y
+        ) {
           self.exec.animateDoor(self, door);
         } else {
           clearTimeout(door.timeout);
