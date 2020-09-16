@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 08.31.2020                                        *
+ * Last updated: 09.16.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -266,16 +266,16 @@
             "buffer": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "wall_mossy.png",
+            "name": "wall.png",
             "vertical": {
-              "width": 128,
+              "width": 64,
               "height": 128,
               "offset": 0
             },
             "horizontal": {
-              "width": 128,
+              "width": 64,
               "height": 128,
-              "offset": 128
+              "offset": 64
             }
           },
           "alt": {
@@ -286,12 +286,12 @@
             "name": "wall_wood.png",
             "vertical": {
               "width": 64,
-              "height": 64,
+              "height": 128,
               "offset": 0
             },
             "horizontal": {
               "width": 64,
-              "height": 64,
+              "height": 128,
               "offset": 64
             }
           },
@@ -302,14 +302,14 @@
             "height": 0,  // initialized at setup
             "name": "wall_tech.png",
             "vertical": {
-              "width": 128,
+              "width": 64,
               "height": 128,
               "offset": 0
             },
             "horizontal": {
-              "width": 128,
+              "width": 64,
               "height": 128,
-              "offset": 128
+              "offset": 64
             }
           },
           "door": {
@@ -320,12 +320,12 @@
             "name": "door.png",
             "vertical": {
               "width": 64,
-              "height": 64,
+              "height": 128,
               "offset": 0
             },
             "horizontal": {
               "width": 64,
-              "height": 64,
+              "height": 128,
               "offset": 64
             }
           },
@@ -337,13 +337,13 @@
             "name": "door_D.png",
             "vertical": {
               "width": 64,
-              "height": 64,
+              "height": 128,
               "offset": 0
             },
             "horizontal": {
               "width": 64,
-              "height": 64,
-              "offset": 64
+              "height": 128,
+              "offset": 0
             }
           }
         },
@@ -447,7 +447,7 @@
       "DOOR_RESET_DELAY": 3000,
       "MARGIN_TO_WALL": 0.5,
       "DRAW_DIST": 15,
-      "H_MAX_WORLD": 192,
+      "H_MAX_WORLD": 384,
       "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
