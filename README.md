@@ -3,7 +3,7 @@ Raycasting performed in an HTML5 canvas using nothing but plain Javascript, with
 # Raycasting.js
 
 <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS00.png?raw=true"></img> | <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS01.png?raw=true"></img>
- ----------------------------------------- | ------------------------------------------
+ ----------------------------------------------------------------------------------------------- | -----------------------------------------------------------------------------------------------
 <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS02.png?raw=true"></img> | <img src="https://github.com/emre-aki/raycasting.js/blob/master/images/SS03.png?raw=true"></img>
 
 This is an implementation of the once-popular 3-D rendering technique known as [raycasting](https://en.wikipedia.org/wiki/Ray_casting) which was famously featured in 1991's popular video game hit Wolfenstein 3D.
@@ -42,7 +42,7 @@ $ npm run start
 
 ### Live Demo
 
-You can check out the live demo [here](https://emres-junkyard.herokuapp.com/raycasting-demo)!
+You can check out the live demo [here](https://raycasting-js.herokuapp.com)!
 
 
 ### Map Editing

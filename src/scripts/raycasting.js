@@ -1012,8 +1012,8 @@
                 if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitV = 1;
                   distToWall = sqrDrawDist;
-                } 
-                
+                }
+
                 // did we hit some SOLID obstacle?
                 // like walls, doors, or diagonal walls
                 else if (
@@ -1071,7 +1071,7 @@
                         : 0);
                   }
                 }
-                
+
                 // if we hit a horizontal door, no need to continue progressing
                 else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) { hitV = 1; }
 
@@ -1102,8 +1102,8 @@
                 if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
                   hitH = 1;
                   distToWall = distToWall ? distToWall : sqrDrawDist;
-                } 
-                
+                }
+
                 // did we hit some SOLID obstacle?
                 // like walls, doors, or diagonal walls
                 else if (
@@ -1169,8 +1169,8 @@
                     }
                     hitH = 1;
                   }
-                } 
-                
+                }
+
                 // if we hit a vertical door, no need to continue progressing
                 else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) { hitH = 1; }
 
@@ -1364,8 +1364,7 @@
               }
               // #endregion
 
-              // draw world-object sprites (if any)
-              /**/
+              // TODO: draw world-object sprites
 
               if (window.DEBUG_MODE === 1) {
                 self.util.render.wallBounds(
