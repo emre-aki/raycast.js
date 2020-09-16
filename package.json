@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node ./src/index.js",
     "leveledit": "node ./src/util/mkmap.js",
-    "format-style": "prettier --config ./.prettierrc.js --write .",
-    "check-style": "prettier --config ./.prettierrc.js --check ."
+    "style:fix": "prettier --config ./.prettierrc.js --write .",
+    "style": "prettier --config ./.prettierrc.js --check ."
   },
   "repository": {
     "type": "git",
