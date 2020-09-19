@@ -1230,17 +1230,6 @@
                           : dFloorTile / self.DRAW_DIST
                     }
                   );
-
-                  // gas
-                  if (window.GAS && dFloorTile * Math.cos(ray.angle - self.player.angle) > 2 * self.MAP_TILE_SIZE) {
-                    self.util.fillRect(
-                      self.DRAW_TILE_SIZE.x * iCol,
-                      self.DRAW_TILE_SIZE.y * (self.mRows - 1 - iR),
-                      self.DRAW_TILE_SIZE.x,
-                      self.DRAW_TILE_SIZE.y,
-                      0.5, 1, 0, 0.25
-                    );
-                  }
                 }
                 // #endregion
 
@@ -1286,17 +1275,6 @@
                             : dCeilTile / self.DRAW_DIST
                       }
                     );
-
-                    // gas
-                    if (window.GAS && dCeilTile * Math.cos(ray.angle - self.player.angle) > 2 * self.MAP_TILE_SIZE) {
-                      self.util.fillRect(
-                        self.DRAW_TILE_SIZE.x * iCol,
-                        self.DRAW_TILE_SIZE.y * iR,
-                        self.DRAW_TILE_SIZE.x,
-                        self.DRAW_TILE_SIZE.y,
-                        0.5, 1, 0, 0.25
-                      );
-                    }
                   }
 
                   // draw skybox
@@ -1349,17 +1327,6 @@
                 self.DRAW_TILE_SIZE.y * hWall,
                 {"shade": realDist / self.DRAW_DIST}
               );
-
-              // gas
-              if (window.GAS && distToWall > 2 * self.MAP_TILE_SIZE) {
-                self.util.fillRect(
-                  self.DRAW_TILE_SIZE.x * iCol,
-                  self.DRAW_TILE_SIZE.y * hCeil,
-                  self.DRAW_TILE_SIZE.x,
-                  self.DRAW_TILE_SIZE.y * hWall,
-                  0.5, 1, 0, 0.25
-                );
-              }
               // #endregion
 
               // TODO: draw world-object sprites
