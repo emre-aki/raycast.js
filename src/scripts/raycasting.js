@@ -1142,8 +1142,7 @@
 
                     // if current horizontal hit is closer than current vertical hit
                     if (
-                      (hitV & 1) === 0 || distToWall === undefined ||
-                      distToWall > hitDist ||
+                      distToWall === undefined || distToWall > hitDist ||
                       (distToWall === hitDist && previousHit === "horizontal")
                     ) {
                       const hitSouth = pHit.y > sampleMap.y;
