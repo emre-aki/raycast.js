@@ -202,8 +202,8 @@
                   }
                 });
               }
-              if (Array.isArray(sprite.buffer)) {
-                sprite.buffer = self.util.bufferify(sprite.img);
+              if (Array.isArray(sprite.bitmap)) {
+                sprite.bitmap = self.util.getBitmap(sprite.img);
                 sprite.width = sprite.img.width;
                 sprite.height = sprite.img.height;
                 delete sprite.img;
@@ -224,21 +224,21 @@
         "floor": {
           "stone": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "floor_brownstone.png"
           },
           "teleporter": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "portal.png"
           },
           "manhole": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "manhole.png"
@@ -247,14 +247,14 @@
         "ceil": {
           "skybox": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name":  "sbox.png"
           },
           "lights": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "ceil_lights.png"
@@ -263,7 +263,7 @@
         "wall": {
           "default": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "wall.png",
@@ -280,7 +280,7 @@
           },
           "alt": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "wall_wood.png",
@@ -297,7 +297,7 @@
           },
           "alt_1": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "wall_tech.png",
@@ -314,7 +314,7 @@
           },
           "door": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "door.png",
@@ -331,7 +331,7 @@
           },
           "doorDock": {
             "img": new Image(),
-            "buffer": [], // initialized at setup
+            "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "door_D.png",
@@ -356,7 +356,7 @@
               return acc[curr];
             }, self.assets.textures);
             texture.img.onload = function() {
-              texture.buffer = self.util.bufferify(texture.img);
+              texture.bitmap = self.util.getBitmap(texture.img);
               texture.width = texture.img.width;
               texture.height = texture.img.height;
               delete texture.img;
@@ -557,7 +557,7 @@
           return x >= xr && x < xr + w && y >= yr && y < yr + h;
         }
       },
-      "bufferify": function(img) {
+      "getBitmap": function(img) {
         const buffCanvas = document.createElement("canvas");
         const buffCtx = buffCanvas.getContext("2d");
         buffCanvas.width = img.width;
@@ -718,7 +718,7 @@
         }
       },
       "drawImage": function(imgData, sx, sy, sw, sh, dx, dy, dw, dh, options) {
-        const imgBuffer = imgData.buffer, imgWidth = imgData.width, imgHeight = imgData.height;
+        const imgBuffer = imgData.bitmap, imgWidth = imgData.width, imgHeight = imgData.height;
         const SX = Math.floor(sx), SY = Math.floor(sy), SW = Math.ceil(sw), SH = Math.ceil(sh);
         const DX = Math.floor(dx), DY = Math.floor(dy), DW = Math.ceil(dw), DH = Math.ceil(dh);
         const shade = options && options.shade ? options.shade : 0;
@@ -1491,7 +1491,7 @@
                 offscreenBufferW,
                 offscreenBufferH
               );
-              texSky.buffer = new ImageData(
+              texSky.bitmap = new ImageData(
                 offscreenBufferData.data,
                 offscreenBufferW,
                 offscreenBufferH
