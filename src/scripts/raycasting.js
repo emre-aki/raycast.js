@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 09.16.2020                                        *
+ * Last updated: 09.19.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -60,11 +60,11 @@
     "res": [512, 384],
     "FPS": 24,
     "FOV": Math.PI / 3, // < Math.PI
-    "MAP_TILE_SIZE": 192, // TODO: move to self.const
-    "DRAW_TILE_SIZE": {}, // initialized in setup // TODO: move to self.const
+    "MAP_TILE_SIZE": 192, // FIXME: move to self.const
+    "DRAW_TILE_SIZE": {}, // initialized in setup // FIXME: move to self.const
     "DRAW_DIST": -1,      // initialized in setup
-    "STEP_SIZE": 0.2,     // TODO: move to self.const
-    "PLAYER_HEIGHT": 0,   // initialized in setup // TODO: move to self.const
+    "STEP_SIZE": 0.2,     // FIXME: move to self.const
+    "PLAYER_HEIGHT": 0,   // initialized in setup // FIXME: move to self.const
     "keyState": {
       "W": 0,
       "A": 0,
@@ -459,21 +459,19 @@
           const cand = candidate || "(anonymous)";
           return self.intervals[cand] ? uid(cand + "_1") : cand;
         };
+
         let iFrame = 0;
         const id = uid(arguments.callee.caller.name);
+
         const cleanUp = function() {
           clearInterval(self.intervals[id]);
           delete self.intervals[id];
-          if (onEnd) {
-            onEnd();
-          }
+          if (onEnd) { onEnd(); }
         };
+
         const animate = function() {
-          if (shouldEnd && shouldEnd(iFrame)) {
-            cleanUp();
-          } else {
-            onFrame(iFrame);
-          }
+          if (shouldEnd && shouldEnd(iFrame)) { cleanUp(); } 
+          else { onFrame(iFrame); }
           iFrame += 1;
         };
 
@@ -482,12 +480,8 @@
           "start": function() {
             self.intervals[id] = setInterval(animate, interval);
           },
-          "cancel": function() {
-            cleanUp();
-          },
-          "isAnimating": function() {
-            return !!self.intervals[id];
-          }
+          "cancel": function() { cleanUp(); },
+          "isAnimating": function() { return !!self.intervals[id]; }
         };
       },
       "memo": function(data) {
@@ -1026,7 +1020,7 @@
 
                   // calculate point hit on the map
                   if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) {
-                    pHit.x = sampleMap.x + 0.5; // TODO: make `0.5` here more dynamic
+                    pHit.x = sampleMap.x + 0.5;
                     pHit.y += (sampleMap.x + 0.5 - traceV.x) * ray.slope;
                   } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
                     const pIntersect = self.util.getIntersect(
@@ -1064,6 +1058,7 @@
                         : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitEast ? self.mapLegend.TEX_WALL_E : self.mapLegend.TEX_WALL_W]]])
                       : self.assets.textures.wall.door;
 
+                    // TODO: add texture-mapping for diagonal walls
                     // determine how far from the left of the wall we should sample from the wall texture
                     offsetLeft = pHit.y - sampleMap.y +
                       (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
@@ -1116,7 +1111,7 @@
 
                   // calculate point hit on the map
                   if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) {
-                    pHit.x += (sampleMap.y + 0.5 - traceH.y) / ray.slope; // TODO: make `0.5` here more dynamic
+                    pHit.x += (sampleMap.y + 0.5 - traceH.y) / ray.slope;
                     pHit.y = sampleMap.y + 0.5;
                   } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
                     const pIntersect = self.util.getIntersect(
@@ -1161,6 +1156,7 @@
                           : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitSouth ? self.mapLegend.TEX_WALL_S : self.mapLegend.TEX_WALL_N]]])
                         : self.assets.textures.wall.door;
 
+                      // TODO: add texture-mapping for diagonal walls
                       // determine how far from the left of the wall we should sample from the wall texture
                       offsetLeft = pHit.x - sampleMap.x -
                         (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
@@ -1183,7 +1179,8 @@
               distToWall = Math.sqrt(distToWall);
               const realDist = distToWall;
 
-              // fix the fish-eye distortion
+              // fix the fish-eye distortion by calculating the perpendicular
+              // distance to the wall
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // calculate ceiling, floor and wall height for current column
@@ -1195,7 +1192,7 @@
               const hWall = self.mRows - hCeil - hFloor;
 
               if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
-                // #region | floor-casting
+                // #region | draw floor for current column
                 for (let iR = 0; iR < hFloor; iR += 1) {
                   const dFloorTile = (self.player.z * self.VIEW_DIST) / (self.player.z - (iR + self.player.tilt)) / Math.cos(ray.angle - self.player.angle);
                   const pFloorTile = {
@@ -1246,7 +1243,7 @@
                 }
                 // #endregion
 
-                // #region | ceiling-casting
+                // #region | draw ceiling for current column
                 for (let iR = 0; iR < hCeil; iR += 1) {
                   const dCeilTile =
                     (self.player.z - self.const.H_MAX_WORLD) * self.VIEW_DIST /
@@ -1303,9 +1300,9 @@
 
                   // draw skybox
                   else {
-                    const pps = texCeil.width / 90; // repeats (x4) // TODO: don't calculate every time, cache instead
+                    const pps = texCeil.width / 90; // repeats (x4) // FIXME: don't calculate every time, cache instead
                     const offsetX = (self.util.rad2Deg(ray.angle) * pps) % texCeil.width;
-                    const offsetY = self.DRAW_TILE_SIZE.y * (iR +  (
+                    const offsetY = self.DRAW_TILE_SIZE.y * (iR + (
                       self.util.getVerticalShift(
                         self,
                         -1 * self.player.anim.walking.apex,
@@ -1336,7 +1333,7 @@
                 // #endregion
               }
 
-              // #region | draw vertical strip of wall
+              // #region | draw wall for current column
               const texWall = typeWall;
               const dataTexWall = texWall[currentHit || "vertical"];
               self.util.drawImage(
