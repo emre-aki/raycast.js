@@ -408,6 +408,8 @@
     "const": {
       "math": {
         // TODO: Make sin/cos && sqrt tables for optimization
+        "RAD_TO_DEG": 180 / Math.PI,
+        "RAD_360": 2 * Math.PI
       },
       "TYPE_TILES": {
         "FREE": 0,
@@ -517,10 +519,9 @@
         return (deltaPlayerZ * (self.VIEW_DIST - self.DRAW_DIST) /
           self.DRAW_DIST + deltaPlayerHeadTilt) / self.mRows;
       },
-      "rad2Deg": function(rad) {
-        const rad360 = 6.28319;
-        const radToDeg = 57.2958;
-        return (((rad + rad360) % rad360) * radToDeg + 360) % 360;
+      "rad2Deg": function(self, rad) {
+        return ((rad % self.const.math.RAD_360) + self.const.math.RAD_360)
+          % self.const.math.RAD_360 * self.const.math.RAD_TO_DEG;
       },
       "toFixed": function(nDigits) {
         const cNDigits = Math.pow(10, nDigits);
@@ -779,7 +780,7 @@
         "stats": function(self, deltaT) {
           self.util.print(
             "X: " + Math.floor(self.player.x) + " Y: " + Math.floor(self.player.y) +
-            " | α: " + self.util.rad2Deg(self.player.angle).toFixed(1) + " deg" +
+            " | α: " + self.util.rad2Deg(self, self.player.angle).toFixed(1) + " deg" +
             " | FPS: " + (1000 / deltaT).toFixed(1),
             5,
             15,
@@ -1301,7 +1302,7 @@
                   // draw skybox
                   else {
                     const pps = texCeil.width / 90; // repeats (x4) // FIXME: don't calculate every time, cache instead
-                    const offsetX = (self.util.rad2Deg(ray.angle) * pps) % texCeil.width;
+                    const offsetX = (self.util.rad2Deg(self, ray.angle) * pps) % texCeil.width;
                     const offsetY = self.DRAW_TILE_SIZE.y * (iR + (
                       self.util.getVerticalShift(
                         self,
