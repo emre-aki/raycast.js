@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 09.19.2020                                        *
+ * Last updated: 10.16.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -1524,7 +1524,7 @@
 
         // tilt player's head
         if (self.keyState.ARW_UP) {
-           self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
+          self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
         } if (self.keyState.ARW_DOWN) {
           self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
         }
