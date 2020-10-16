@@ -1213,135 +1213,56 @@
               const hWall = self.mRows - hCeil - hFloor;
 
               if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
-                // #region | draw floor for current column
-                for (let iR = 0; iR < hFloor; iR += 1) {
-                  const dFloorTile = (self.player.z * self.VIEW_DIST) / (self.player.z - (iR + H_FRSTM)) / Math.cos(ray.angle - self.player.angle);
-                  const pFloorTile = {
-                    "x": self.player.x + dFloorTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
-                    "y": self.player.y + dFloorTile * Math.sin(ray.angle) / self.MAP_TILE_SIZE
-                  };
-                  const pMapTile = {
-                    "x": Math.floor(pFloorTile.x),
-                    "y": Math.floor(pFloorTile.y)
-                  };
-                  const sampleFloorTile = self.map[self.nCols * pMapTile.y + pMapTile.x];
-                  const texFloor = self.assets.textures.floor[self.const.LEGEND_TEXTURES.FLOOR[sampleFloorTile[self.mapLegend.TYPE_FLOOR]]];
-                  const pTexFloor = {
-                    "x": (pFloorTile.x - pMapTile.x) * texFloor.width,
-                    "y": (pFloorTile.y - pMapTile.y) * texFloor.height
-                  };
-
-                  // draw floor texture
-                  self.util.drawImage(
-                    texFloor,
-                    pTexFloor.x,
-                    pTexFloor.y,
-                    1,
-                    1,
-                    self.DRAW_TILE_SIZE.x * iCol,
-                    self.DRAW_TILE_SIZE.y * (self.mRows - 1 - iR),
-                    self.DRAW_TILE_SIZE.x,
-                    self.DRAW_TILE_SIZE.y,
-                    {
-                      "shade":
-                        self.player.anim.shooting.index === 0 ||
-                        self.player.anim.shooting.index === 1
-                          ? 0
-                          : dFloorTile / self.DRAW_DIST
-                    }
-                  );
-                }
-                // #endregion
-
-                // #region | draw ceiling for current column
-                for (let iR = 0; iR < hCeil; iR += 1) {
-                  const dCeilTile =
-                    (self.player.z - self.const.H_MAX_WORLD) * self.VIEW_DIST /
-                    (self.player.z - self.const.H_MAX_WORLD +
-                      iR + self.const.CLIP_PROJ_EXTRA_CEIL - H_FRSTM) /
-                    Math.cos(ray.angle - self.player.angle);
-                  const pCeilTile = {
-                    "x": self.player.x + dCeilTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
-                    "y": self.player.y + dCeilTile * Math.sin(ray.angle) / self.MAP_TILE_SIZE
-                  };
-                  const pMapTile = {
-                    "x": Math.floor(pCeilTile.x),
-                    "y": Math.floor(pCeilTile.y)
-                  };
-                  const sampleCeilTile = self.map[self.nCols * pMapTile.y + pMapTile.x];
-                  const texCeil = self.assets.textures.ceil[self.const.LEGEND_TEXTURES.CEIL[sampleCeilTile[self.mapLegend.TYPE_CEIL]]];
-                  
-                  // draw ceiling texture
-                  if (sampleCeilTile[self.mapLegend.TYPE_CEIL]) {
-                    const pTexCeil = {
-                      "x": (pCeilTile.x - pMapTile.x) * texCeil.width,
-                      "y": (pCeilTile.y - pMapTile.y) * texCeil.height
-                    };
-                    self.util.drawImage(
-                      texCeil,
-                      pTexCeil.x,
-                      pTexCeil.y,
-                      1,
-                      1,
-                      self.DRAW_TILE_SIZE.x * iCol,
-                      self.DRAW_TILE_SIZE.y * iR,
-                      self.DRAW_TILE_SIZE.x,
-                      self.DRAW_TILE_SIZE.y,
-                      {
-                        "shade":
-                          self.player.anim.shooting.index === 0 ||
-                          self.player.anim.shooting.index === 1
-                            ? 0
-                            : dCeilTile / self.DRAW_DIST
-                      }
-                    );
-                  }
-
-                  // draw skybox
-                  else {
-                    const pps = texCeil.width / 90; // repeats (x4) // FIXME: don't calculate every time, cache instead
-                    const offsetX = (self.util.rad2Deg(self, ray.angle) * pps) % texCeil.width;
-                    const offsetY = texCeil.height / self.mRows *
-                      (iR + self.const.MAX_TILT - self.player.tilt);
-                    self.util.drawImage(
-                      texCeil,
-                      offsetX,
-                      offsetY,
-                      1,
-                      1,
-                      self.DRAW_TILE_SIZE.x * iCol,
-                      self.DRAW_TILE_SIZE.y * iR,
-                      self.DRAW_TILE_SIZE.x,
-                      self.DRAW_TILE_SIZE.y,
-                      {
-                        "shade":
-                          self.player.anim.shooting.index === 0 ||
-                          self.player.anim.shooting.index === 1
-                            ? 0
-                            : dCeilTile / self.DRAW_DIST
-                      }
-                    );
-                  }
-                }
-                // #endregion
+                // draw floor
+                self.util.render.col_floor(
+                  self,
+                  {}, // occlusion for the current column
+                  undefined,
+                  iCol,
+                  self.mRows - hFloor,
+                  hFloor,
+                  ray.angle,
+                  0,
+                  H_FRSTM,
+                  self.player.anim.shooting.index === 0 ||
+                  self.player.anim.shooting.index === 1
+                    ? 0
+                    : 1
+                );
+                // draw ceiling
+                self.util.render.col_ceiling(
+                  self,
+                  {}, // occlusion for the current column
+                  undefined,
+                  iCol,
+                  0,
+                  hCeil,
+                  ray.angle,
+                  self.const.H_MAX_WORLD,
+                  0,
+                  self.const.CLIP_PROJ_EXTRA_CEIL - H_FRSTM,
+                  self.player.anim.shooting.index === 0 ||
+                  self.player.anim.shooting.index === 1
+                    ? 0
+                    : 1
+                );
               }
 
-              // #region | draw wall for current column
+              // draw wall
               const texWall = typeWall;
               const dataTexWall = texWall[currentHit || "vertical"];
-              self.util.drawImage(
+              self.util.render.col_wall(
+                self,
+                {}, // occlusion for the current column
                 texWall,
                 offsetLeft * dataTexWall.width + dataTexWall.offset,
-                texWall.height - dataTexWall.height,
-                1,
+                0,
                 dataTexWall.height,
-                self.DRAW_TILE_SIZE.x * iCol,
-                self.DRAW_TILE_SIZE.y * hCeil,
-                self.DRAW_TILE_SIZE.x,
-                self.DRAW_TILE_SIZE.y * hWall,
-                {"shade": realDist / self.DRAW_DIST}
+                iCol,
+                hCeil,
+                hWall,
+                realDist / self.DRAW_DIST
               );
-              // #endregion
 
               // TODO: draw world-object sprites
 
@@ -1360,6 +1281,314 @@
               self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
               self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
             );
+          }
+        },
+        "col_wall": function(
+          self,
+          occlusion,
+          texture,
+          sx,
+          sy,
+          sh,
+          dx,
+          dy,
+          dh,
+          shade,
+          opacity
+        ) {
+          // early return if trying to render out of frustum bounds
+          if (dy + dh <= 0 || dy >= offscreenBufferH) { return; }
+
+          const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
+          const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
+
+          const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
+          const DY = Math.floor(DRAW_TILE_SIZE_Y * dy);
+          const DH = Math.ceil(DRAW_TILE_SIZE_Y * dh);
+
+          const SX = Math.floor(sx), SY = Math.floor(sy), SH = Math.ceil(sh);
+          // texture-mapping scaling factor
+          const scaleH = DH / SH;
+
+          const tw = texture.width, th = texture.height;
+          const texBitmap = texture.bitmap;
+
+          const lightLevel = 1 - (shade || 0);
+          const translucency = 1 - (opacity || 1);
+
+          // clip texture & its projection against occlusion table
+          const occTop = Math.floor(occlusion.top * DRAW_TILE_SIZE_Y) || 0;
+          const occBottom = Math.floor(occlusion.bottom * DRAW_TILE_SIZE_Y) || 0;
+          const wallClipTop = Math.max(occTop - DY, 0);
+          const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
+          const wallClipped = DH - wallClipTop - wallClipBottom;
+          const texClipTop = Math.floor(wallClipTop * SH / DH);
+          const texClipBottom = Math.floor(wallClipBottom * SH / DH);
+          const texClipped = SH - texClipTop - texClipBottom;
+          const dStart = DY + wallClipTop, sStart = SY + texClipTop;
+
+          for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
+            let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
+            while (sY < sStart + texClipped && dY < dStart + wallClipped) {
+              while (drawRow > 0 && dY < dStart + wallClipped) {
+                const offIm  = 4 * (tw * sY + SX);
+                const offBuff = 4 * (offscreenBufferW * dY + DX + x);
+                const iRed = texBitmap[offIm];
+                const iGreen = texBitmap[offIm + 1];
+                const iBlue = texBitmap[offIm + 2];
+                const iAlpha = texBitmap[offIm + 3];
+                const bRed = offscreenBufferData.data[offBuff];
+                const bGreen = offscreenBufferData.data[offBuff + 1];
+                const bBlue = offscreenBufferData.data[offBuff + 2];
+                const bAlpha = offscreenBufferData.data[offBuff + 3] || 255;
+                const rBlend = iAlpha * (1 - translucency) / bAlpha;
+                const newRed = iRed * lightLevel * rBlend + bRed * (1 - rBlend);
+                const newGreen = iGreen * lightLevel * rBlend + bGreen * (1 - rBlend);
+                const newBlue = iBlue * lightLevel * rBlend + bBlue * (1 - rBlend);
+                offscreenBufferData.data[offBuff] = newRed;
+                offscreenBufferData.data[offBuff + 1] = newGreen;
+                offscreenBufferData.data[offBuff + 2] = newBlue;
+                offscreenBufferData.data[offBuff + 3] = 255;
+                drawRow -= 1;
+                dY += 1;
+              }
+              drawRow += scaleH;
+              sY += 1;
+            }
+          }
+        },
+        "col_floor": function(
+          self,
+          occlusion,
+          texture,
+          dx,
+          dy,
+          dh,
+          rayAngle,
+          wz,
+          offset,
+          shade
+        ) {
+          // early return if trying to render out of frustum bounds
+          if (dy + dh <= 0 || dy >= self.mRows) { return; }
+
+          // read some global constants
+          const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
+          const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
+          const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
+          const M_ROWS = self.mRows;
+          const MAP = self.map, N_COLS = self.nCols;
+          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.FLOOR;
+          const KEY_TYPE_FLOOR = self.mapLegend.TYPE_FLOOR;
+          const FLOOR_TEXTURES = self.assets.textures.floor;
+          const VIEW_DIST = self.VIEW_DIST;
+          const DRAW_DIST = self.DRAW_DIST;
+
+          const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
+
+          // clip projection against occlusion table
+          const occTop = occlusion.top || 0;
+          const occBottom = occlusion.bottom || 0;
+          const floorClipTop = Math.max(occTop - dy, 0);
+          const floorClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
+          const floorClipped = dh - floorClipTop - floorClipBottom;
+          const dStart = dy + dh - floorClipBottom - 1;
+          // calculate the height and the screen-y-coordinate offset for the
+          // final texel to smooth the projection end
+          const int_floorClipped = Math.floor(floorClipped);
+          const hFinal = Math.ceil(
+            DRAW_TILE_SIZE_Y * (floorClipped - int_floorClipped)
+          );
+          const yOffFinal = DRAW_TILE_SIZE_Y - hFinal;
+
+          const relAngle = rayAngle - self.player.angle;
+          for (let iR = 0; iR < floorClipped; iR += 1) {
+            const isFinalTexel = iR === int_floorClipped;
+            const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart - iR)) +
+              // smooth the projection end if final texel
+              (isFinalTexel ? yOffFinal : 0);
+            // extend an imaginary line from the current y-coordinate of the screen
+            // to player's viewpoint, and find the actual distance from the player
+            // to the point where the imaginary line intersects with the floor
+            // at the given world-z (wz)
+            const dFloorTile = VIEW_DIST * (wz - self.player.z) /
+              (wz - self.player.z + iR + offset + floorClipBottom) /
+              Math.cos(relAngle);
+            // get the distance vector to the floor
+            const pFloorTile = {
+              "x": dFloorTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
+              "y": dFloorTile * Math.sin(rayAngle) / MAP_TILE_SIZE + self.player.y
+            };
+            // determine which tile on the map the point intersected falls within
+            const pMapTile = {
+              "x": Math.floor(pFloorTile.x),
+              "y": Math.floor(pFloorTile.y)
+            };
+
+            let texFloor, tx, ty, tw, th;
+            // determine which texture to render by using the calculated world
+            // coordinates if no texture was given
+            if (!texture) {
+              const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
+              const typeFloor = tile[KEY_TYPE_FLOOR];
+              texFloor = FLOOR_TEXTURES[LEGEND_TEXTURES[typeFloor]];
+              tw = texFloor.width, th = texFloor.height;
+              tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
+              ty = Math.floor((pFloorTile.y - pMapTile.y) * th);
+            } else {
+              texFloor = texture, tw = texFloor.width, th = texFloor.height;
+              tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
+              ty = Math.floor((pFloorTile.y - pMapTile.y) * th);
+            }
+
+            // sample the texture pixel
+            const texBitmap = texFloor.bitmap;
+            const offTexel = 4 * (tw * ty + tx);
+            const tRed = texBitmap[offTexel];
+            const tGreen = texBitmap[offTexel + 1];
+            const tBlue = texBitmap[offTexel + 2];
+            const tAlpha = texBitmap[offTexel + 3];
+            // render the sampled texture pixel
+            const lightLevel = shade ? 1 - dFloorTile / DRAW_DIST : 1;
+            const hTexel = isFinalTexel ? hFinal : DRAW_TILE_SIZE_Y; // smooth the projection end if final texel
+            for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
+              for (let y = 0; y < hTexel; y += 1) {
+                const offBuffer = 4 * (offscreenBufferW * (DY + y) + DX + x);
+                const bRed = offscreenBufferData.data[offBuffer];
+                const bGreen = offscreenBufferData.data[offBuffer + 1];
+                const bBlue = offscreenBufferData.data[offBuffer + 2];
+                const bAlpha = offscreenBufferData.data[offBuffer + 3] || 255;
+                const rBlend = tAlpha / bAlpha;
+                const _rBlend = 1 - rBlend;
+                const newRed = tRed * lightLevel * rBlend + bRed * _rBlend;
+                const newGreen = tGreen * lightLevel * rBlend + bGreen * _rBlend;
+                const newBlue = tBlue * lightLevel * rBlend + bBlue * _rBlend;
+                offscreenBufferData.data[offBuffer] = newRed;
+                offscreenBufferData.data[offBuffer + 1] = newGreen;
+                offscreenBufferData.data[offBuffer + 2] = newBlue;
+                offscreenBufferData.data[offBuffer + 3] = 255;
+              }
+            }
+          }
+        },
+        "col_ceiling": function(
+          self,
+          occlusion,
+          texture,
+          dx,
+          dy,
+          dh,
+          rayAngle,
+          wz,
+          wh,
+          offset,
+          shade
+        ) {
+          // early return if trying to render out of frustum bounds
+          if (dy + dh <= 0 || dy >= self.mRows) { return; }
+
+          // read some global constants
+          const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
+          const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
+          const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
+          const M_ROWS = self.mRows;
+          const MAP = self.map, N_COLS = self.nCols;
+          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.CEIL;
+          const KEY_TYPE_CEIL = self.mapLegend.TYPE_CEIL;
+          const CEIL_TEXTURES = self.assets.textures.ceil;
+          const MAX_TILT = self.const.MAX_TILT;
+          const VIEW_DIST = self.VIEW_DIST;
+          const DRAW_DIST = self.DRAW_DIST;
+          const rad2Deg = self.util.rad2Deg;
+
+          const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
+
+          // clip projection against occlusion table
+          const occTop = occlusion.top || 0;
+          const occBottom = occlusion.bottom || 0;
+          const ceilClipTop = Math.max(occTop - dy, 0);
+          const ceilClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
+          const ceilClipped = dh - ceilClipTop - ceilClipBottom;
+          const dStart = dy + ceilClipTop;
+          // calculate the height for the final texel to smooth the projection end
+          const int_ceilClipped = Math.floor(ceilClipped);
+          const hFinal = Math.ceil(
+            DRAW_TILE_SIZE_Y * (ceilClipped - int_ceilClipped)
+          );
+
+          const relAngle = rayAngle - self.player.angle;
+          for (let iR = 0; iR < ceilClipped; iR += 1) {
+            const isFinalTexel = iR === int_ceilClipped;
+            const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart + iR));
+            // extend an imaginary line from the current y-coordinate of the screen
+            // to player's viewpoint, and find the actual distance from the player
+            // to the point where the imaginary line intersects with the ceiling
+            // that has a height of world-height (wh) at the given world-z (wz)
+            const dCeilTile = VIEW_DIST * (wh + self.player.z - wz) /
+              (wh + self.player.z - wz + offset + iR + ceilClipTop) /
+              Math.cos(relAngle);
+            // get the distance vector to the ceiling
+            const pCeilTile = {
+              "x": dCeilTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
+              "y": dCeilTile * Math.sin(rayAngle) / MAP_TILE_SIZE + self.player.y
+            };
+            // determine which tile on the map the point intersected falls within
+            const pMapTile = {
+              "x": Math.floor(pCeilTile.x),
+              "y": Math.floor(pCeilTile.y)
+            };
+
+            let texCeil, tx, ty, tw, th;
+            // determine which texture to render by using the calculated world
+            // coordinates if no texture was given
+            if (!texture) {
+              const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
+              const typeCeil = tile[KEY_TYPE_CEIL];
+              texCeil = CEIL_TEXTURES[LEGEND_TEXTURES[typeCeil]];
+              tw = texCeil.width, th = texCeil.height;
+              if (typeCeil) { // if indoors ceiling
+                tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
+                ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
+              } else {        // if outdoors skybox
+                const ppr = tw / 90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
+                tx = Math.floor((rad2Deg(self, rayAngle) * ppr) % tw);
+                ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS);
+              }
+            } else {
+              texCeil = texture;
+              tw = texCeil.width, th = texCeil.height;
+              tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
+              ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
+            }
+
+            // sample the texture pixel
+            const texBitmap = texCeil.bitmap;
+            const offTexel = 4 * (tw * ty + tx);
+            const tRed = texBitmap[offTexel];
+            const tGreen = texBitmap[offTexel + 1];
+            const tBlue = texBitmap[offTexel + 2];
+            const tAlpha = texBitmap[offTexel + 3];
+            // render the sampled texture pixel
+            const lightLevel = shade ? 1 - dCeilTile / DRAW_DIST : 1;
+            const hTexel = isFinalTexel ? hFinal : DRAW_TILE_SIZE_Y; // smooth the projection end if final texel
+            for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
+              for (let y = 0; y < hTexel; y += 1) {
+                const offBuffer = 4 * (offscreenBufferW * (DY + y) + DX + x);
+                const bRed = offscreenBufferData.data[offBuffer];
+                const bGreen = offscreenBufferData.data[offBuffer + 1];
+                const bBlue = offscreenBufferData.data[offBuffer + 2];
+                const bAlpha = offscreenBufferData.data[offBuffer + 3] || 255;
+                const rBlend = tAlpha / bAlpha;
+                const _rBlend = 1 - rBlend;
+                const newRed = tRed * lightLevel * rBlend + bRed * _rBlend;
+                const newGreen = tGreen * lightLevel * rBlend + bGreen * _rBlend;
+                const newBlue = tBlue * lightLevel * rBlend + bBlue * _rBlend;
+                offscreenBufferData.data[offBuffer] = newRed;
+                offscreenBufferData.data[offBuffer + 1] = newGreen;
+                offscreenBufferData.data[offBuffer + 2] = newBlue;
+                offscreenBufferData.data[offBuffer + 3] = 255;
+              }
+            }
           }
         }
       }
