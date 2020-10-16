@@ -64,7 +64,7 @@
     "MAP_TILE_SIZE": 192, // FIXME: move to self.const
     "DRAW_TILE_SIZE": {}, // initialized in setup // FIXME: move to self.const
     "DRAW_DIST": -1,      // initialized in setup
-    "STEP_SIZE": 0.2,     // FIXME: move to self.const
+    "STEP_SIZE": 0.15,    // FIXME: move to self.const
     "PLAYER_HEIGHT": 0,   // initialized in setup // FIXME: move to self.const
     "keyState": {
       "W": 0,
@@ -91,8 +91,8 @@
       "angle": window.__player__.ANGLE,
       "anim": {
         "shooting": {"index": -1, "animating": 0},
-        "walking": {"index": 0, "reverse": 0, "apex": 8},
-        "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
+        "walking": {"index": 0, "reverse": 0, "apex": 12},
+        "weaponBob": {"index": 0, "reverse": 0, "apex": 6}
       },
       "tilt": 0,
       "frstmElev": 0,
@@ -511,8 +511,8 @@
       },
       "getWeaponBob": function(self) {
         const bobState = self.player.anim.weaponBob;
-        const x = bobState.index + (bobState.reverse ? -1 : 1);
-        const y = -1 * x * x;
+        const x = bobState.index + (bobState.reverse ? -0.5 : 0.5);
+        const y = -0.75 * x * x;
         bobState.reverse = x === bobState.apex ? 1 : x === -1 * bobState.apex
           ? 0
           : bobState.reverse;
