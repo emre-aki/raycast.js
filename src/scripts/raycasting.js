@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 10.16.2020                                        *
+ * Last updated: 10.17.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -152,7 +152,7 @@
                 "offset": 474,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) {
-                  return {"x": 0, "y": self.res[1] - frame.height}; 
+                  return {"x": 0, "y": self.res[1] - frame.height};
                 }
               },
               {
@@ -160,8 +160,8 @@
                 "height": 302,
                 "offset": 712,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
-                "setLocOnScreen": function(self, frame) { 
-                  return {"x": 0, "y": self.res[1] - frame.height}; 
+                "setLocOnScreen": function(self, frame) {
+                  return {"x": 0, "y": self.res[1] - frame.height};
                 }
               },
               {
@@ -169,8 +169,8 @@
                 "height": 262,
                 "offset": 886,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
-                "setLocOnScreen": function(self, frame) { 
-                  return {"x": 0, "y": self.res[1] - frame.height}; 
+                "setLocOnScreen": function(self, frame) {
+                  return {"x": 0, "y": self.res[1] - frame.height};
                 }
               }
             ]
@@ -475,7 +475,7 @@
         };
 
         const animate = function() {
-          if (shouldEnd && shouldEnd(iFrame)) { cleanUp(); } 
+          if (shouldEnd && shouldEnd(iFrame)) { cleanUp(); }
           else { onFrame(iFrame); }
           iFrame += 1;
         };
@@ -570,8 +570,8 @@
       },
       "deepcopy": function(obj) {
         const clone = function(object) {
-          const cloned = Array.isArray(object) 
-            ? [] 
+          const cloned = Array.isArray(object)
+            ? []
             : typeof({}) === typeof(object)
               ? {}
               : object;
@@ -591,7 +591,7 @@
       },
       "merge": function(self) {
         const mergeTwo = function(accumulator, current) {
-          const local = self.util.deepcopy(accumulator) || 
+          const local = self.util.deepcopy(accumulator) ||
             (Array.isArray(current) ? [] : {});
           for (const key in current) {
             if (current.hasOwnProperty(key)) {
@@ -607,8 +607,8 @@
         };
         return Array.prototype.slice.call(arguments, 1).reduce(
           function(acc, curr) {
-            return mergeTwo(acc, curr); 
-          }, 
+            return mergeTwo(acc, curr);
+          },
           {}
         );
       },
@@ -885,7 +885,7 @@
               minimapCanvasCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
             }
           }
-          
+
           self.util.drawCaret(
             minimapCanvasCtx,
             {"x": (R + 0.5 + Math.cos(self.player.angle)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.angle)) * tileSize},
@@ -1646,11 +1646,11 @@
                     {
                       "locOnScreen": [
                         {
-                          "x": self.res[0] * 0.5 - 150, 
+                          "x": self.res[0] * 0.5 - 150,
                           "y": (self.res[1] - 56) * 0.5
                         },
                         {
-                          "x": self.res[0] * 0.5 + 120, 
+                          "x": self.res[0] * 0.5 + 120,
                           "y": (self.res[1] - 56) * 0.5
                         }
                       ]
@@ -1861,7 +1861,7 @@
         if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
           // animate head tilt
           self.player.z = self.util.getWalkingPlayerHeight(self);
-          
+
           // animate weapon bob
           if (self.player.anim.shooting.index < 0) {
             const bob = self.util.getWeaponBob(self);
@@ -1878,7 +1878,7 @@
       },
       "animateShooting": function(self) {
         if (
-          (self.keyState.SPC & 1) && 
+          (self.keyState.SPC & 1) &&
           (self.player.anim.shooting.animating & 1) === 0
         ) {
           const animationFrames = self.assets.sprites.animations.playerWeapons[
