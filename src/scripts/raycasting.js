@@ -29,6 +29,7 @@
  *     - Doors                                                     *
  *     - Diagonal walls                                            *
  *     - Ability to look up & down                                 *
+ *     - Player elevation                                          *
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
@@ -72,6 +73,8 @@
       "D": 0,
       "Q": 0,
       "E": 0,
+      "R": 0,
+      "F": 0,
       "SPC": 0,
       "RTN": 0,
       "ARW_UP": 0,
@@ -92,6 +95,7 @@
         "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
       },
       "tilt": 0,
+      "frstmElev": 0,
       "x": window.__player__.X,
       "y": window.__player__.Y,
       "z": window.__player__.Z // re-initialized at setup
@@ -627,6 +631,10 @@
           self.keyState.Q = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.Q;
         } else if (key === 69) {
           self.keyState.E = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.E;
+        } else if (key === 82) {
+          self.keyState.R = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.R;
+        } else if (key === 70) {
+          self.keyState.F = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.F;
         } else if (key === 32) {
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
         } else if (key === 13) {
@@ -895,7 +903,7 @@
             self.res[1] * (0.5 + self.util.getVerticalShift(
               self,
               self.player.anim.walking.index,
-              self.player.tilt
+              self.player.frstmElev + self.player.tilt
             )),
             self.DRAW_TILE_SIZE.x,
             hLine,
@@ -955,6 +963,9 @@
         },
         "frame": {
           "rasterized": function(self) {
+            // read some constants
+            const H_FRSTM = self.player.frstmElev + self.player.tilt;
+
             // reset offscreen buffer
             self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
 
@@ -1178,17 +1189,17 @@
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // calculate ceiling, floor and wall height for current column
-              const hCeil = ((self.const.H_MAX_WORLD - self.player.z) *
-                (distToWall - self.VIEW_DIST) / distToWall + self.player.tilt) -
-                self.const.CLIP_PROJ_EXTRA_CEIL;
-              const hFloor = self.player.z *
-                (distToWall - self.VIEW_DIST) / distToWall - self.player.tilt;
+              const hCeil = (self.const.H_MAX_WORLD - self.player.z) *
+                (distToWall - self.VIEW_DIST) / distToWall +
+                H_FRSTM - self.const.CLIP_PROJ_EXTRA_CEIL;
+              const hFloor = self.player.z * (distToWall - self.VIEW_DIST) /
+                distToWall - H_FRSTM;
               const hWall = self.mRows - hCeil - hFloor;
 
               if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
                 // #region | draw floor for current column
                 for (let iR = 0; iR < hFloor; iR += 1) {
-                  const dFloorTile = (self.player.z * self.VIEW_DIST) / (self.player.z - (iR + self.player.tilt)) / Math.cos(ray.angle - self.player.angle);
+                  const dFloorTile = (self.player.z * self.VIEW_DIST) / (self.player.z - (iR + H_FRSTM)) / Math.cos(ray.angle - self.player.angle);
                   const pFloorTile = {
                     "x": self.player.x + dFloorTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
                     "y": self.player.y + dFloorTile * Math.sin(ray.angle) / self.MAP_TILE_SIZE
@@ -1231,7 +1242,7 @@
                   const dCeilTile =
                     (self.player.z - self.const.H_MAX_WORLD) * self.VIEW_DIST /
                     (self.player.z - self.const.H_MAX_WORLD +
-                      iR + self.const.CLIP_PROJ_EXTRA_CEIL - self.player.tilt) /
+                      iR + self.const.CLIP_PROJ_EXTRA_CEIL - H_FRSTM) /
                     Math.cos(ray.angle - self.player.angle);
                   const pCeilTile = {
                     "x": self.player.x + dCeilTile * Math.cos(ray.angle) / self.MAP_TILE_SIZE,
@@ -1512,6 +1523,22 @@
           self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
         } if (self.keyState.ARW_DOWN) {
           self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
+        }
+
+        if (self.keyState.R & 1) {
+          self.PLAYER_HEIGHT += 5;
+          self.player.frstmElev += 5;
+          if (self.PLAYER_HEIGHT >= self.const.H_MAX_WORLD) {
+            self.PLAYER_HEIGHT -= 5;
+            self.player.frstmElev -= 5;
+          }
+        } if (self.keyState.F & 1) {
+          self.PLAYER_HEIGHT -= 5;
+          self.player.frstmElev -= 5;
+          if (self.PLAYER_HEIGHT < self.player.anim.walking.apex) {
+            self.PLAYER_HEIGHT += 5;
+            self.player.frstmElev += 5;
+          }
         }
 
         // calculate updated player position & wall margin

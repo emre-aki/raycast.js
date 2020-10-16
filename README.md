@@ -35,6 +35,7 @@ $ npm run start
 - Use keys `W` and `S` on your keyboard to move forwards and backwards, respectively.
 - Key `A` rotates player counter-clockwise, and key `D` rotates player clockwise. 
 - Use keys `Q` and `E` to strafe left and right, respectively.
+- Use keys `R` and `F` to raise and lower the player, respectively.
 - Use keys `↑` and `↓` to look up and down, respectively.
 - Use `SPACE` to shoot.
 - Use `ENTER` to open/close doors.
@@ -56,6 +57,7 @@ $ npm run leveledit
 ### Features include
 - Walking animation
 - Ability to look up & down
+- Player elevation
 - Texture-mapped walls, floors & ceiling
 - Alpha-blending
 - Skybox rendering for outdoors
