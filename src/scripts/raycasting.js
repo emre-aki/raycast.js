@@ -7,12 +7,11 @@
  * technique known as "ray-casting" which was famously featured in *
  * 1991's popular video game hit Wolfenstein 3D.                   *
  *                                                                 *
- *   All of the rendering is carried out within a single 512x384   *
- * canvas at ~24 frames per second. The rendering at its core is   *
- * basically comprised of vertical slices of wall textures and     *
- * per-pixel rendered ceiling and floor textures--all of which at  *
- * constant Z. An offscreen frame buffer is utilized to optimize   *
- * per-pixel rendering.                                            *
+ *   All of the rendering is carried out within a single 640x480   *
+ * canvas at ~30 frames per second. The rendering at its core is   *
+ * basically comprised of texture-mapped walls at constant-Z and   *
+ * per-pixel rendered ceiling and floor textures. An offscreen     *
+ * frame buffer is utilized to optimize per-pixel rendering.       *
  *                                                                 *
  *   This little project was inspired by a video on YouTube posted *
  * by a fellow seasoned programmer who goes by the name 'javidx9.' *
@@ -58,10 +57,10 @@
     "__audio__": "/audio/"
   };
   const game = {
-    "res": [512, 384],
-    "FPS": 24,
+    "res": [640, 480],
+    "FPS": 30,
     "FOV": Math.PI / 3, // < Math.PI
-    "MAP_TILE_SIZE": 192, // FIXME: move to self.const
+    "MAP_TILE_SIZE": 240, // FIXME: move to self.const
     "DRAW_TILE_SIZE": {}, // initialized in setup // FIXME: move to self.const
     "DRAW_DIST": -1,      // initialized in setup
     "STEP_SIZE": 0.15,    // FIXME: move to self.const
@@ -82,8 +81,8 @@
     },
     "map": window.__map__.MAP,
     "mapLegend": window.__map__.LEGEND,
-    "mRows": 192,
-    "mCols": 256,
+    "mRows": 240,
+    "mCols": 320,
     "nRows": window.__map__.N_ROWS,
     "nCols": window.__map__.N_COLS,
     "doors": {},
@@ -453,7 +452,7 @@
       "DOOR_RESET_DELAY": 3000,
       "MARGIN_TO_WALL": 0.5,
       "DRAW_DIST": 15,
-      "H_MAX_WORLD": 384,
+      "H_MAX_WORLD": 480,
       "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
@@ -1999,7 +1998,7 @@
     "run": function(self) {
       let tsStart = new Date();
       self.intervals.game = setInterval(function() { // main game loop:
-        const tsEnd = new Date();                    // reiterates ~24 times in a sec
+        const tsEnd = new Date();                    // reiterates ~30 times in a sec
         self.exec.gameLoop(self, tsEnd - tsStart);
         tsStart = tsEnd;
       }, 1000 / self.FPS);

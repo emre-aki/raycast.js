@@ -8,7 +8,7 @@ Raycasting performed in an HTML5 canvas using nothing but plain Javascript, with
 
 This is an implementation of the once-popular 3-D rendering technique known as [raycasting](https://en.wikipedia.org/wiki/Ray_casting) which was famously featured in 1991's popular video game hit Wolfenstein 3D.
 
-All of the rendering is carried out within a single 512x384 canvas at ~24 frames per second. The rendering at its core is basically comprised of vertical slices of wall textures and per-pixel rendered ceiling and floor textures--all of which at constant Z. An offscreen frame buffer is utilized to optimize per-pixel rendering.
+All of the rendering is carried out within a single 640x480 canvas at ~30 frames per second. The rendering at its core is basically comprised of vertical slices of texture-mapped walls at constant-Z and per-pixel rendered ceiling and floor textures. An offscreen frame buffer is utilized to optimize per-pixel rendering.
 
 This little project was inspired by a video on YouTube posted by a fellow seasoned programmer who goes by the name 'javidx9.' You can follow [this link](https://youtu.be/xW8skO7MFYw) to refer to his tutorial of ray-casting done entirely on a command-line window!
 
