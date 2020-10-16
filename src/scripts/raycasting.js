@@ -958,12 +958,6 @@
             // reset offscreen buffer
             self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
 
-            const verticalShift = self.util.getVerticalShift(
-              self,
-              self.player.anim.walking.index,
-              self.player.tilt
-            );
-
             // raycasting
             const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
             let previousHit;
@@ -1280,12 +1274,8 @@
                   else {
                     const pps = texCeil.width / 90; // repeats (x4) // FIXME: don't calculate every time, cache instead
                     const offsetX = (self.util.rad2Deg(self, ray.angle) * pps) % texCeil.width;
-                    const offsetY = self.DRAW_TILE_SIZE.y * (iR + (
-                      self.util.getVerticalShift(
-                        self,
-                        -1 * self.player.anim.walking.apex,
-                        self.const.MAX_TILT
-                      ) - verticalShift) * self.mRows);
+                    const offsetY = texCeil.height / self.mRows *
+                      (iR + self.const.MAX_TILT - self.player.tilt);
                     self.util.drawImage(
                       texCeil,
                       offsetX,
@@ -1435,12 +1425,7 @@
             .then(function(textures) {
               const texSky = textures.ceil.skybox;
               const projectSkyH = Math.floor(
-                self.res[1] * 0.5 +
-                self.util.getVerticalShift(
-                  self,
-                  -1 * self.player.anim.walking.apex,
-                  self.const.MAX_TILT
-                ) * self.mRows * self.DRAW_TILE_SIZE.y
+                self.res[1] + self.const.MAX_TILT * self.DRAW_TILE_SIZE.y
               );
               const projectSkyW = Math.floor(projectSkyH * texSky.width / texSky.height);
               self.util.setOffscreenBufferDimensions(projectSkyW, projectSkyH);
