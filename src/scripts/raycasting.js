@@ -727,36 +727,52 @@
       },
       "drawImage": function(imgData, sx, sy, sw, sh, dx, dy, dw, dh, options) {
         const imgBuffer = imgData.bitmap, imgWidth = imgData.width, imgHeight = imgData.height;
+        // early return if either source or destination is out of bounds
+        if (
+          sx + sw <= 0 || sy + sh <= 0 || sx >= imgWidth || sy >= imgHeight ||
+          dx + dw <= 0 || dy + dh <= 0 || dx >= offscreenBufferW ||
+          dy >= offscreenBufferH
+        ) {
+          return;
+        }
+        // calculate source & destination coordinates & the scaling factor
         const SX = Math.floor(sx), SY = Math.floor(sy), SW = Math.ceil(sw), SH = Math.ceil(sh);
         const DX = Math.floor(dx), DY = Math.floor(dy), DW = Math.ceil(dw), DH = Math.ceil(dh);
         const shade = options && options.shade ? options.shade : 0;
         const opacity = options && options.alpha ? options.alpha : 1;
         const scaleX = DW / SW, scaleY = DH / SH;
-        let sX = SX, dX = DX, drawCol = scaleX;
-
-        // early return if destination is out of canvas bounds
-        if (DX + DW <= 0 || DY + DH <= 0) { return; }
-
-        while (sX < SX + SW && sX < imgWidth && dX < DX + DW && dX < offscreenBufferW) {
-          while (drawCol > 0 && dX < DX + DW && dX < offscreenBufferW) {
-            let sY = SY, dY = DY, drawRow = scaleY;
-            while (sY < SY + SH && sY < imgHeight && dY < DY + DH && dY < offscreenBufferH) {
-              while (drawRow > 0 && dY < DY + DH && dY < offscreenBufferH) {
-                if (sX >= 0 && sY >= 0 && dX >= 0 && dY >= 0) {
-                  const offIm    = 4 * (imgWidth * sY + sX);
-                  const offBuff  = 4 * (offscreenBufferW * dY + dX);
-                  const iRed     = imgBuffer[offIm];
-                  const iGreen   = imgBuffer[offIm + 1];
-                  const iBlue    = imgBuffer[offIm + 2];
-                  const iAlpha   = imgBuffer[offIm + 3];
-                  const bRed     = offscreenBufferData.data[offBuff];
-                  const bGreen   = offscreenBufferData.data[offBuff + 1];
-                  const bBlue    = offscreenBufferData.data[offBuff + 2];
-                  const bAlpha   = offscreenBufferData.data[offBuff + 3] || 255;
-                  const rBlend   = iAlpha * opacity / bAlpha;
-                  const newRed   = iRed * (1 - shade) * rBlend + bRed * (1 - rBlend);
+        // clip image from top and left
+        const dClipW = Math.max(0 - DX, 0), dClipH = Math.max(0 - DY, 0);
+        const dClippedW = DW - dClipW, dClippedH = DH - dClipH;
+        const sClipW = Math.floor(dClipW * SW / DW), sClipH = Math.floor(dClipH * SH / DH);
+        const sClippedW = SW - sClipW, sClippedH = SH - sClipH;
+        // calculate starting coordinates and dimensions for source & destination
+        const sStartX = SX + sClipW, dStartX = DX + dClipW;
+        const sStartY = SY + sClipH, dStartY = DY + dClipH;
+        const sW = sClippedW, sH = sClippedH;
+        const dW = dClippedW, dH = dClippedH;
+        // draw scaled image
+        let sX = sStartX, dX = dStartX, drawCol = scaleX - dClipW % scaleX;
+        while (sX < sStartX + sW && sX < imgWidth && dX < dStartX + dW && dX < offscreenBufferW) {
+          while (drawCol > 0 && dX < dStartX + dW && dX < offscreenBufferW) {
+            let sY = sStartY, dY = dStartY, drawRow = scaleY - dClipH % scaleY;
+            while (sY < sStartY + sH && sY < imgHeight && dY < dStartY + dH && dY < offscreenBufferH) {
+              const offIm = 4 * (imgWidth * sY + sX);
+              const iRed = imgBuffer[offIm];
+              const iGreen = imgBuffer[offIm + 1];
+              const iBlue = imgBuffer[offIm + 2];
+              const iAlpha = imgBuffer[offIm + 3];
+              while (drawRow > 0 && dY < dStartY + dH && dY < offscreenBufferH) {
+                if (sX >= 0 && sY >= 0) {
+                  const offBuff = 4 * (offscreenBufferW * dY + dX);
+                  const bRed = offscreenBufferData.data[offBuff];
+                  const bGreen = offscreenBufferData.data[offBuff + 1];
+                  const bBlue = offscreenBufferData.data[offBuff + 2];
+                  const bAlpha = offscreenBufferData.data[offBuff + 3] || 255;
+                  const rBlend = iAlpha * opacity / bAlpha;
+                  const newRed = iRed * (1 - shade) * rBlend + bRed * (1 - rBlend);
                   const newGreen = iGreen * (1 - shade) * rBlend + bGreen * (1 - rBlend);
-                  const newBlue  = iBlue * (1 - shade) * rBlend + bBlue * (1 - rBlend);
+                  const newBlue = iBlue * (1 - shade) * rBlend + bBlue * (1 - rBlend);
                   offscreenBufferData.data[offBuff] = newRed;
                   offscreenBufferData.data[offBuff + 1] = newGreen;
                   offscreenBufferData.data[offBuff + 2] = newBlue;
