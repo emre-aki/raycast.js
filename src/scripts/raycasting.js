@@ -1262,8 +1262,6 @@
                 {}, // occlusion for the current column
                 texWall,
                 offsetLeft * dataTexWall.width + dataTexWall.offset,
-                0,
-                dataTexWall.height,
                 iCol,
                 hCeil,
                 hWall,
@@ -1285,8 +1283,6 @@
           occlusion,
           texture,
           sx,
-          sy,
-          sh,
           dx,
           dy,
           dh,
@@ -1302,13 +1298,12 @@
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
           const DY = Math.floor(DRAW_TILE_SIZE_Y * dy);
           const DH = Math.ceil(DRAW_TILE_SIZE_Y * dh);
+          const SX = Math.floor(sx);
 
-          const SX = Math.floor(sx), SY = Math.floor(sy), SH = Math.ceil(sh);
+          const tw = texture.width, th = texture.height, texBitmap = texture.bitmap;
+
           // texture-mapping scaling factor
-          const scaleH = DH / SH;
-
-          const tw = texture.width, th = texture.height;
-          const texBitmap = texture.bitmap;
+          const scaleH = DH / th;
 
           const lightLevel = 1 - (shade || 0);
           const translucency = 1 - (opacity || 1);
@@ -1319,14 +1314,12 @@
           const wallClipTop = Math.max(occTop - DY, 0);
           const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
           const wallClipped = DH - wallClipTop - wallClipBottom;
-          const texClipTop = Math.floor(wallClipTop * SH / DH);
-          const texClipBottom = Math.floor(wallClipBottom * SH / DH);
-          const texClipped = SH - texClipTop - texClipBottom;
-          const dStart = DY + wallClipTop, sStart = SY + texClipTop;
+          const texClipTop = Math.floor(wallClipTop * th / DH);
+          const dStart = DY + wallClipTop, sStart = texClipTop;
 
           for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
             let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
-            while (sY < sStart + texClipped && dY < dStart + wallClipped) {
+            while (dY < dStart + wallClipped) {
               while (drawRow > 0 && dY < dStart + wallClipped) {
                 const offIm  = 4 * (tw * sY + SX);
                 const offBuff = 4 * (offscreenBufferW * dY + DX + x);
