@@ -134,46 +134,46 @@
             "activeFrames": [0],
             "frames": [
               {
-                "width": 158,
-                "height": 120,
+                "width": 237,
+                "height": 180,
                 "offset": 0,
                 "locOnScreen": {"x": 0, "y": 0},       // initialized at setup
                 "defaultLocOnScreen": {"x": 0, "y": 0} // initialized at setup
               },
               {
-                "width": 158,
-                "height": 146,
-                "offset": 158,
+                "width": 237,
+                "height": 219,
+                "offset": 237,
                 "locOnScreen": {"x": 0, "y": 0} // initialized at setup
               },
               {
-                "width": 158,
-                "height": 164,
-                "offset": 316,
-                "locOnScreen": {"x": 0, "y": 0} // initialized at setup
-              },
-              {
-                "width": 238,
-                "height": 242,
+                "width": 237,
+                "height": 246,
                 "offset": 474,
+                "locOnScreen": {"x": 0, "y": 0} // initialized at setup
+              },
+              {
+                "width": 357,
+                "height": 363,
+                "offset": 711,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) {
                   return {"x": 0, "y": self.res[1] - frame.height};
                 }
               },
               {
-                "width": 174,
-                "height": 302,
-                "offset": 712,
+                "width": 261,
+                "height": 453,
+                "offset": 1068,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) {
                   return {"x": 0, "y": self.res[1] - frame.height};
                 }
               },
               {
-                "width": 226,
-                "height": 262,
-                "offset": 886,
+                "width": 339,
+                "height": 393,
+                "offset": 1329,
                 "locOnScreen": {"x": 0, "y": 0}, // initialized at setup
                 "setLocOnScreen": function(self, frame) {
                   return {"x": 0, "y": self.res[1] - frame.height};
