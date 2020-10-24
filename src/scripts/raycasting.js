@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 10.17.2020                                        *
+ * Last updated: 10.24.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -104,6 +104,9 @@
         "menu": {
           "skull": {
             "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
             "name": "menu_skull.png",
             "activeFrames": [0],
             // `locOnScreen` initialized at setup
@@ -125,6 +128,9 @@
           "shotgun": {
             "img": new Image(),
             "name": "shotgun.png",
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
             "activeFrames": [0],
             "frames": [
               {
@@ -829,11 +835,14 @@
           );
         },
         "titleScreen": function(self, onEnd) {
+          const sprite = self.assets.sprites.menu.skull;
           const animationFrames = self.assets.sprites.animations.menu.skull;
           const render = function(iFrame) {
             const i = iFrame % animationFrames.length;
-            ctx.fillStyle = "#000000";
-            ctx.fillRect(0, 0, self.res[0], self.res[1]);
+            self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
+            self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH, 0, 0, 0, 1);
+            self.util.render.globalSprite(self, sprite);
+            ctx.putImageData(offscreenBufferData, 0, 0);
             if (i === 1) {
               self.util.print(
                 "Press any key to start",
@@ -842,8 +851,6 @@
                 {"size": 16, "color": "#FFFFFF"}
               );
             }
-            self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
-            self.util.render.globalSprite(self.assets.sprites.menu.skull);
           };
           return self.api.animation(
             self,
@@ -939,8 +946,8 @@
             1, 0, 1, 1
           );
         },
-        "globalSprite": function(sprite) {
-          const img = sprite.img;
+        "globalSprite": function(self, sprite) {
+          const tex = sprite;
           const frames = sprite.frames;
           const activeFrames = sprite.activeFrames;
           for (let iFrame = 0; iFrame < activeFrames.length; iFrame += 1) {
@@ -949,10 +956,10 @@
             if (Array.isArray(locOnScreen)) {
               for (let iLoc = 0; iLoc < locOnScreen.length; iLoc += 1) {
                 const loc = locOnScreen[iLoc];
-                ctx.drawImage(
-                  img,
+                self.util.drawImage(
+                  tex,
                   frame.offset,
-                  img.height - frame.height,
+                  tex.height - frame.height,
                   frame.width,
                   frame.height,
                   loc.x,
@@ -962,10 +969,10 @@
                 );
               }
             } else {
-              ctx.drawImage(
-                img,
+              self.util.drawImage(
+                tex,
                 frame.offset,
-                img.height - frame.height,
+                tex.height - frame.height,
                 frame.width,
                 frame.height,
                 locOnScreen.x,
@@ -1271,15 +1278,6 @@
                 );
               }
             }
-
-            ctx.putImageData(offscreenBufferData, 0, 0);
-
-            // render mini-map
-            self.util.render.minimap(
-              self,
-              self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
-              self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
-            );
           }
         },
         "col_wall": function(
@@ -1986,12 +1984,25 @@
         }
       },
       "gameLoop": function(self, deltaT) {
+        // update the game state
         self.exec.movePlayer(self);
         self.exec.interactWDoor(self);
         self.exec.animateShooting(self);
-
+        // TODO: add portals dynamically by reading from the map
+        // update the frame buffer
         self.util.render.frame.rasterized(self);
-        self.util.render.globalSprite(self.assets.sprites.playerWeapons[self.player.weaponDrawn]);
+        self.util.render.globalSprite(
+          self,
+          self.assets.sprites.playerWeapons[self.player.weaponDrawn]
+        );
+        // flush the frame buffer onto the game canvas
+        ctx.putImageData(offscreenBufferData, 0, 0);
+        // render mini-map directly onto the game canvas
+        self.util.render.minimap(
+          self,
+          self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
+          self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
+        );
         self.util.render.stats(self, deltaT);
       }
     },
