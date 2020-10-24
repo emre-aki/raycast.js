@@ -1312,11 +1312,11 @@
 
           // clip texture & its projection against occlusion table
           const occTop = Math.floor(
-            Math.max(occlusion.top, 0) * DRAW_TILE_SIZE_Y
-          ) || 0;
+            Math.max(occlusion.top || 0, 0) * DRAW_TILE_SIZE_Y
+          );
           const occBottom = Math.floor(
-            Math.max(occlusion.bottom, 0) * DRAW_TILE_SIZE_Y
-          ) || 0;
+            Math.max(occlusion.bottom || 0, 0) * DRAW_TILE_SIZE_Y
+          );
           const wallClipTop = Math.max(occTop - DY, 0);
           const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
           const wallClipped = DH - wallClipTop - wallClipBottom;
@@ -1385,8 +1385,8 @@
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
-          const occTop = Math.max(occlusion.top, 0) || 0;
-          const occBottom = Math.max(occlusion.bottom, 0) || 0;
+          const occTop = Math.max(occlusion.top || 0, 0);
+          const occBottom = Math.max(occlusion.bottom || 0, 0);
           const floorClipTop = Math.max(occTop - dy, 0);
           const floorClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const floorClipped = dh - floorClipTop - floorClipBottom;
@@ -1502,8 +1502,8 @@
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
-          const occTop = Math.max(occlusion.top, 0) || 0;
-          const occBottom = Math.max(occlusion.bottom, 0) || 0;
+          const occTop = Math.max(occlusion.top || 0, 0);
+          const occBottom = Math.max(occlusion.bottom || 0, 0);
           const ceilClipTop = Math.max(occTop - dy, 0);
           const ceilClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const ceilClipped = dh - ceilClipTop - ceilClipBottom;
