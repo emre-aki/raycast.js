@@ -750,18 +750,16 @@
         const dClipW = Math.max(0 - DX, 0), dClipH = Math.max(0 - DY, 0);
         const dClippedW = DW - dClipW, dClippedH = DH - dClipH;
         const sClipW = Math.floor(dClipW * SW / DW), sClipH = Math.floor(dClipH * SH / DH);
-        const sClippedW = SW - sClipW, sClippedH = SH - sClipH;
         // calculate starting coordinates and dimensions for source & destination
         const sStartX = SX + sClipW, dStartX = DX + dClipW;
         const sStartY = SY + sClipH, dStartY = DY + dClipH;
-        const sW = sClippedW, sH = sClippedH;
         const dW = dClippedW, dH = dClippedH;
         // draw scaled image
         let sX = sStartX, dX = dStartX, drawCol = scaleX - dClipW % scaleX;
-        while (sX < sStartX + sW && sX < imgWidth && dX < dStartX + dW && dX < offscreenBufferW) {
+        while (sX < imgWidth && dX < dStartX + dW && dX < offscreenBufferW) {
           while (drawCol > 0 && dX < dStartX + dW && dX < offscreenBufferW) {
             let sY = sStartY, dY = dStartY, drawRow = scaleY - dClipH % scaleY;
-            while (sY < sStartY + sH && sY < imgHeight && dY < dStartY + dH && dY < offscreenBufferH) {
+            while (sY < imgHeight && dY < dStartY + dH && dY < offscreenBufferH) {
               const offIm = 4 * (imgWidth * sY + sX);
               const iRed = imgBuffer[offIm];
               const iGreen = imgBuffer[offIm + 1];
@@ -786,14 +784,18 @@
                 drawRow -= 1;
                 dY += 1;
               }
-              drawRow += scaleY;
-              sY += 1;
+              while (drawRow <= 0) {
+                drawRow += scaleY;
+                sY += 1;
+              }
             }
             drawCol -= 1;
             dX += 1;
           }
-          drawCol += scaleX;
-          sX += 1;
+          while (drawCol <= 0) {
+            drawCol += scaleX;
+            sX += 1;
+          }
         }
       },
       "print": function(text, x, y, options) {
@@ -1309,8 +1311,12 @@
           const translucency = 1 - (opacity || 1);
 
           // clip texture & its projection against occlusion table
-          const occTop = Math.floor(occlusion.top * DRAW_TILE_SIZE_Y) || 0;
-          const occBottom = Math.floor(occlusion.bottom * DRAW_TILE_SIZE_Y) || 0;
+          const occTop = Math.floor(
+            Math.max(occlusion.top, 0) * DRAW_TILE_SIZE_Y
+          ) || 0;
+          const occBottom = Math.floor(
+            Math.max(occlusion.bottom, 0) * DRAW_TILE_SIZE_Y
+          ) || 0;
           const wallClipTop = Math.max(occTop - DY, 0);
           const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
           const wallClipped = DH - wallClipTop - wallClipBottom;
@@ -1320,13 +1326,13 @@
           for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
             let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
             while (dY < dStart + wallClipped) {
+              const offIm = 4 * (tw * sY + SX);
+              const iRed = texBitmap[offIm];
+              const iGreen = texBitmap[offIm + 1];
+              const iBlue = texBitmap[offIm + 2];
+              const iAlpha = texBitmap[offIm + 3];
               while (drawRow > 0 && dY < dStart + wallClipped) {
-                const offIm  = 4 * (tw * sY + SX);
                 const offBuff = 4 * (offscreenBufferW * dY + DX + x);
-                const iRed = texBitmap[offIm];
-                const iGreen = texBitmap[offIm + 1];
-                const iBlue = texBitmap[offIm + 2];
-                const iAlpha = texBitmap[offIm + 3];
                 const bRed = offscreenBufferData.data[offBuff];
                 const bGreen = offscreenBufferData.data[offBuff + 1];
                 const bBlue = offscreenBufferData.data[offBuff + 2];
@@ -1342,8 +1348,10 @@
                 drawRow -= 1;
                 dY += 1;
               }
-              drawRow += scaleH;
-              sY += 1;
+              while (drawRow <= 0) {
+                drawRow += scaleH;
+                sY += 1;
+              }
             }
           }
         },
@@ -1377,8 +1385,8 @@
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
-          const occTop = occlusion.top || 0;
-          const occBottom = occlusion.bottom || 0;
+          const occTop = Math.max(occlusion.top, 0) || 0;
+          const occBottom = Math.max(occlusion.bottom, 0) || 0;
           const floorClipTop = Math.max(occTop - dy, 0);
           const floorClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const floorClipped = dh - floorClipTop - floorClipBottom;
@@ -1494,8 +1502,8 @@
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
-          const occTop = occlusion.top || 0;
-          const occBottom = occlusion.bottom || 0;
+          const occTop = Math.max(occlusion.top, 0) || 0;
+          const occBottom = Math.max(occlusion.bottom, 0) || 0;
           const ceilClipTop = Math.max(occTop - dy, 0);
           const ceilClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const ceilClipped = dh - ceilClipTop - ceilClipBottom;
