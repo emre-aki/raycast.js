@@ -32,13 +32,13 @@ $ npm run start
 ```
 
 ### Controls
-- Use keys `W` and `S` on your keyboard to move forwards and backwards, respectively.
-- Key `A` rotates player counter-clockwise, and key `D` rotates player clockwise. 
-- Use keys `Q` and `E` to strafe left and right, respectively.
-- Use keys `R` and `F` to raise and lower the player, respectively.
-- Use keys `↑` and `↓` to look up and down, respectively.
-- Use `SPACE` to shoot.
-- Use `ENTER` to open/close doors.
+- Use keys <kbd>W</kbd> and <kbd>S</kbd> on your keyboard to move forwards and backwards, respectively.
+- Key <kbd>A</kbd> rotates player counter-clockwise, and key <kbd>D</kbd> rotates player clockwise. 
+- Use keys <kbd>Q</kbd> and <kbd>E</kbd> to strafe left and right, respectively.
+- Use keys <kbd>R</kbd> and <kbd>F</kbd> to raise and lower the player, respectively.
+- Use keys <kbd>↑</kbd> and <kbd>↓</kbd> to look up and down, respectively.
+- Use <kbd>SPACE</kbd> to shoot.
+- Use <kbd>ENTER</kbd> to open/close doors.
 
 
 ### Live Demo
