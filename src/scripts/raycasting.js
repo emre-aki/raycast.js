@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 10.24.2020                                        *
+ * Last updated: 12.23.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -477,12 +477,12 @@
         const cleanUp = function() {
           clearInterval(self.intervals[id]);
           delete self.intervals[id];
-          if (onEnd) { onEnd(); }
+          if (onEnd) onEnd();
         };
 
         const animate = function() {
-          if (shouldEnd && shouldEnd(iFrame)) { cleanUp(); }
-          else { onFrame(iFrame); }
+          if (shouldEnd && shouldEnd(iFrame)) cleanUp();
+          else onFrame(iFrame);
           iFrame += 1;
         };
 
@@ -737,9 +737,8 @@
           sx + sw <= 0 || sy + sh <= 0 || sx >= imgWidth || sy >= imgHeight ||
           dx + dw <= 0 || dy + dh <= 0 || dx >= offscreenBufferW ||
           dy >= offscreenBufferH
-        ) {
-          return;
-        }
+        ) return;
+
         // calculate source & destination coordinates & the scaling factor
         const SX = Math.floor(sx), SY = Math.floor(sy), SW = Math.ceil(sw), SH = Math.ceil(sh);
         const DX = Math.floor(dx), DY = Math.floor(dy), DW = Math.ceil(dw), DH = Math.ceil(dh);
@@ -1098,7 +1097,7 @@
                 }
 
                 // if we hit a horizontal door, no need to continue progressing
-                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) { hitV = 1; }
+                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) hitV = 1;
 
                 traceV.x += stepV.x;
                 traceV.y += stepV.y;
@@ -1197,7 +1196,7 @@
                 }
 
                 // if we hit a vertical door, no need to continue progressing
-                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) { hitH = 1; }
+                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) hitH = 1;
 
                 traceH.x += stepH.x;
                 traceH.y += stepH.y;
@@ -1292,7 +1291,7 @@
           opacity
         ) {
           // early return if trying to render out of frustum bounds
-          if (dy + dh <= 0 || dy >= offscreenBufferH) { return; }
+          if (dy + dh <= 0 || dy >= offscreenBufferH) return;
 
           const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
           const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
@@ -1368,7 +1367,7 @@
           shade
         ) {
           // early return if trying to render out of frustum bounds
-          if (dy + dh <= 0 || dy >= self.mRows) { return; }
+          if (dy + dh <= 0 || dy >= self.mRows) return;
 
           // read some global constants
           const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
@@ -1483,7 +1482,7 @@
           shade
         ) {
           // early return if trying to render out of frustum bounds
-          if (dy + dh <= 0 || dy >= self.mRows) { return; }
+          if (dy + dh <= 0 || dy >= self.mRows) return;
 
           // read some global constants
           const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
@@ -1806,9 +1805,7 @@
             stepX.x,
             stepX.y
           )
-        ) {
-          return;
-        }
+        ) return;
 
         const tileX = sampleX[self.mapLegend.TYPE_TILE];
 
@@ -1832,7 +1829,7 @@
         const sampleY = self.map[self.nCols * stepY.y + stepY.x];
 
         // early return if out-of-map
-        if (!sampleY) { return; }
+        if (!sampleY) return;
 
         const tileY = sampleY[self.mapLegend.TYPE_TILE];
 
