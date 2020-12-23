@@ -524,10 +524,6 @@
         bobState.index = x;
         return {"x": 4 * x, "y": y};
       },
-      "getVerticalShift": function(self, deltaPlayerZ, deltaPlayerHeadTilt) {
-        return (deltaPlayerZ * (self.VIEW_DIST - self.DRAW_DIST) /
-          self.DRAW_DIST + deltaPlayerHeadTilt) / self.mRows;
-      },
       "rad2Deg": function(self, rad) {
         return ((rad % self.const.math.RAD_360) + self.const.math.RAD_360)
           % self.const.math.RAD_360 * self.const.math.RAD_TO_DEG;
@@ -920,17 +916,6 @@
             self.DRAW_TILE_SIZE.x,
             hLine,
             1, 0, 0, 1
-          );
-          self.util.fillRect(
-            iCol * self.DRAW_TILE_SIZE.x,
-            self.res[1] * (0.5 + self.util.getVerticalShift(
-              self,
-              self.player.anim.walking.index,
-              self.player.frstmElev + self.player.tilt
-            )),
-            self.DRAW_TILE_SIZE.x,
-            hLine,
-            0, 0, 1, 1
           );
           self.util.fillRect(
             iCol * self.DRAW_TILE_SIZE.x,
