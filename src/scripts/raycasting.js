@@ -561,8 +561,8 @@
           return [xI, m0 * xI + n0];
         }
       },
-      "isInside": {
-        "rectangle": function(xr, yr, w, h, x, y) {
+      "collision": {
+        "pointVsRect": function(xr, yr, w, h, x, y) {
           return x >= xr && x < xr + w && y >= yr && y < yr + h;
         }
       },
@@ -1791,7 +1791,7 @@
 
         // early return if out-of-map
         if (
-          !self.util.isInside.rectangle(
+          !self.util.collision.pointVsRect(
             0,
             0,
             self.nCols,
