@@ -64,7 +64,6 @@
     "DRAW_TILE_SIZE": {}, // initialized in setup // FIXME: move to self.const
     "DRAW_DIST": -1,      // initialized in setup
     "STEP_SIZE": 0.15,    // FIXME: move to self.const
-    "PLAYER_HEIGHT": 0,   // initialized in setup // FIXME: move to self.const
     "keyState": {
       "W": 0,
       "A": 0,
@@ -451,6 +450,7 @@
       },
       "LEGEND_WORLD_OBJECTS": ["spDude0"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
+      "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
       "FLOOR_CAST": 1,
       "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
@@ -512,7 +512,7 @@
           ? 0
           : walkingState.reverse;
         walkingState.index = index;
-        return self.PLAYER_HEIGHT + index;
+        return self.player.frstmElev + self.const.PLAYER_HEIGHT + index;
       },
       "getWeaponBob": function(self) {
         const bobState = self.player.anim.weaponBob;
@@ -1594,8 +1594,8 @@
           "y": self.res[1] / self.mRows
         };
         self.const.CLIP_PROJ_EXTRA_CEIL = self.const.H_MAX_WORLD - self.mRows;
-        self.PLAYER_HEIGHT = self.mRows * 0.5;
-        self.player.z = self.PLAYER_HEIGHT;
+        self.const.PLAYER_HEIGHT = self.mRows * 0.5;
+        self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
         self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
 
         // setup minimap
@@ -1746,6 +1746,7 @@
         }
 
         // tilt player's head
+        const magTilt = 5;
         if (self.keyState.ARW_UP) {
           self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
         } if (self.keyState.ARW_DOWN) {
@@ -1753,18 +1754,18 @@
         }
 
         if (self.keyState.R & 1) {
-          self.PLAYER_HEIGHT += 5;
-          self.player.frstmElev += 5;
-          if (self.PLAYER_HEIGHT >= self.const.H_MAX_WORLD) {
-            self.PLAYER_HEIGHT -= 5;
-            self.player.frstmElev -= 5;
+          self.player.frstmElev += magTilt;
+          const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+          if (zPlayerHead > self.const.H_MAX_WORLD - self.player.anim.walking.apex) {
+            self.player.frstmElev = self.const.H_MAX_WORLD - self.player.anim.walking.apex -
+              self.const.PLAYER_HEIGHT;
           }
         } if (self.keyState.F & 1) {
-          self.PLAYER_HEIGHT -= 5;
-          self.player.frstmElev -= 5;
-          if (self.PLAYER_HEIGHT < self.player.anim.walking.apex) {
-            self.PLAYER_HEIGHT += 5;
-            self.player.frstmElev += 5;
+          self.player.frstmElev -= magTilt;
+          const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+          if (zPlayerHead < self.player.anim.walking.apex) {
+            self.player.frstmElev = self.player.anim.walking.apex -
+              self.const.PLAYER_HEIGHT;
           }
         }
 
@@ -1850,7 +1851,7 @@
             defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y + bob.y;
           }
         } else {
-          self.player.z = self.PLAYER_HEIGHT;
+          self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
           defaultWeaponFrame.locOnScreen.x = defaultLocOnScreen.x;
           defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y;
