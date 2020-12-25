@@ -32,7 +32,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 12.23.2020                                        *
+ * Last updated: 12.25.2020                                        *
  *******************************************************************/
 
 (function() {
@@ -1966,12 +1966,7 @@
           ).start();
         }
       },
-      "gameLoop": function(self, deltaT) {
-        // update the game state
-        self.exec.movePlayer(self);
-        self.exec.interactWDoor(self);
-        self.exec.animateShooting(self);
-        // TODO: add portals dynamically by reading from the map
+      "renderLoop": function(self, deltaT) {
         // update the frame buffer
         self.util.render.frame.rasterized(self);
         self.util.render.globalSprite(
@@ -1986,16 +1981,30 @@
           self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
           self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
         );
+        // render stats directly onto the game canvas
         self.util.render.stats(self, deltaT);
+      },
+      "playerLoop": function(self) {
+        // TODO: add portals dynamically by reading from the map
+        self.exec.movePlayer(self);
+        self.exec.interactWDoor(self);
+        self.exec.animateShooting(self);
+      },
+      "tick": function(self, deltaT) {
+        self.exec.renderLoop(self, deltaT);
+        self.exec.playerLoop(self);
       }
     },
     "run": function(self) {
-      let tsStart = new Date();
-      self.intervals.game = setInterval(function() { // main game loop:
-        const tsEnd = new Date();                    // reiterates ~30 times in a sec
-        self.exec.gameLoop(self, tsEnd - tsStart);
-        tsStart = tsEnd;
-      }, 1000 / self.FPS);
+      let lastTick = new Date();
+      // main game loop: reiterates ~30 times a sec
+      const advanceTick = function() {
+        const currentTick = new Date();
+        const deltaT = currentTick - lastTick;
+        self.exec.tick(self, deltaT);
+        lastTick = currentTick;
+      };
+      self.intervals.game = setInterval(advanceTick, 1000 / self.FPS);
     },
     "start": function(resolution) {
       const self = this;
