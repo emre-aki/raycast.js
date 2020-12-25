@@ -103,10 +103,10 @@
         "menu": {
           "skull": {
             "img": new Image(),
+            "name": "menu_skull.png",
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "menu_skull.png",
             "activeFrames": [0],
             // `locOnScreen` initialized at setup
             "frames": [
@@ -1750,16 +1750,17 @@
 
         // tilt player's head
         const magTilt = 5;
-        if (self.keyState.ARW_UP) {
+        if (self.keyState.ARW_UP & 1) {
           self.player.tilt += magTilt;
           if (self.player.tilt > self.const.MAX_TILT)
             self.player.tilt = self.const.MAX_TILT;
-        } if (self.keyState.ARW_DOWN) {
+        } if (self.keyState.ARW_DOWN & 1) {
           self.player.tilt -= magTilt;
           if (self.player.tilt + self.const.MAX_TILT < 0)
             self.player.tilt = 0 - self.const.MAX_TILT;
         }
 
+        // update player elevation
         if (self.keyState.E & 1) {
           self.player.frstmElev += magTilt;
           const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
