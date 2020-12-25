@@ -71,12 +71,12 @@
       "D": 0,
       "Q": 0,
       "E": 0,
-      "R": 0,
-      "F": 0,
       "SPC": 0,
       "RTN": 0,
       "ARW_UP": 0,
-      "ARW_DOWN": 0
+      "ARW_DOWN": 0,
+      "ARW_LEFT": 0,
+      "ARW_RIGHT": 0
     },
     "map": window.__map__.MAP,
     "mapLegend": window.__map__.LEGEND,
@@ -632,10 +632,6 @@
           self.keyState.Q = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.Q;
         } else if (key === 69) {
           self.keyState.E = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.E;
-        } else if (key === 82) {
-          self.keyState.R = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.R;
-        } else if (key === 70) {
-          self.keyState.F = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.F;
         } else if (key === 32) {
           self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
         } else if (key === 13) {
@@ -644,6 +640,10 @@
           self.keyState.ARW_UP = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_UP;
         } else if (key === 40) {
           self.keyState.ARW_DOWN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_DOWN;
+        } else if (key === 37) {
+          self.keyState.ARW_LEFT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_LEFT;
+        } else if (key === 39) {
+          self.keyState.ARW_RIGHT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_RIGHT;
         }
       },
       "getDoors": function(self) {
@@ -1730,18 +1730,18 @@
         } if (self.keyState.S & 1) {
           displacement.x -= dir.x;
           displacement.y -= dir.y;
-        } if (self.keyState.Q & 1) {
+        } if (self.keyState.A & 1) {
           displacement.x += dir.y;
           displacement.y -= dir.x;
-        } if (self.keyState.E & 1) {
+        } if (self.keyState.D & 1) {
           displacement.x -= dir.y;
           displacement.y += dir.x;
         }
 
         // rotate player in-place
-        if (self.keyState.D & 1) {
+        if (self.keyState.ARW_RIGHT & 1) {
           self.player.angle += 0.075;
-        } if (self.keyState.A & 1) {
+        } if (self.keyState.ARW_LEFT & 1) {
           self.player.angle -= 0.075;
         }
 
@@ -1757,14 +1757,14 @@
             self.player.tilt = 0 - self.const.MAX_TILT;
         }
 
-        if (self.keyState.R & 1) {
+        if (self.keyState.E & 1) {
           self.player.frstmElev += magTilt;
           const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
           if (zPlayerHead > self.const.H_MAX_WORLD - self.player.anim.walking.apex) {
             self.player.frstmElev = self.const.H_MAX_WORLD - self.player.anim.walking.apex -
               self.const.PLAYER_HEIGHT;
           }
-        } if (self.keyState.F & 1) {
+        } if (self.keyState.Q & 1) {
           self.player.frstmElev -= magTilt;
           const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
           if (zPlayerHead < self.player.anim.walking.apex) {
