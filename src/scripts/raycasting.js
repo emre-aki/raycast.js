@@ -1914,6 +1914,7 @@
           };
           const sampleV = self.map[self.nCols * sampleMapV.y + sampleMapV.x];
           const tileV = sampleV ? sampleV[self.mapLegend.TYPE_TILE] : undefined;
+          const doorDataV = self.doors[self.util.coords2Key(sampleMapV)];
           const traceH = {};
           traceH.y = (up & 1) > 0 ? Math.floor(self.player.y) : Math.ceil(self.player.y);
           traceH.x = self.player.x + (traceH.y - self.player.y) / slope;
@@ -1923,10 +1924,11 @@
           };
           const sampleH = self.map[self.nCols * sampleMapH.y + sampleMapH.x];
           const tileH = sampleH ? sampleH[self.mapLegend.TYPE_TILE] : undefined;
-          if (tileV === self.const.TYPE_TILES.V_DOOR) {
-            self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapV)]);
-          } else if (tileH === self.const.TYPE_TILES.H_DOOR) {
-            self.exec.animateDoor(self, self.doors[self.util.coords2Key(sampleMapH)]);
+          const doorDataH = self.doors[self.util.coords2Key(sampleMapH)];
+          if (tileV === self.const.TYPE_TILES.V_DOOR && doorDataV) {
+            self.exec.animateDoor(self, doorDataV);
+          } else if (tileH === self.const.TYPE_TILES.H_DOOR && doorDataH) {
+            self.exec.animateDoor(self, doorDataH);
           }
         }
       },
