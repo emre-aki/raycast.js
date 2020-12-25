@@ -541,25 +541,20 @@
         const pseudoDist = ((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)) * multiplier * multiplier;
         return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
       },
-      "getIntersect": function(l0x0, l0y0, l0x1, l0y1, l1x0, l1y0, l1x1, l1y1) {
-        const deltaX0 = (l0x1 - l0x0).toFixedNum(5), deltaY0 = l0y1 - l0y0;
-        const deltaX1 = (l1x1 - l1x0).toFixedNum(5), deltaY1 = l1y1 - l1y0;
-        const m0 = deltaY0 / deltaX0, m1 = deltaY1 / deltaX1;
-
-        // early return if lines are parallel
-        if (m0 === m1) { return; }
-
-        if (deltaX0 === 0) {
-          const n1 = l1y1 - m1 * l1x1;
-          return [l0x1, m1 * l0x1 + n1];
-        } else if (deltaX1 === 0) {
-          const n0 = l0y1 - m0 * l0x1;
-          return [l1x1, m0 * l1x1 + n0];
-        } else {
-          const n0 = l0y1 - m0 * l0x1, n1 = l1y1 - m1 * l1x1;
-          const xI = (n1 - n0) / (m0 - m1);
-          return [xI, m0 * xI + n0];
+      "getIntersect": function(l0x0, l0y0, l0x1, l0y1, l1x0, l1y0, l1x1, l1y1, seg) {
+        const vec2dCross = (u, v) => u[0] * v[1] - u[1] * v[0]; // FIXME: remove as a separate function
+        const l0 = [l0x1 - l0x0, l0y1 - l0y0], l1 = [l1x1 - l1x0, l1y1 - l1y0];
+        const denom = vec2dCross(l0, l1);
+        const numer = [l1x0 - l0x0, l1y0 - l0y0];
+        const X = vec2dCross(numer, l1) / denom;
+        if (seg) {
+          const Y = vec2dCross(numer, l0) / denom;
+          // if given vectors l0 and l1 are line segments, their intersection
+          // parameters X and Y must be within the range [0, 1), that is,
+          // the point of intersection must be sitting on both line segments
+          if (X < 0 || X >= 1 || Y < 0 || Y >= 1) return;
         }
+        return [l0x0 + X * l0[0], l0y0 + X * l0[1]];
       },
       "collision": {
         "pointVsRect": function(xr, yr, w, h, x, y) {
