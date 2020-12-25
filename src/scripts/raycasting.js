@@ -1196,11 +1196,15 @@
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // calculate ceiling, floor and wall height for current column
-              const hCeil = (self.const.H_MAX_WORLD - self.player.z) *
+              const hCeil = Math.floor(
+                (self.const.H_MAX_WORLD - self.player.z) *
                 (distToWall - self.VIEW_DIST) / distToWall +
-                H_FRSTM - self.const.CLIP_PROJ_EXTRA_CEIL;
-              const hFloor = self.player.z * (distToWall - self.VIEW_DIST) /
-                distToWall - H_FRSTM;
+                H_FRSTM - self.const.CLIP_PROJ_EXTRA_CEIL
+              );
+              const hFloor = Math.floor(
+                self.player.z * (distToWall - self.VIEW_DIST) / distToWall -
+                H_FRSTM
+              );
               const hWall = self.mRows - hCeil - hFloor;
 
               if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
