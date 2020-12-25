@@ -417,6 +417,7 @@
       "math": {
         // TODO: Make sin/cos && sqrt tables for optimization
         "RAD_TO_DEG": 180 / Math.PI,
+        "RAD_90": 0.5 * Math.PI,
         "RAD_360": 2 * Math.PI
       },
       "TYPE_TILES": {
@@ -523,6 +524,9 @@
           : bobState.reverse;
         bobState.index = x;
         return {"x": 4 * x, "y": y};
+      },
+      "normalizeAngle": function(angle) {
+        return ((angle % Math.PI) + Math.PI) % Math.PI;
       },
       "rad2Deg": function(self, rad) {
         return ((rad % self.const.math.RAD_360) + self.const.math.RAD_360)
@@ -1481,7 +1485,7 @@
           const MAX_TILT = self.const.MAX_TILT;
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
-          const rad2Deg = self.util.rad2Deg;
+          const normalizeAngle = self.util.normalizeAngle;
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
@@ -1532,8 +1536,8 @@
                 tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
                 ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
               } else {        // if outdoors skybox
-                const ppr = tw / 90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
-                tx = Math.floor((rad2Deg(self, rayAngle) * ppr) % tw);
+                const ppr = tw / self.const.math.RAD_90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
+                tx = Math.floor((normalizeAngle(rayAngle) * ppr) % tw);
                 ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS);
               }
             } else {
