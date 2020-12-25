@@ -1748,9 +1748,13 @@
         // tilt player's head
         const magTilt = 5;
         if (self.keyState.ARW_UP) {
-          self.player.tilt += self.player.tilt < self.const.MAX_TILT ? 5 : 0;
+          self.player.tilt += magTilt;
+          if (self.player.tilt > self.const.MAX_TILT)
+            self.player.tilt = self.const.MAX_TILT;
         } if (self.keyState.ARW_DOWN) {
-          self.player.tilt -= self.player.tilt > -1 * self.const.MAX_TILT ? 5 : 0;
+          self.player.tilt -= magTilt;
+          if (self.player.tilt + self.const.MAX_TILT < 0)
+            self.player.tilt = 0 - self.const.MAX_TILT;
         }
 
         if (self.keyState.R & 1) {
