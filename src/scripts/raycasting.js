@@ -1768,11 +1768,8 @@
 
         // rotate player in-place
         const magRot = 0.075 * mult;
-        if (self.keyState.ARW_RIGHT & 1) {
-          self.player.angle += magRot;
-        } if (self.keyState.ARW_LEFT & 1) {
-          self.player.angle -= magRot;
-        }
+        if (self.keyState.ARW_RIGHT & 1) self.player.angle += magRot;
+        if (self.keyState.ARW_LEFT & 1) self.player.angle -= magRot;
 
         // tilt player's head
         const magTilt = 5 * mult;
@@ -1790,17 +1787,15 @@
         if (self.keyState.E & 1) {
           self.player.frstmElev += magTilt;
           const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
-          if (zPlayerHead > self.const.H_MAX_WORLD - self.player.anim.walking.apex) {
-            self.player.frstmElev = self.const.H_MAX_WORLD - self.player.anim.walking.apex -
-              self.const.PLAYER_HEIGHT;
-          }
+          if (zPlayerHead > self.const.H_MAX_WORLD - self.player.anim.walking.apex)
+            self.player.frstmElev = self.const.H_MAX_WORLD -
+              self.player.anim.walking.apex - self.const.PLAYER_HEIGHT;
         } if (self.keyState.Q & 1) {
           self.player.frstmElev -= magTilt;
           const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
-          if (zPlayerHead < self.player.anim.walking.apex) {
+          if (zPlayerHead < self.player.anim.walking.apex)
             self.player.frstmElev = self.player.anim.walking.apex -
               self.const.PLAYER_HEIGHT;
-          }
         }
 
         // calculate updated player position & wall margin
