@@ -1089,7 +1089,7 @@
                       sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
                       sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
                       sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
-                    );
+                    ); // FIXME: fix for parallel lines
                     pHit.x = pIntersect[0];
                     pHit.y = pIntersect[1];
                   }
@@ -1180,7 +1180,7 @@
                       sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
                       sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
                       sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
-                    );
+                    ); // FIXME: fix for parallel lines
                     pHit.x = pIntersect[0];
                     pHit.y = pIntersect[1];
                   }
@@ -1255,7 +1255,7 @@
                 // draw floor
                 self.util.render.col_floor(
                   self,
-                  {}, // occlusion for the current column
+                  {}, // FIXME: occlusion for the current column
                   undefined,
                   iCol,
                   self.mRows - hFloor,
@@ -1271,7 +1271,7 @@
                 // draw ceiling
                 self.util.render.col_ceiling(
                   self,
-                  {}, // occlusion for the current column
+                  {}, // FIXME: occlusion for the current column
                   undefined,
                   iCol,
                   0,
@@ -1292,7 +1292,7 @@
               const dataTexWall = texWall[currentHit || "vertical"];
               self.util.render.col_wall(
                 self,
-                {}, // occlusion for the current column
+                {}, // FIXME: occlusion for the current column
                 texWall,
                 offsetLeft * dataTexWall.width + dataTexWall.offset,
                 iCol,
@@ -1441,7 +1441,7 @@
             // to the point where the imaginary line intersects with the floor
             // at the given world-z (wz)
             const dFloorTile = VIEW_DIST * (wz - self.player.z) /
-              (wz - self.player.z + iR + offset + floorClipBottom) /
+              (wz - self.player.z + offset + floorClipBottom + iR) /
               Math.cos(relAngle);
             // get the distance vector to the floor
             const pFloorTile = {
@@ -1554,7 +1554,7 @@
             // to the point where the imaginary line intersects with the ceiling
             // that has a height of world-height (wh) at the given world-z (wz)
             const dCeilTile = VIEW_DIST * (wh + self.player.z - wz) /
-              (wh + self.player.z - wz + offset + iR + ceilClipTop) /
+              (wh + self.player.z - wz + offset + ceilClipTop + iR) /
               Math.cos(relAngle);
             // get the distance vector to the ceiling
             const pCeilTile = {
@@ -1581,7 +1581,7 @@
               } else {        // if outdoors skybox
                 const ppr = tw / self.const.math.RAD_90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
                 tx = Math.floor((normalizeAngle(rayAngle) * ppr) % tw);
-                ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS);
+                ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS); // FIXME: extreme MAX_TILTs
               }
             } else {
               texCeil = texture;
