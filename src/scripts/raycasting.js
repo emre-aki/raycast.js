@@ -9,9 +9,10 @@
  *                                                                 *
  *   All of the rendering is carried out within a single 640x480   *
  * canvas at ~30 frames per second. The rendering at its core is   *
- * basically comprised of texture-mapped walls at constant-Z and   *
- * per-pixel rendered ceiling and floor textures. An offscreen     *
- * frame buffer is utilized to optimize per-pixel rendering.       *
+ * basically comprised of vertical slices of texture-mapped walls  *
+ * at constant-Z and per-pixel rendered ceiling & floor textures.  *
+ * An offscreen frame buffer is utilized to optimize per-pixel     *
+ * rendering.                                                      *
  *                                                                 *
  *   This little project was inspired by a video on YouTube posted *
  * by a fellow seasoned programmer who goes by the name 'javidx9.' *
@@ -32,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 12.25.2020                                        *
+ * Last updated: 01.14.2021                                        *
  *******************************************************************/
 
 (function() {
