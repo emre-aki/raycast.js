@@ -551,9 +551,9 @@
         if (seg) {
           const Y = vec2dCross(numer, l0) / denom;
           // if given vectors l0 and l1 are line segments, their intersection
-          // parameters X and Y must be within the range [0, 1), that is,
+          // parameters X and Y must be within the range [0, 1], that is,
           // the point of intersection must be sitting on both line segments
-          if (X < 0 || X >= 1 || Y < 0 || Y >= 1) return;
+          if (X < 0 || X > 1 || Y < 0 || Y > 1) return;
         }
         return [l0x0 + X * l0[0], l0y0 + X * l0[1]];
       },
