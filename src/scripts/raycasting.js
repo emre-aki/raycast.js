@@ -1742,7 +1742,7 @@
           self.player.angle = toAngle;
         }
       },
-      "movePlayer": function(self) {
+      "movePlayer": function(self, mult) {
         // memoize current position
         const memoPos = self.api.memo([self.player.x, self.player.y]);
 
@@ -1767,14 +1767,15 @@
         }
 
         // rotate player in-place
+        const magRot = 0.075 * mult;
         if (self.keyState.ARW_RIGHT & 1) {
-          self.player.angle += 0.075;
+          self.player.angle += magRot;
         } if (self.keyState.ARW_LEFT & 1) {
-          self.player.angle -= 0.075;
+          self.player.angle -= magRot;
         }
 
         // tilt player's head
-        const magTilt = 5;
+        const magTilt = 5 * mult;
         if (self.keyState.ARW_UP & 1) {
           self.player.tilt += magTilt;
           if (self.player.tilt > self.const.MAX_TILT)
@@ -2020,15 +2021,15 @@
         // render stats directly onto the game canvas
         self.util.render.stats(self, deltaT);
       },
-      "playerLoop": function(self) {
+      "playerLoop": function(self, mult) {
         // TODO: add portals dynamically by reading from the map
-        self.exec.movePlayer(self);
+        self.exec.movePlayer(self, mult);
         self.exec.interactWDoor(self);
         self.exec.animateShooting(self);
       },
       "tick": function(self, deltaT) {
         self.exec.renderLoop(self, deltaT);
-        self.exec.playerLoop(self);
+        self.exec.playerLoop(self, 1);
       }
     },
     "run": function(self) {
