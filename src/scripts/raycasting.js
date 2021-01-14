@@ -94,10 +94,10 @@
         "weaponBob": {"index": 0, "reverse": 0, "apex": 6}
       },
       "tilt": 0,
-      "frstmElev": 0,
+      "frstmElev": window.__player__.Z,
       "x": window.__player__.X,
       "y": window.__player__.Y,
-      "z": window.__player__.Z // re-initialized at setup
+      "z": 0 // re-initialized at setup
     },
     "assets": {
       "sprites": {
