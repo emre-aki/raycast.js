@@ -560,6 +560,30 @@
       "collision": {
         "pointVsRect": function(xr, yr, w, h, x, y) {
           return x >= xr && x < xr + w && y >= yr && y < yr + h;
+        },
+        "pointVsPolygon": function(self, x, y, linedefs) {
+          const nLines = linedefs.length;
+          let nColls = 0;
+          for (let i = 0; i < nLines; i += 1) {
+            const v0 = linedefs[i][0], v1 = linedefs[i][1];
+            const x0 = v0[0], y0 = v0[1], x1 = v1[0], y1 = v1[1];
+            const colln = self.util.getIntersect(x, y, 0, y, x0, y0, x1, y1, 1);
+            if (
+              // if the ray intersects with an edge of the polygon
+              colln && isFinite(colln[0]) && (
+                // if the intersection is on either one of the vertices of the
+                // polygon edge, the other vertex of the edge should be situated
+                // below the ray
+                colln[0] === x0 && colln[1] === y0 && y0 < y1 ||
+                colln[0] === x1 && colln[1] === y1 && y0 > y1 ||
+                // if the intersection is on neither one of the vertices of the
+                // polygon edge
+                (colln[0] !== x0 || colln[1] !== y0) &&
+                (colln[0] !== x1 || colln[1] !== y1)
+              )
+            ) nColls += 1;
+          }
+          return nColls % 2 > 0;
         }
       },
       "getBitmap": function(img) {
