@@ -35,10 +35,13 @@ $ npm run start
 - Use keys <kbd>W</kbd> and <kbd>S</kbd> on your keyboard to move forwards and backwards, respectively.
 - Key <kbd>←</kbd> rotates player counter-clockwise, and key <kbd>→</kbd> rotates player clockwise.
 - Use keys <kbd>A</kbd> and <kbd>D</kbd> to strafe left and right, respectively.
-- Use keys <kbd>E</kbd> and <kbd>Q</kbd> to raise and lower the player, respectively.
+- You may use either <kbd>![MSW]</kbd><sup>__*__</sup>, or the keys <kbd>E</kbd> and <kbd>Q</kbd> to raise and lower the player, respectively.
 - Use keys <kbd>↑</kbd> and <kbd>↓</kbd> to look up and down, respectively.
-- Use <kbd>SPACE</kbd> to shoot.
+- You may use either <kbd>![LMB]</kbd><sup>__*__</sup>, or <kbd>SPACE</kbd> to shoot.
 - Use <kbd>ENTER</kbd> to open/close doors.
+- You may also use the mouse<sup>__*__</sup> for free-look.
+
+  *<sup>__\*__</sup> You should first click <kbd>![LMB]</kbd> on the `canvas` to activate mouse controls.*
 
 
 ### Live Demo
@@ -70,3 +73,6 @@ $ npm run leveledit
 - World-object sprites
 - Transparent walls
 - *Pseudo portal-rendering*
+
+[LMB]: https://github.com/emre-aki/raycasting.js/blob/master/images/lmb.png?raw=true (left mouse button)
+[MSW]: https://github.com/emre-aki/raycasting.js/blob/master/images/msw.png?raw=true (mouse scroll whell)

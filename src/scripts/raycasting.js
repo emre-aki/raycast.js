@@ -79,6 +79,13 @@
       "ARW_LEFT": 0,
       "ARW_RIGHT": 0
     },
+    "mouseButtonState": {
+      "LEFT": 0,
+      "MIDDLE": 0,
+      "RIGHT": 0,
+      "BRWS_BWD": 0,
+      "BRWS_FWD": 0,
+    },
     "map": window.__map__.MAP,
     "mapLegend": window.__map__.LEGEND,
     "mRows": 240,
@@ -668,6 +675,18 @@
           self.keyState.ARW_LEFT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_LEFT;
         } else if (key === 39) {
           self.keyState.ARW_RIGHT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_RIGHT;
+        }
+      },
+      "handleAsyncMouseButtonState": function(self, type, button) {
+        if (type !== "mousedown" && type !== "mouseup") return;
+        const pressing = type === "mousedown";
+        switch (button) {
+          case 0: self.mouseButtonState.LEFT = pressing ? 1 : 0; break;
+          case 1: self.mouseButtonState.MIDDLE = pressing ? 1 : 0; break;
+          case 2: self.mouseButtonState.RIGHT = pressing ? 1 : 0; break;
+          case 3: self.mouseButtonState.BRWS_BWD = pressing ? 1 : 0; break;
+          case 4: self.mouseButtonState.BRWS_FWD = pressing ? 1 : 0; break;
+          default: break;
         }
       },
       "getDoors": function(self) {
@@ -1640,6 +1659,8 @@
         document.onkeyup = function(e) {
           self.util.handleAsyncKeyState(self, e.type, e.which || e.keyCode);
         };
+        // setup mouse listeners
+        self.exec.addMouseListener(self, canvas);
 
         // async ops.
         return new Promise(function(resolve, reject) {
@@ -1728,6 +1749,56 @@
               resolve(resolution);
             });
         });
+      },
+      "addMouseListener": function(self, element) {
+        const onMouseDown = function(e) {
+          self.util.handleAsyncMouseButtonState(self, "mousedown", e.button);
+        };
+        const onMouseUp = function(e) {
+          self.util.handleAsyncMouseButtonState(self, "mouseup", e.button);
+        };
+        const onMouseMove = function(e) {
+          // get mouse movement
+          const deltaX = e.movementX, deltaY = e.movementY;
+          // update the player tilt using the mouse movement along y-axis
+          self.exec.updatePlayerTilt(self, 0 - deltaY / self.DRAW_TILE_SIZE.y);
+          // update the player rotation using the mouse movement along x-axis
+          self.player.angle += deltaX * self.FOV / self.res[0];
+        };
+        const onMouseWheel = function(e) {
+          // update the player height using the change in the mouse scroll
+          self.exec.updatePlayerZ(self, 0 - e.deltaY / 5);
+          self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+        };
+        const isPointerLocked = function() {
+          return document.pointerLockElement === element ||
+            document.mozPointerLockElement === element;
+        };
+        const requestPointerLock = function() {
+          if (!isPointerLocked()) {
+            element.requestPointerLock = element.requestPointerLock ||
+              element.mozRequestPointerLock;
+            element.requestPointerLock();
+          }
+        };
+        const onPointerLockChange = function() {
+          if (isPointerLocked()) { // pointer locked, attach mouse listeners
+            element.onclick = undefined;
+            element.onmousedown = onMouseDown;
+            element.onmouseup = onMouseUp;
+            element.onmousemove = onMouseMove;
+            element.onwheel = onMouseWheel;
+          } else {                 // pointer unlocked, detach mouse listeners
+            element.onclick = requestPointerLock;
+            element.onmousedown = undefined;
+            element.onmouseup = undefined;
+            element.onmousemove = undefined;
+            element.onwheel = undefined;
+          }
+        };
+        element.onclick = requestPointerLock;
+        document.onpointerlockchange = onPointerLockChange;
+        document.onmozpointerlockchange = onPointerLockChange;
       },
       "playAudio": function(self, theme) {
         if (theme.status === "READY") {
@@ -1888,7 +1959,7 @@
       },
       "animateShooting": function(self) {
         if (
-          (self.keyState.SPC & 1) &&
+          ((self.keyState.SPC & 1) || (self.mouseButtonState.LEFT & 1)) &&
           (self.player.anim.shooting.animating & 1) === 0
         ) {
           const animationFrames = self.assets.sprites.animations.playerWeapons[
