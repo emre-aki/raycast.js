@@ -651,30 +651,22 @@
           : arguments[0].toString() + "_" + arguments[1].toString();
       },
       "handleAsyncKeyState": function(self, type, key) {
-        if (key === 87) {
-          self.keyState.W = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.W;
-        } else if (key === 65) {
-          self.keyState.A = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.A;
-        } else if (key === 83) {
-          self.keyState.S = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.S;
-        } else if (key === 68) {
-          self.keyState.D = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.D;
-        } else if (key === 81) {
-          self.keyState.Q = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.Q;
-        } else if (key === 69) {
-          self.keyState.E = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.E;
-        } else if (key === 32) {
-          self.keyState.SPC = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.SPC;
-        } else if (key === 13) {
-          self.keyState.RTN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.RTN;
-        } else if (key === 38) {
-          self.keyState.ARW_UP = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_UP;
-        } else if (key === 40) {
-          self.keyState.ARW_DOWN = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_DOWN;
-        } else if (key === 37) {
-          self.keyState.ARW_LEFT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_LEFT;
-        } else if (key === 39) {
-          self.keyState.ARW_RIGHT = type === "keydown" ? 1 : type === "keyup" ? 0 : self.keyState.ARW_RIGHT;
+        if (type !== "keydown" && type !== "keyup") return;
+        const pressing = type === "keydown";
+        switch (key) {
+          case 87: self.keyState.W = pressing ? 1 : 0; break;
+          case 65: self.keyState.A = pressing ? 1 : 0; break;
+          case 83: self.keyState.S = pressing ? 1 : 0; break;
+          case 68: self.keyState.D = pressing ? 1 : 0; break;
+          case 81: self.keyState.Q = pressing ? 1 : 0; break;
+          case 69: self.keyState.E = pressing ? 1 : 0; break;
+          case 32: self.keyState.SPC = pressing ? 1 : 0; break;
+          case 13: self.keyState.RTN = pressing ? 1 : 0; break;
+          case 37: self.keyState.ARW_LEFT = pressing ? 1 : 0; break;
+          case 38: self.keyState.ARW_UP = pressing ? 1 : 0; break;
+          case 39: self.keyState.ARW_RIGHT = pressing ? 1 : 0; break;
+          case 40: self.keyState.ARW_DOWN = pressing ? 1 : 0; break;
+          default: break;
         }
       },
       "handleAsyncMouseButtonState": function(self, type, button) {
