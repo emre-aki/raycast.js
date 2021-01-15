@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 01.14.2021                                        *
+ * Last updated: 01.15.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -1742,6 +1742,23 @@
           self.player.angle = toAngle;
         }
       },
+      "updatePlayerTilt": function(self, deltaTilt) {
+        self.player.tilt += deltaTilt;
+        if (self.player.tilt > self.const.MAX_TILT)
+          self.player.tilt = self.const.MAX_TILT;
+        else if (self.player.tilt + self.const.MAX_TILT < 0)
+          self.player.tilt = 0 - self.const.MAX_TILT;
+      },
+      "updatePlayerZ": function(self, deltaZ) {
+        self.player.frstmElev += deltaZ;
+        const hPlayerCrouch = self.player.anim.walking.apex;
+        const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+        if (zPlayerHead > self.const.H_MAX_WORLD - hPlayerCrouch)
+          self.player.frstmElev = self.const.H_MAX_WORLD - hPlayerCrouch -
+            self.const.PLAYER_HEIGHT;
+        else if (zPlayerHead < hPlayerCrouch)
+          self.player.frstmElev = hPlayerCrouch - self.const.PLAYER_HEIGHT;
+      },
       "movePlayer": function(self, mult) {
         // memoize current position
         const memoPos = self.api.memo([self.player.x, self.player.y]);
@@ -1773,30 +1790,12 @@
 
         // tilt player's head
         const magTilt = 5 * mult;
-        if (self.keyState.ARW_UP & 1) {
-          self.player.tilt += magTilt;
-          if (self.player.tilt > self.const.MAX_TILT)
-            self.player.tilt = self.const.MAX_TILT;
-        } if (self.keyState.ARW_DOWN & 1) {
-          self.player.tilt -= magTilt;
-          if (self.player.tilt + self.const.MAX_TILT < 0)
-            self.player.tilt = 0 - self.const.MAX_TILT;
-        }
+        if (self.keyState.ARW_UP & 1) self.exec.updatePlayerTilt(self, magTilt);
+        if (self.keyState.ARW_DOWN & 1) self.exec.updatePlayerTilt(self, 0 - magTilt);
 
         // update player elevation
-        if (self.keyState.E & 1) {
-          self.player.frstmElev += magTilt;
-          const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
-          if (zPlayerHead > self.const.H_MAX_WORLD - self.player.anim.walking.apex)
-            self.player.frstmElev = self.const.H_MAX_WORLD -
-              self.player.anim.walking.apex - self.const.PLAYER_HEIGHT;
-        } if (self.keyState.Q & 1) {
-          self.player.frstmElev -= magTilt;
-          const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
-          if (zPlayerHead < self.player.anim.walking.apex)
-            self.player.frstmElev = self.player.anim.walking.apex -
-              self.const.PLAYER_HEIGHT;
-        }
+        if (self.keyState.E & 1) self.exec.updatePlayerZ(self, magTilt);
+        if (self.keyState.Q & 1) self.exec.updatePlayerZ(self, 0 - magTilt);
 
         // calculate updated player position & wall margin
         const paceX = displacement.x * self.STEP_SIZE;
