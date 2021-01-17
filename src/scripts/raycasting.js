@@ -195,9 +195,7 @@
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
-            if (i === keys.length) {
-              return resolve(self.assets.sprites);
-            }
+            if (i === keys.length) return resolve(self.assets.sprites);
             const sprite = keys[i].split(".").reduce(function(acc, curr) {
               return acc[curr];
             }, self.assets.sprites);
@@ -365,9 +363,7 @@
         },
         "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
-            if (i === keys.length) {
-              return resolve(self.assets.textures);
-            }
+            if (i === keys.length) return resolve(self.assets.textures);
             const texture = keys[i].split(".").reduce(function(acc, curr) {
               return acc[curr];
             }, self.assets.textures);
@@ -653,11 +649,8 @@
           for (const key in object) {
             if (object.hasOwnProperty(key)) {
               const prop = object[key];
-              if (typeof(prop) === typeof({})) {
-                cloned[key] = clone(prop);
-              } else {
-                cloned[key] = prop;
-              }
+              if (typeof(prop) === typeof({})) cloned[key] = clone(prop);
+              else cloned[key] = prop;
             }
           }
           return cloned;
@@ -671,11 +664,9 @@
           for (const key in current) {
             if (current.hasOwnProperty(key)) {
               const prop = current[key];
-              if (typeof(prop) === typeof({})) {
+              if (typeof(prop) === typeof({}))
                 local[key] = mergeTwo(local[key], current[key]);
-              } else {
-                local[key] = prop;
-              }
+              else local[key] = prop;
             }
           }
           return local;
@@ -2005,11 +1996,10 @@
           const sampleH = self.map[self.nCols * sampleMapH.y + sampleMapH.x];
           const tileH = sampleH ? sampleH[self.mapLegend.TYPE_TILE] : undefined;
           const doorDataH = self.doors[self.util.coords2Key(sampleMapH)];
-          if (tileV === self.const.TYPE_TILES.V_DOOR && doorDataV) {
+          if (tileV === self.const.TYPE_TILES.V_DOOR && doorDataV)
             self.exec.animateDoor(self, doorDataV);
-          } else if (tileH === self.const.TYPE_TILES.H_DOOR && doorDataH) {
+          else if (tileH === self.const.TYPE_TILES.H_DOOR && doorDataH)
             self.exec.animateDoor(self, doorDataH);
-          }
         }
       },
       "tryAndCloseDoor": function(self, door) {
