@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 01.15.2021                                        *
+ * Last updated: 01.17.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -465,7 +465,7 @@
       "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
-      "MARGIN_TO_WALL": 0.5,
+      "MARGIN_TO_WALL": 0.4,
       "DRAW_DIST": 15,
       "H_MAX_WORLD": 480,
       "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
@@ -591,7 +591,49 @@
             ) nColls += 1;
           }
           return nColls % 2 > 0;
+        },
+        "playerAABBvsGrid": function(self, pace, movingAlongX) {
+          const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
+          const playerX = self.player.x, playerY = self.player.y;
+          const PACE = pace.toFixedNum(5);
+          const DIR = Math.sign(PACE);
+          if (PACE && movingAlongX) {    // if the movement is along the x-axis
+            const newX = playerX + PACE;
+            const vX = newX + MARGIN_TO_WALL * DIR;
+            const vNorth = (playerY - MARGIN_TO_WALL).toFixedNum(5);
+            const vSouth = (playerY + MARGIN_TO_WALL).toFixedNum(5);
+            const northBlocked = self.util.isBlockingMapCell(self, vX, vNorth);
+            const southBlocked = self.util.isBlockingMapCell(self, vX, vSouth);
+            const southEdgeTouching = Math.floor(vSouth) === vSouth;
+            // a collision must have occurred whether the northern or the
+            // the non-touching southern edge of the player bounding-box
+            // is blocked
+            if (northBlocked || southBlocked && !southEdgeTouching)
+              return Math.floor(vX);
+          } else if (PACE) {             // if the movement is along the y-axis
+            const newY = playerY + PACE;
+            const vY = newY + MARGIN_TO_WALL * DIR;
+            const vWest = (playerX - MARGIN_TO_WALL).toFixedNum(5);
+            const vEast = (playerX + MARGIN_TO_WALL).toFixedNum(5);
+            const westBlocked = self.util.isBlockingMapCell(self, vWest, vY);
+            const eastBlocked = self.util.isBlockingMapCell(self, vEast, vY);
+            const eastEdgeTouching = Math.floor(vEast) === vEast;
+            // a collision must have occurred whether the western or the
+            // the non-touching eastern edge of the player bounding-box
+            // is blocked
+            if (westBlocked || eastBlocked && !eastEdgeTouching)
+              return Math.floor(vY);
+          }
         }
+      },
+      "isBlockingMapCell": function(self, x, y) {
+        const X = Math.floor(x), Y = Math.floor(y);
+        const typeCell = self.map[self.nCols * Y + X][self.mapLegend.TYPE_TILE];
+        return typeCell === self.const.TYPE_TILES.WALL ||
+          typeCell === self.const.TYPE_TILES.WALL_DIAG ||
+          (typeCell === self.const.TYPE_TILES.V_DOOR ||
+            typeCell === self.const.TYPE_TILES.H_DOOR) &&
+            self.doors[self.util.coords2Key(X, Y)].state;
       },
       "getBitmap": function(img) {
         const buffCanvas = document.createElement("canvas");
@@ -1825,7 +1867,6 @@
       "movePlayer": function(self, mult) {
         // memoize current position
         const memoPos = self.api.memo([self.player.x, self.player.y]);
-
         // calculate displacement vector
         const dir = {
           "x": Math.cos(self.player.angle),
@@ -1845,86 +1886,38 @@
           displacement.x -= dir.y;
           displacement.y += dir.x;
         }
-
         // rotate player in-place
         const magRot = 0.075 * mult;
         if (self.keyState.ARW_RIGHT & 1) self.player.angle += magRot;
         if (self.keyState.ARW_LEFT & 1) self.player.angle -= magRot;
-
         // tilt player's head
         const magTilt = 5 * mult;
         if (self.keyState.ARW_UP & 1) self.exec.updatePlayerTilt(self, magTilt);
         if (self.keyState.ARW_DOWN & 1) self.exec.updatePlayerTilt(self, 0 - magTilt);
-
         // update player elevation
         if (self.keyState.E & 1) self.exec.updatePlayerZ(self, magTilt);
         if (self.keyState.Q & 1) self.exec.updatePlayerZ(self, 0 - magTilt);
-
-        // calculate updated player position & wall margin
-        const paceX = displacement.x * self.STEP_SIZE;
-        const paceY = displacement.y * self.STEP_SIZE;
-        const marginToWall = {
-          "x": Math.sign(displacement.x) * self.const.MARGIN_TO_WALL,
-          "y": Math.sign(displacement.y) * self.const.MARGIN_TO_WALL
-        };
-
-        // #region | collision detection for horizontal movement
-        const stepX = {"x": Math.floor(self.player.x + paceX + marginToWall.x), "y": Math.floor(self.player.y)};
-        const sampleX = self.map[self.nCols * stepX.y + stepX.x];
-
-        // early return if out-of-map
-        if (
-          !self.util.collision.pointVsRect(
-            0,
-            0,
-            self.nCols,
-            self.nRows,
-            stepX.x,
-            stepX.y
-          )
-        ) return;
-
-        const tileX = sampleX[self.mapLegend.TYPE_TILE];
-
-        // collided with a solid wall/semi-open door/diagonal wall
-        if (
-          tileX === self.const.TYPE_TILES.WALL ||
-          tileX === self.const.TYPE_TILES.WALL_DIAG ||
-          (tileX === self.const.TYPE_TILES.V_DOOR &&
-            self.doors[self.util.coords2Key(stepX)].state > 0)
-        ) {
-          self.player.x = marginToWall.x > 0 // heading east
-            ? stepX.x - marginToWall.x
-            : stepX.x + 1 - marginToWall.x;  // heading west
-        } else {
-          self.player.x += paceX;
+        // calculate updated player position
+        const paceX = displacement.x * self.STEP_SIZE * mult;
+        const paceY = displacement.y * self.STEP_SIZE * mult;
+        // detect collisions when moving along x-axis
+        const collnX = self.util.collision.playerAABBvsGrid(self, paceX, 1);
+        // update player position unless a collision has occurred
+        if (isNaN(collnX)) self.player.x += paceX;
+        // if collided with a solid geometry, resolve it accordingly
+        else {
+          const resolve = self.const.MARGIN_TO_WALL * (0 - Math.sign(paceX));
+          self.player.x = collnX + (resolve > 0 ? 1 : 0) + resolve;
         }
-        // #endregion
-
-        // #region | collision detection for vertical movement
-        const stepY = {"x": Math.floor(self.player.x), "y": Math.floor(self.player.y + paceY + marginToWall.y)};
-        const sampleY = self.map[self.nCols * stepY.y + stepY.x];
-
-        // early return if out-of-map
-        if (!sampleY) return;
-
-        const tileY = sampleY[self.mapLegend.TYPE_TILE];
-
-        // collided with a solid wall/semi-open door/diagonal wall
-        if (
-          tileY === self.const.TYPE_TILES.WALL ||
-          tileY === self.const.TYPE_TILES.WALL_DIAG ||
-          (tileY === self.const.TYPE_TILES.H_DOOR &&
-            self.doors[self.util.coords2Key(stepY)].state > 0)
-        ) {
-          self.player.y = marginToWall.y > 0 // heading south
-            ? stepY.y - marginToWall.y
-            : stepY.y + 1 - marginToWall.y;  // heading north
-        } else {
-          self.player.y += paceY;
+        // detect collisions when moving along y-axis
+        const collnY = self.util.collision.playerAABBvsGrid(self, paceY);
+        // update player position unless a collision has occurred
+        if (isNaN(collnY)) self.player.y += paceY;
+        // if collided with a solid geometry, resolve it accordingly
+        else {
+          const resolve = self.const.MARGIN_TO_WALL * (0 - Math.sign(paceY));
+          self.player.y = collnY + (resolve > 0 ? 1 : 0) + resolve;
         }
-        // #endregion
-
         // walking animation
         self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos.get());
       },

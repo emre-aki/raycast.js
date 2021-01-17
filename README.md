@@ -58,6 +58,7 @@ $ npm run leveledit
 ```
 
 ### Features include
+- AABB collision detection & resolution
 - Walking animation
 - Ability to look up & down
 - Player elevation
