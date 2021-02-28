@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 01.17.2021                                        *
+ * Last updated: 02.28.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -601,7 +601,7 @@
             const northBlocked = self.util.isBlockingMapCell(self, vX, vNorth);
             const southBlocked = self.util.isBlockingMapCell(self, vX, vSouth);
             const southEdgeTouching = Math.floor(vSouth) === vSouth;
-            // a collision must have occurred whether the northern or the
+            // a collision must have occurred if either the northern or the
             // the non-touching southern edge of the player bounding-box
             // is blocked
             if (northBlocked || southBlocked && !southEdgeTouching)
@@ -614,7 +614,7 @@
             const westBlocked = self.util.isBlockingMapCell(self, vWest, vY);
             const eastBlocked = self.util.isBlockingMapCell(self, vEast, vY);
             const eastEdgeTouching = Math.floor(vEast) === vEast;
-            // a collision must have occurred whether the western or the
+            // a collision must have occurred if either the western or the
             // the non-touching eastern edge of the player bounding-box
             // is blocked
             if (westBlocked || eastBlocked && !eastEdgeTouching)
