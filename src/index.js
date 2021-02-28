@@ -6,7 +6,7 @@ const ROOT = __dirname;
 
 express()
   .use(express.static(path.join(ROOT, "assets")))
-  .use("/scripts", express.static(path.join(ROOT, "scripts")))
+  .use("/engine", express.static(path.join(ROOT, "engine")))
   .set("view engine", "ejs")
   .set("views", path.join(ROOT, "templates"))
   .get("/", (req, res) => res.render("index"))

@@ -51,8 +51,8 @@
   const minimapCanvasCtx = minimapCanvas.getContext("2d");
 
   const fs = {
-    "__dirname__": "/scripts/",
-    "__file__": "/scripts/raycasting.js",
+    "__dirname__": "/engine/",
+    "__file__": "/engine/raycasting.js",
     "__sprites__": "/sprites/",
     "__textures__": "/textures/",
     "__audio__": "/audio/"
