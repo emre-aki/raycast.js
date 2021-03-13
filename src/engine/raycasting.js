@@ -290,7 +290,8 @@
               "width": 64,
               "height": 128,
               "offset": 64
-            }
+            },
+            "worldHeight": 10
           },
           "alt": {
             "img": new Image(),
@@ -307,7 +308,8 @@
               "width": 64,
               "height": 128,
               "offset": 64
-            }
+            },
+            "worldHeight": 10
           },
           "alt_1": {
             "img": new Image(),
@@ -324,7 +326,8 @@
               "width": 64,
               "height": 128,
               "offset": 64
-            }
+            },
+            "worldHeight": 10
           },
           "door": {
             "img": new Image(),
@@ -341,7 +344,8 @@
               "width": 64,
               "height": 128,
               "offset": 64
-            }
+            },
+            "worldHeight": 10
           },
           "doorDock": {
             "img": new Image(),
@@ -358,7 +362,8 @@
               "width": 64,
               "height": 128,
               "offset": 0
-            }
+            },
+            "worldHeight": 10
           }
         },
         "setup": function(self, keys) { // never heard of `Promise.all`???
@@ -463,6 +468,7 @@
       "DOOR_RESET_DELAY": 3000,
       "MARGIN_TO_WALL": 0.4,
       "DRAW_DIST": 15,
+      "H_SOLID_WALL": 10,
       "H_MAX_WORLD": 480,
       "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
       "R_MINIMAP": 12,
@@ -1319,6 +1325,7 @@
                 self,
                 {}, // FIXME: occlusion for the current column
                 texWall,
+                self.const.H_SOLID_WALL / texWall.worldHeight,
                 offsetLeft * dataTexWall.width + dataTexWall.offset,
                 iCol,
                 hCeil,
@@ -1340,6 +1347,7 @@
           self,
           occlusion,
           texture,
+          repeat,
           sx,
           dx,
           dy,
@@ -1361,7 +1369,7 @@
           const tw = texture.width, th = texture.height, texBitmap = texture.bitmap;
 
           // texture-mapping scaling factor
-          const scaleH = DH / th;
+          const scaleH = DH / (th * repeat);
 
           const lightLevel = 1 - (shade || 0);
           const translucency = 1 - (opacity || 1);
@@ -1376,8 +1384,8 @@
           const wallClipTop = Math.max(occTop - DY, 0);
           const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
           const wallClipped = DH - wallClipTop - wallClipBottom;
-          const texClipTop = Math.floor(wallClipTop * th / DH);
-          const dStart = DY + wallClipTop, sStart = texClipTop;
+          const texClipTop = Math.floor(wallClipTop / scaleH);
+          const dStart = DY + wallClipTop, sStart = texClipTop % th;
 
           for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
             let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
@@ -1408,6 +1416,7 @@
                 drawRow += scaleH;
                 sY += 1;
               }
+              if (sY >= th) sY %= th;
             }
           }
         },
