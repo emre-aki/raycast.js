@@ -462,7 +462,7 @@
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
-      "FLOOR_CAST": 1,
+      "VISPLANES": 1,
       "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
@@ -1282,7 +1282,7 @@
               );
               const hWall = self.mRows - hCeil - hFloor;
 
-              if (self.const.FLOOR_CAST || window.FLOOR_CAST) {
+              if (self.const.VISPLANES || window.VISPLANES) {
                 // draw floor
                 self.util.render.col_floor(
                   self,
