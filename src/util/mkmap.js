@@ -149,7 +149,7 @@ const editCell = function(rlHandle, mapData) {
             .map(function(component) { return parseInt(component, 10); });
           for (let i = 0; i < coordinatesParsed.length; i += 2) {
             const cellData = props.split(" ")
-              .map(function(component) { return  parseInt(component, 10); });
+              .map(function(component) { return parseFloat(component, 10); });
             const [x, y] = [coordinatesParsed[i], coordinatesParsed[i + 1]];
             mapData.map[mapData.width * y + x] = cellData;
             console.log(
