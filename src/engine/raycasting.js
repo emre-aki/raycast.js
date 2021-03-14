@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 03.13.2021                                        *
+ * Last updated: 03.15.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -1271,16 +1271,13 @@
               distToWall *= Math.cos(ray.angle - self.player.angle);
 
               // calculate ceiling, floor and wall height for current column
+              const scaleProj = self.VIEW_DIST / distToWall;
+              const yPlayer = self.mRows + H_FRSTM - self.player.z;
               const hCeil = Math.floor(
-                (self.const.H_MAX_WORLD - self.player.z) *
-                (distToWall - self.VIEW_DIST) / distToWall +
-                H_FRSTM - self.const.CLIP_PROJ_EXTRA_CEIL
+                scaleProj * (self.player.z - self.const.H_MAX_WORLD) + yPlayer
               );
-              const hFloor = Math.floor(
-                self.player.z * (distToWall - self.VIEW_DIST) / distToWall -
-                H_FRSTM
-              );
-              const hWall = self.mRows - hCeil - hFloor;
+              const yFloor = Math.floor(scaleProj * self.player.z + yPlayer);
+              const hWall = yFloor - hCeil;
 
               if (self.const.VISPLANES || window.VISPLANES) {
                 // draw floor
@@ -1289,11 +1286,10 @@
                   {}, // FIXME: occlusion for the current column
                   undefined,
                   iCol,
-                  self.mRows - hFloor,
-                  hFloor,
+                  yFloor,
+                  self.mRows - yFloor,
                   ray.angle,
                   0,
-                  H_FRSTM,
                   self.player.anim.shooting.index === 0 ||
                   self.player.anim.shooting.index === 1
                     ? 0
@@ -1308,9 +1304,7 @@
                   0,
                   hCeil,
                   ray.angle,
-                  self.const.H_MAX_WORLD,
                   0,
-                  self.const.CLIP_PROJ_EXTRA_CEIL - H_FRSTM,
                   self.player.anim.shooting.index === 0 ||
                   self.player.anim.shooting.index === 1
                     ? 0
@@ -1429,7 +1423,6 @@
           dh,
           rayAngle,
           wz,
-          offset,
           shade
         ) {
           // early return if trying to render out of frustum bounds
@@ -1447,6 +1440,9 @@
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
 
+          const H_FRSTM = self.player.frstmElev + self.player.tilt;
+          const yPlayer = H_FRSTM + M_ROWS - self.player.z;
+
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
@@ -1455,28 +1451,17 @@
           const floorClipTop = Math.max(occTop - dy, 0);
           const floorClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const floorClipped = dh - floorClipTop - floorClipBottom;
-          const dStart = dy + dh - floorClipBottom - 1;
-          // calculate the height and the screen-y-coordinate offset for the
-          // final texel to smooth the projection end
-          const int_floorClipped = Math.floor(floorClipped);
-          const hFinal = Math.ceil(
-            DRAW_TILE_SIZE_Y * (floorClipped - int_floorClipped)
-          );
-          const yOffFinal = DRAW_TILE_SIZE_Y - hFinal;
+          const dStart = dy + floorClipTop;
 
           const relAngle = rayAngle - self.player.angle;
           for (let iR = 0; iR < floorClipped; iR += 1) {
-            const isFinalTexel = iR === int_floorClipped;
-            const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart - iR)) +
-              // smooth the projection end if final texel
-              (isFinalTexel ? yOffFinal : 0);
+            const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart + iR));
             // extend an imaginary line from the current y-coordinate of the screen
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the floor
             // at the given world-z (wz)
-            const dFloorTile = VIEW_DIST * (wz - self.player.z) /
-              (wz - self.player.z + offset + floorClipBottom + iR) /
-              Math.cos(relAngle);
+            const dFloorTile = VIEW_DIST * (self.player.z - wz) /
+              (dStart + 1 + iR - yPlayer) / Math.cos(relAngle);
             // get the distance vector to the floor
             const pFloorTile = {
               "x": dFloorTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1513,9 +1498,8 @@
             const tAlpha = texBitmap[offTexel + 3];
             // render the sampled texture pixel
             const lightLevel = shade ? 1 - dFloorTile / DRAW_DIST : 1;
-            const hTexel = isFinalTexel ? hFinal : DRAW_TILE_SIZE_Y; // smooth the projection end if final texel
             for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
-              for (let y = 0; y < hTexel; y += 1) {
+              for (let y = 0; y < DRAW_TILE_SIZE_Y; y += 1) {
                 const offBuffer = 4 * (offscreenBufferW * (DY + y) + DX + x);
                 const bRed = offscreenBufferData.data[offBuffer];
                 const bGreen = offscreenBufferData.data[offBuffer + 1];
@@ -1542,9 +1526,7 @@
           dy,
           dh,
           rayAngle,
-          wz,
           wh,
-          offset,
           shade
         ) {
           // early return if trying to render out of frustum bounds
@@ -1564,6 +1546,10 @@
           const DRAW_DIST = self.DRAW_DIST;
           const normalizeAngle = self.util.normalizeAngle;
 
+          const H_MAX_WORLD = self.const.H_MAX_WORLD;
+          const H_FRSTM = self.player.frstmElev + self.player.tilt;
+          const yPlayer = H_FRSTM + M_ROWS - self.player.z;
+
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
           // clip projection against occlusion table
@@ -1573,23 +1559,16 @@
           const ceilClipBottom = Math.max(dy + dh - M_ROWS + occBottom, 0);
           const ceilClipped = dh - ceilClipTop - ceilClipBottom;
           const dStart = dy + ceilClipTop;
-          // calculate the height for the final texel to smooth the projection end
-          const int_ceilClipped = Math.floor(ceilClipped);
-          const hFinal = Math.ceil(
-            DRAW_TILE_SIZE_Y * (ceilClipped - int_ceilClipped)
-          );
 
           const relAngle = rayAngle - self.player.angle;
           for (let iR = 0; iR < ceilClipped; iR += 1) {
-            const isFinalTexel = iR === int_ceilClipped;
             const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart + iR));
             // extend an imaginary line from the current y-coordinate of the screen
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the ceiling
-            // that has a height of world-height (wh) at the given world-z (wz)
-            const dCeilTile = VIEW_DIST * (wh + self.player.z - wz) /
-              (wh + self.player.z - wz + offset + ceilClipTop + iR) /
-              Math.cos(relAngle);
+            // that has a height of world-height (wh)
+            const dCeilTile = VIEW_DIST * (self.player.z + wh - H_MAX_WORLD) /
+              (dStart + iR - yPlayer) / Math.cos(relAngle);
             // get the distance vector to the ceiling
             const pCeilTile = {
               "x": dCeilTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1633,9 +1612,8 @@
             const tAlpha = texBitmap[offTexel + 3];
             // render the sampled texture pixel
             const lightLevel = shade ? 1 - dCeilTile / DRAW_DIST : 1;
-            const hTexel = isFinalTexel ? hFinal : DRAW_TILE_SIZE_Y; // smooth the projection end if final texel
             for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
-              for (let y = 0; y < hTexel; y += 1) {
+              for (let y = 0; y < DRAW_TILE_SIZE_Y; y += 1) {
                 const offBuffer = 4 * (offscreenBufferW * (DY + y) + DX + x);
                 const bRed = offscreenBufferData.data[offBuffer];
                 const bGreen = offscreenBufferData.data[offBuffer + 1];
