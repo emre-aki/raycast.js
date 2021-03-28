@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 03.15.2021                                        *
+ * Last updated: 03.28.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -264,7 +264,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name":  "sbox.png"
+            "name":  "s_mounts.png"
           },
           "lights": {
             "img": new Image(),
