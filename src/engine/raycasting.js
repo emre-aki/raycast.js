@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 03.28.2021                                        *
+ * Last updated: 03.29.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -241,21 +241,21 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "floor_brownstone.png"
+            "name": "f_brownstone.png"
           },
           "teleporter": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "portal.png"
+            "name": "f_tporter.png"
           },
           "manhole": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "manhole.png"
+            "name": "f_manhole.png"
           }
         },
         "ceil": {
@@ -271,7 +271,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "ceil_lights.png"
+            "name": "f_lights.png"
           }
         },
         "wall": {
@@ -280,7 +280,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "wall.png",
+            "name": "w_temple.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -298,7 +298,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "wall_wood.png",
+            "name": "w_wood.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -316,7 +316,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "wall_tech.png",
+            "name": "w_tech.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -334,7 +334,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "door.png",
+            "name": "w_door.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -352,7 +352,7 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "door_D.png",
+            "name": "w_doordock.png",
             "vertical": {
               "width": 64,
               "height": 128,
