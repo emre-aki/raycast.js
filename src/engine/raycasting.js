@@ -535,8 +535,9 @@
         bobState.index = x;
         return {"x": 4 * x, "y": y};
       },
-      "normalizeAngle": function(angle) {
-        return ((angle % Math.PI) + Math.PI) % Math.PI;
+      "normalizeAngle": function(self, angle) {
+        const RAD_360 = self.const.math.RAD_360;
+        return ((angle % RAD_360) + RAD_360) % RAD_360;
       },
       "rad2Deg": function(self, rad) {
         return ((rad % self.const.math.RAD_360) + self.const.math.RAD_360)
@@ -1593,7 +1594,7 @@
                 ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
               } else {        // if outdoors skybox
                 const ppr = tw / self.const.math.RAD_90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
-                tx = Math.floor((normalizeAngle(rayAngle) * ppr) % tw);
+                tx = Math.floor((normalizeAngle(self, rayAngle) * ppr) % tw);
                 ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS); // FIXME: extreme MAX_TILTs
               }
             } else {
