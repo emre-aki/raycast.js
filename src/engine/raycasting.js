@@ -1433,7 +1433,7 @@
           const M_ROWS = self.mRows;
           const MAP = self.map, N_COLS = self.nCols;
           const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.FLOOR;
-          const KEY_TYPE_FLOOR = self.mapLegend.TYPE_FLOOR;
+          const KEY_TEX_G_FLOOR = self.mapLegend.TEX_G_FLOOR;
           const FLOOR_TEXTURES = self.assets.textures.floor;
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
@@ -1476,7 +1476,7 @@
             // coordinates if no texture was given
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
-              const typeFloor = tile[KEY_TYPE_FLOOR];
+              const typeFloor = tile[KEY_TEX_G_FLOOR];
               texFloor = FLOOR_TEXTURES[LEGEND_TEXTURES[typeFloor]];
               tw = texFloor.width, th = texFloor.height;
               tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
@@ -1537,7 +1537,7 @@
           const M_ROWS = self.mRows;
           const MAP = self.map, N_COLS = self.nCols;
           const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.CEIL;
-          const KEY_TYPE_CEIL = self.mapLegend.TYPE_CEIL;
+          const KEY_TEX_G_CEIL = self.mapLegend.TEX_G_CEIL;
           const CEIL_TEXTURES = self.assets.textures.ceil;
           const MAX_TILT = self.const.MAX_TILT;
           const VIEW_DIST = self.VIEW_DIST;
@@ -1583,7 +1583,7 @@
             // coordinates if no texture was given
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
-              const typeCeil = tile[KEY_TYPE_CEIL];
+              const typeCeil = tile[KEY_TEX_G_CEIL];
               texCeil = CEIL_TEXTURES[LEGEND_TEXTURES[typeCeil]];
               tw = texCeil.width, th = texCeil.height;
               if (typeCeil) { // if indoors ceiling

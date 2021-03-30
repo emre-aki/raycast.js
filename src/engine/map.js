@@ -9,8 +9,8 @@
       "TEX_WALL_E": 2,
       "TEX_WALL_S": 3,
       "TEX_WALL_W": 4,
-      "TYPE_FLOOR": 5,
-      "TYPE_CEIL": 6,
+      "TEX_G_FLOOR": 5,
+      "TEX_G_CEIL": 6,
       "FACE_DIAG": 7
     },
     "MAP": [
