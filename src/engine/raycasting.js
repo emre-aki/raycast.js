@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 03.29.2021                                        *
+ * Last updated: 03.30.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -435,8 +435,7 @@
         "WALL_DIAG": 2,
         "V_DOOR": 3,
         "H_DOOR": 4,
-        "TELEPORTER": 5,
-        "WORLD_OBJECT": 6
+        "TELEPORTER": 5
       },
       "OFFSET_DIAG_WALLS": [
         [[1, 0], [0, 1]], // #/
@@ -450,15 +449,13 @@
         "#FFFFFF",   // 2: WALL_DIAG
         "#264E73",   // 3: V_DOOR
         "#264E73",   // 4: H_DOOR
-        "#EB4034",   // 5: TELEPORTER
-        "#55555599", // 6: WORLD_OBJECT
+        "#EB4034"    // 5: TELEPORTER
       ],
       "LEGEND_TEXTURES": {
         "WALL": ["default", "door", "doorDock", "alt", "alt_1"],
         "CEIL": ["skybox", "lights"],
         "FLOOR": ["stone", "teleporter", "manhole"]
       },
-      "LEGEND_WORLD_OBJECTS": ["spDude0"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
