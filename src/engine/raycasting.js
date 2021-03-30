@@ -236,12 +236,12 @@
       },
       "textures": {
         "floor": {
-          "stone": {
+          "hexStone": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_brownstone.png"
+            "name": "f_hexstone.png"
           },
           "teleporter": {
             "img": new Image(),
@@ -454,7 +454,7 @@
       "LEGEND_TEXTURES": {
         "WALL": ["default", "door", "doorDock", "alt", "alt_1"],
         "CEIL": ["skybox", "lights"],
-        "FLOOR": ["stone", "teleporter", "manhole"]
+        "FLOOR": ["hexStone", "teleporter", "manhole"]
       },
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
@@ -1706,7 +1706,7 @@
               return self.assets.textures.setup(self, [
                 "ceil.skybox",
                 "ceil.lights",
-                "floor.stone",
+                "floor.hexStone",
                 "floor.teleporter",
                 "floor.manhole",
                 "wall.default",
