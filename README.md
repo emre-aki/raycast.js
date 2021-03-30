@@ -49,13 +49,9 @@ $ npm run start
 You can check out the live demo [here](https://raycasting-js.herokuapp.com)!
 
 
-### Map Editing
+### Map Editor GUI
 
-Even though this is still mostly a WIP, if you would like to edit the game map to your liking, and do all sorts of crazy stuff, you can do so by using the integrated command-line level editor. Simply run the following command from the root of the project.
-
-```bash
-$ npm run leveledit
-```
+*Coming soon...*
 
 ### Features include
 - AABB collision detection & resolution
