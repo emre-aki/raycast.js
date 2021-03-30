@@ -1776,6 +1776,7 @@
           self.player.angle += deltaX * self.FOV / self.res[0];
         };
         const onMouseWheel = function(e) {
+          e.preventDefault(); // prevent scrolling the page
           // update the player height using the change in the mouse scroll
           self.exec.updatePlayerZ(self, 0 - e.deltaY / 5);
           self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
