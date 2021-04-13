@@ -1,8 +1,6 @@
 <img src="https://github.com/emre-aki/raycast.js/blob/master/images/RayCast.js-medium.png?raw=true"></img>
 
-<img src="https://github.com/emre-aki/raycast.js/blob/master/images/SS00.png?raw=true"></img> | <img src="https://github.com/emre-aki/raycast.js/blob/master/images/SS01.png?raw=true"></img>
- ----------------------------------------------------------------------------------------------- | -----------------------------------------------------------------------------------------------
-<img src="https://github.com/emre-aki/raycast.js/blob/master/images/SS02.png?raw=true"></img> | <img src="https://github.com/emre-aki/raycast.js/blob/master/images/SS03.png?raw=true"></img>
+<img src="https://media4.giphy.com/media/agn2uFHzPWa4TLWQwx/giphy.gif"></img>
 
 This is an implementation of the once-popular 3-D rendering technique known as [raycasting](https://en.wikipedia.org/wiki/Ray_casting) which was famously featured in 1991's popular video game hit Wolfenstein 3D.
 
