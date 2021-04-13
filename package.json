@@ -1,5 +1,5 @@
 {
-  "name": "raycasting.js",
+  "name": "raycast.js",
   "version": "0.0.1",
   "description": "Raycasting performed in an HTML5 canvas using nothing but plain Javascript, with zero-dependencies 🌞🕶",
   "main": "index.js",
@@ -10,7 +10,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/emre-aki/raycasting.js.git"
+    "url": "git+https://github.com/emre-aki/raycast.js.git"
   },
   "keywords": [
     "raycasting-engine",
@@ -24,9 +24,9 @@
   "author": "Emre Akı",
   "license": "GPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/emre-aki/raycasting.js/issues"
+    "url": "https://github.com/emre-aki/raycast.js/issues"
   },
-  "homepage": "https://github.com/emre-aki/raycasting.js#readme",
+  "homepage": "https://github.com/emre-aki/raycast.js#readme",
   "dependencies": {
     "ejs": "^3.1.3",
     "express": "^4.17.1"

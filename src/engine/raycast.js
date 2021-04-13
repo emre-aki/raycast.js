@@ -1,5 +1,5 @@
 /*******************************************************************
- *                       Raycasting.js                             *
+ *                        RayCast.js                               *
  *                            by                                   *
  *                      Emre Akı, 2018.                            *
  *                                                                 *
@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 03.30.2021                                        *
+ * Last updated: 04.13.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -52,7 +52,7 @@
 
   const fs = {
     "__dirname__": "/engine/",
-    "__file__": "/engine/raycasting.js",
+    "__file__": "/engine/raycast.js",
     "__sprites__": "/sprites/",
     "__textures__": "/textures/",
     "__audio__": "/audio/"
