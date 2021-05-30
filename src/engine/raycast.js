@@ -894,9 +894,12 @@
       "render": {
         "stats": function(self, deltaT) {
           self.util.print(
-            "X: " + Math.floor(self.player.x) + " Y: " + Math.floor(self.player.y) +
-            " | α: " + self.util.rad2Deg(self, self.player.angle).toFixed(1) + " deg" +
-            " | FPS: " + (1000 / deltaT).toFixed(1),
+            "pos: <" + Math.floor(self.player.x) + ", " +
+                       Math.floor(self.player.y) + ", " +
+                       (self.player.z / self.MAP_TILE_SIZE).toFixed(1) + ">" +
+            " | rot: " + Math.round(self.util.rad2Deg(self, self.player.angle))
+              + " deg" +
+            " | fps: " + Math.round(1000 / deltaT),
             5,
             15,
             {"size": 14, "color": "#FF0000"}
