@@ -34,6 +34,7 @@ $ npm run start
 - *Change elevation*: <kbd>Q</kbd> <kbd>E</kbd>, or <kbd>![MSW]</kbd><sup>__*__</sup>
 - *Shoot*: <kbd>⎵</kbd>, or <kbd>![LMB]</kbd><sup>__*__</sup>
 - *Interact*: <kbd>⏎</kbd>
+- *Switch fullscreen mode on/off*: <kbd>F</kbd>
 
   *<sup>__\*__</sup> You should first click <kbd>![LMB]</kbd> on the `canvas` to activate mouse controls.*
 

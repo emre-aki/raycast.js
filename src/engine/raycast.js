@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 05.30.2021                                        *
+ * Last updated: 05.31.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -1691,6 +1691,8 @@
         };
         // setup mouse listeners
         self.exec.addMouseListener(self, canvas);
+        // add fullscreen listener
+        self.exec.addFullscreenListener(canvas);
 
         // async ops.
         return new Promise(function(resolve, reject) {
@@ -1835,6 +1837,23 @@
         element.onclick = requestPointerLock;
         document.onpointerlockchange = onPointerLockChange;
         document.onmozpointerlockchange = onPointerLockChange;
+      },
+      "addFullscreenListener": function(element) {
+        element.requestFullscreen = element.requestFullscreen ||
+                                    element.mozRequestFullscreen ||
+                                    element.webkitRequestFullscreen;
+        document.exitFullscreen = document.exitFullscreen ||
+                                  document.mozExitFullscreen ||
+                                  document.webkitExitFullscreen;
+        addEventListener("keypress", function(e) {
+          if (e.which === 102 || e.keyCode === 102) {
+            if (document.fullscreenElement ||
+                document.mozFullscreenElement ||
+                document.webkitFullscreenElement)
+              document.exitFullscreen();
+            else element.requestFullscreen();
+          }
+        });
       },
       "playAudio": function(self, theme) {
         if (theme.status === "READY") {
