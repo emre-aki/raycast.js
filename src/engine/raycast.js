@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 04.13.2021                                        *
+ * Last updated: 05.30.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -217,7 +217,7 @@
                 });
               }
               if (Array.isArray(sprite.bitmap)) {
-                sprite.bitmap = self.util.getBitmap(sprite.img);
+                sprite.bitmap = self.util.getBitmap(self, sprite.img);
                 sprite.width = sprite.img.width;
                 sprite.height = sprite.img.height;
                 delete sprite.img;
@@ -373,7 +373,7 @@
               return acc[curr];
             }, self.assets.textures);
             texture.img.onload = function() {
-              texture.bitmap = self.util.getBitmap(texture.img);
+              texture.bitmap = self.util.getBitmap(self, texture.img);
               texture.width = texture.img.width;
               texture.height = texture.img.height;
               delete texture.img;
@@ -635,13 +635,30 @@
             typeCell === self.const.TYPE_TILES.H_DOOR) &&
             self.doors[self.util.coords2Key(X, Y)].state;
       },
-      "getBitmap": function(img) {
+      "getBitmap": function(self, img) {
         const buffCanvas = document.createElement("canvas");
         const buffCtx = buffCanvas.getContext("2d");
-        buffCanvas.width = img.width;
-        buffCanvas.height = img.height;
+        const imgWidth = img.width, imgHeight = img.height;
+        buffCanvas.width = imgWidth; buffCanvas.height = imgHeight;
         buffCtx.drawImage(img, 0, 0);
-        return buffCtx.getImageData(0, 0, img.width, img.height).data;
+        return self.util.transposeBitmap(
+          buffCtx.getImageData(0, 0, imgWidth, imgHeight).data,
+          imgWidth, imgHeight
+        );
+      },
+      "transposeBitmap": function(bitmap, w, h) {
+        const bitmapTransposed = new Uint8ClampedArray(4 * w * h);
+        for (let x = 0; x < w; x += 1) {
+          for (let y = 0; y < h; y += 1) {
+            const idxTransposed = 4 * (h * x + y);
+            const idxNormal = 4 * (w * y + x);
+            bitmapTransposed[idxTransposed] = bitmap[idxNormal];
+            bitmapTransposed[idxTransposed + 1] = bitmap[idxNormal + 1];
+            bitmapTransposed[idxTransposed + 2] = bitmap[idxNormal + 2];
+            bitmapTransposed[idxTransposed + 3] = bitmap[idxNormal + 3];
+          }
+        }
+        return bitmapTransposed;
       },
       "deepcopy": function(obj) {
         const clone = function(object) {
@@ -827,7 +844,7 @@
           while (drawCol > 0 && dX < dStartX + dW && dX < offscreenBufferW) {
             let sY = sStartY, dY = dStartY, drawRow = scaleY - dClipH % scaleY;
             while (sY < imgHeight && dY < dStartY + dH && dY < offscreenBufferH) {
-              const offIm = 4 * (imgWidth * sY + sX);
+              const offIm = 4 * (imgHeight * sX + sY);
               const iRed = imgBuffer[offIm];
               const iGreen = imgBuffer[offIm + 1];
               const iBlue = imgBuffer[offIm + 2];
@@ -1358,7 +1375,7 @@
           const DH = Math.ceil(DRAW_TILE_SIZE_Y * dh);
           const SX = Math.floor(sx);
 
-          const tw = texture.width, th = texture.height, texBitmap = texture.bitmap;
+          const th = texture.height, texBitmap = texture.bitmap;
 
           // texture-mapping scaling factor
           const scaleH = DH / (th * repeat);
@@ -1382,7 +1399,7 @@
           for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
             let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
             while (dY < dStart + wallClipped) {
-              const offIm = 4 * (tw * sY + SX);
+              const offIm = 4 * (th * SX + sY);
               const iRed = texBitmap[offIm];
               const iGreen = texBitmap[offIm + 1];
               const iBlue = texBitmap[offIm + 2];
@@ -1489,7 +1506,7 @@
 
             // sample the texture pixel
             const texBitmap = texFloor.bitmap;
-            const offTexel = 4 * (tw * ty + tx);
+            const offTexel = 4 * (th * tx + ty);
             const tRed = texBitmap[offTexel];
             const tGreen = texBitmap[offTexel + 1];
             const tBlue = texBitmap[offTexel + 2];
@@ -1603,7 +1620,7 @@
 
             // sample the texture pixel
             const texBitmap = texCeil.bitmap;
-            const offTexel = 4 * (tw * ty + tx);
+            const offTexel = 4 * (th * tx + ty);
             const tRed = texBitmap[offTexel];
             const tGreen = texBitmap[offTexel + 1];
             const tBlue = texBitmap[offTexel + 2];
@@ -1738,7 +1755,8 @@
                 offscreenBufferH
               );
               texSky.bitmap = new ImageData(
-                offscreenBufferData.data,
+                self.util.transposeBitmap(offscreenBufferData.data,
+                                          offscreenBufferW, offscreenBufferH),
                 offscreenBufferW,
                 offscreenBufferH
               ).data;
