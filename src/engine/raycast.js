@@ -1770,9 +1770,13 @@
               self.util.setOffscreenBufferDimensions(self.res[0], self.res[1]);
             })
 
-            // setup theme music
+            // FIXME: find a permanent fix for the audio-loading issues on iOS
+            // setup theme music unless running on iOS
             .then(function() {
-              return self.assets.themes.setup(self, "main");
+              const userAgent = window.navigator.userAgent;
+              if (!userAgent.match(/iPad/i) && !userAgent.match(/iPhone/i)) {
+                return self.assets.themes.setup(self, "main");
+              }
             })
 
             // resolve setup
