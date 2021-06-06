@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 05.31.2021                                        *
+ * Last updated: 06.06.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -94,7 +94,7 @@
     "nCols": window.__map__.N_COLS,
     "doors": {},
     "player": {
-      "angle": window.__player__.ANGLE,
+      "rotation": window.__player__.ROTATION,
       "anim": {
         "shooting": {"index": -1, "animating": 0},
         "walking": {"index": 0, "reverse": 0, "apex": 12},
@@ -897,7 +897,7 @@
             "pos: <" + Math.floor(self.player.x) + ", " +
                        Math.floor(self.player.y) + ", " +
                        (self.player.z / self.MAP_TILE_SIZE).toFixed(1) + ">" +
-            " | rot: " + Math.round(self.util.rad2Deg(self, self.player.angle))
+            " | rot: " + Math.round(self.util.rad2Deg(self, self.player.rotation))
               + " deg" +
             " | fps: " + Math.round(1000 / deltaT),
             5,
@@ -984,9 +984,9 @@
 
           self.util.drawCaret(
             minimapCanvasCtx,
-            {"x": (R + 0.5 + Math.cos(self.player.angle)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.angle)) * tileSize},
-            {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 4 / 3)) * tileSize},
-            {"x": (R + 0.5 + Math.cos(self.player.angle + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.angle + Math.PI * 2 / 3)) * tileSize},
+            {"x": (R + 0.5 + Math.cos(self.player.rotation)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.rotation)) * tileSize},
+            {"x": (R + 0.5 + Math.cos(self.player.rotation + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.rotation + Math.PI * 4 / 3)) * tileSize},
+            {"x": (R + 0.5 + Math.cos(self.player.rotation + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.rotation + Math.PI * 2 / 3)) * tileSize},
             {"border": {"color": "#000000", "thickness": 2}}
           );
 
@@ -996,9 +996,9 @@
           ctx.fill();
 
           ctx.translate(offsetX, offsetY);
-          ctx.rotate(-1 * Math.PI * 0.5 - self.player.angle);
+          ctx.rotate(-1 * Math.PI * 0.5 - self.player.rotation);
           ctx.drawImage(minimapCanvas, -1 * R * tileSize, -1 * R * tileSize, minimapCanvas.width, minimapCanvas.height);
-          ctx.rotate(Math.PI * 0.5 + self.player.angle);
+          ctx.rotate(Math.PI * 0.5 + self.player.rotation);
           ctx.translate(-1 * offsetX, -1 * offsetY);
         },
         "wallBounds": function(self, iCol, hCeil, hWall, hLine) {
@@ -1075,7 +1075,7 @@
             let currentHit;
             for (let iCol = 0; iCol < self.mCols; iCol += 1) {
               const ray = {
-                "angle": Math.atan((-1 * self.mCols * 0.5 + iCol) / self.VIEW_DIST) + self.player.angle
+                "angle": Math.atan((-1 * self.mCols * 0.5 + iCol) / self.VIEW_DIST) + self.player.rotation
               };
               ray.dir = {
                 "x": Math.cos(ray.angle),
@@ -1286,7 +1286,7 @@
 
               // fix the fish-eye distortion by calculating the perpendicular
               // distance to the wall
-              distToWall *= Math.cos(ray.angle - self.player.angle);
+              distToWall *= Math.cos(ray.angle - self.player.rotation);
 
               // calculate ceiling, floor and wall height for current column
               const scaleProj = self.VIEW_DIST / distToWall;
@@ -1471,7 +1471,7 @@
           const floorClipped = dh - floorClipTop - floorClipBottom;
           const dStart = dy + floorClipTop;
 
-          const relAngle = rayAngle - self.player.angle;
+          const relAngle = rayAngle - self.player.rotation;
           for (let iR = 0; iR < floorClipped; iR += 1) {
             const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart + iR));
             // extend an imaginary line from the current y-coordinate of the screen
@@ -1578,7 +1578,7 @@
           const ceilClipped = dh - ceilClipTop - ceilClipBottom;
           const dStart = dy + ceilClipTop;
 
-          const relAngle = rayAngle - self.player.angle;
+          const relAngle = rayAngle - self.player.rotation;
           for (let iR = 0; iR < ceilClipped; iR += 1) {
             const DY = Math.floor(DRAW_TILE_SIZE_Y * (dStart + iR));
             // extend an imaginary line from the current y-coordinate of the screen
@@ -1800,7 +1800,7 @@
           // update the player tilt using the mouse movement along y-axis
           self.exec.updatePlayerTilt(self, 0 - deltaY / self.DRAW_TILE_SIZE.y);
           // update the player rotation using the mouse movement along x-axis
-          self.player.angle += deltaX * self.FOV / self.res[0];
+          self.player.rotation += deltaX * self.FOV / self.res[0];
         };
         const onMouseWheel = function(e) {
           e.preventDefault(); // prevent scrolling the page
@@ -1865,7 +1865,7 @@
         if (Math.floor(self.player.x) === fromX && Math.floor(self.player.y) === fromY) {
           self.player.x = toX;
           self.player.y = toY;
-          self.player.angle = toAngle;
+          self.player.rotation = toAngle;
         }
       },
       "updatePlayerTilt": function(self, deltaTilt) {
@@ -1890,8 +1890,8 @@
         const memoPos = self.api.memo([self.player.x, self.player.y]);
         // calculate displacement vector
         const dir = {
-          "x": Math.cos(self.player.angle),
-          "y": Math.sin(self.player.angle)
+          "x": Math.cos(self.player.rotation),
+          "y": Math.sin(self.player.rotation)
         };
         const displacement = {"x": 0, "y": 0};
         if (self.keyState.W & 1) {
@@ -1909,8 +1909,8 @@
         }
         // rotate player in-place
         const magRot = 0.075 * mult;
-        if (self.keyState.ARW_RIGHT & 1) self.player.angle += magRot;
-        if (self.keyState.ARW_LEFT & 1) self.player.angle -= magRot;
+        if (self.keyState.ARW_RIGHT & 1) self.player.rotation += magRot;
+        if (self.keyState.ARW_LEFT & 1) self.player.rotation -= magRot;
         // tilt player's head
         const magTilt = 5 * mult;
         if (self.keyState.ARW_UP & 1) self.exec.updatePlayerTilt(self, magTilt);
@@ -2000,8 +2000,8 @@
       "interactWDoor": function(self) {
         if ((self.keyState.RTN & 1) > 0) {
           const dir    = {
-            "x": Math.cos(self.player.angle),
-            "y": Math.sin(self.player.angle)
+            "x": Math.cos(self.player.rotation),
+            "y": Math.sin(self.player.rotation)
           };
           const slope  = dir.y / dir.x;
           const up     = dir.y < 0 ? 1 : 0;
