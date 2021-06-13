@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 06.06.2021                                        *
+ * Last updated: 06.13.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -459,7 +459,7 @@
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
-      "VISPLANES": 1,
+      "FLATS": 1,
       "SHOOTING_ANIM_INTERVAL": {"shotgun": 110},
       "DOOR_ANIM_INTERVAL": 20,
       "DOOR_RESET_DELAY": 3000,
@@ -544,10 +544,11 @@
         const cNDigits = Math.pow(10, nDigits);
         return Math.round(this * cNDigits) / cNDigits;
       },
-      "eucDist": function(a, b, pseudo, multiplier) {
+      "eucDist": function(ux, uy, vx, vy, pseudo, multiplier) {
         multiplier = multiplier ? multiplier : 1;
-        const pseudoDist = ((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y)) * multiplier * multiplier;
-        return pseudo === true ? pseudoDist : Math.sqrt(pseudoDist);
+        const pseudoDist = ((vx - ux) * (vx - ux) + (vy - uy) * (vy - uy)) *
+                           multiplier * multiplier;
+        return pseudo ? pseudoDist : Math.sqrt(pseudoDist);
       },
       "getIntersect": function(l0x0, l0y0, l0x1, l0y1, l1x0, l1y0, l1x1, l1y1, seg) {
         const vec2dCross = (u, v) => u[0] * v[1] - u[1] * v[0]; // FIXME: remove as a separate function
@@ -1061,299 +1062,259 @@
             }
           }
         },
-        "frame": {
-          "rasterized": function(self) {
-            // read some constants
-            const H_FRSTM = self.player.frstmElev + self.player.tilt;
+        "playerView": function(self) {
+          // reset offscreen buffer
+          self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
 
-            // reset offscreen buffer
-            self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
+          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES;
+          const MAP_LEGEND = self.mapLegend;
+          const OFFSET_DIAG_WALLS = self.const.OFFSET_DIAG_WALLS;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const N_COLS = self.nCols, N_ROWS = self.nRows;
+          const MAP = self.map;
+          const M_COLS = self.mCols, M_ROWS = self.mRows;
+          const H_MAX_WORLD = self.const.H_MAX_WORLD;
+          const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
+          const VIEW_DIST = self.VIEW_DIST, MAX_DRAW_DIST = self.DRAW_DIST;
+          const sqrDrawDist = MAX_DRAW_DIST * MAX_DRAW_DIST;
+          const pointVsRect = self.util.collision.pointVsRect;
+          const eucDist = self.util.eucDist;
+          const getIntersect = self.util.getIntersect;
+          const zBuffer = self.api.zBuffer;
 
-            // raycasting
-            const sqrDrawDist = self.DRAW_DIST * self.DRAW_DIST;
-            let previousHit;
-            let currentHit;
-            for (let iCol = 0; iCol < self.mCols; iCol += 1) {
-              const ray = {
-                "angle": Math.atan((-1 * self.mCols * 0.5 + iCol) / self.VIEW_DIST) + self.player.rotation
-              };
-              ray.dir = {
-                "x": Math.cos(ray.angle),
-                "y": Math.sin(ray.angle)
-              };
-              ray.slope   = ray.dir.y / ray.dir.x;
-              const up    = ray.dir.y < 0 ? 1 : 0;
-              const right = ray.dir.x > 0 ? 1 : 0;
-
-              let distToWall;
-              let typeWall   = self.assets.textures.wall.default;
-              let offsetLeft = 0;
-
-              // vertical wall detection
-              const stepV  = {};
-              const traceV = {};
-              stepV.x      = right & 1 ? 1 : -1;
-              stepV.y      = stepV.x * ray.slope;
-              traceV.x     = right ? Math.ceil(self.player.x) : Math.floor(self.player.x);
-              traceV.y     = self.player.y + (traceV.x - self.player.x) * ray.slope;
-              let hitV     = 0;
-              while (
-                (hitV & 1) === 0 &&
-                traceV.x > 0 && traceV.x < self.nCols &&
-                traceV.y >= 0 && traceV.y < self.nRows
-              ) {
-                const sampleMap = {
-                  "x": Math.floor(traceV.x + ((right & 1) ? 0 : -1)),
-                  "y": Math.floor(traceV.y)
-                };
-                const sample = self.map[self.nCols * sampleMap.y + sampleMap.x];
-
-                // max. draw distance exceeded, break out of loop
-                if (self.util.eucDist(traceV, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
-                  hitV = 1;
-                  distToWall = sqrDrawDist;
+          const playerX = self.player.x, playerY = self.player.y;
+          const playerRot = self.player.rotation, playerTilt = self.player.tilt;
+          const playerElev = self.player.z;
+          const frstmElev = self.player.frstmElev + playerTilt;
+          /* render an entire frame of pixel columns by ray-casting */
+          for (let iCol = 0; iCol < M_COLS; ++iCol) {
+            /* calculate the properties for the current ray */
+            const rayAngle = Math.atan((iCol - M_COLS * 0.5) / VIEW_DIST) +
+                             playerRot;
+            const rayX = Math.cos(rayAngle), rayY = Math.sin(rayAngle);
+            const rayDirX = Math.sign(rayX), rayDirY = Math.sign(rayY);
+            const raySlope = rayY / rayX, raySlope_ = rayX / rayY;
+            // cast the ray starting from the current position of the player
+            let hitX = playerX, hitY = playerY;
+            let tileX = Math.floor(hitX), tileY = Math.floor(hitY);
+            /* vertical & horizontal tracers:
+             * iterate over vertical and horizontal grid lines that intersect
+             * with the current ray
+             */
+            let vTraceX = rayDirX > 0 ? Math.ceil(playerX) : tileX;
+            let vTraceY = playerY + (vTraceX - playerX) * raySlope;
+            let hTraceY = rayDirY < 0 ? tileY : Math.ceil(playerY);
+            let hTraceX = playerX + (hTraceY - playerY) * raySlope_;
+            /* how much each tracer will advance at each iteration */
+            const vStepX = rayDirX, vStepY = vStepX * raySlope;
+            const hStepY = rayDirY, hStepX = hStepY * raySlope_;
+            let distCovered = 0; // the distance covered by the "closest" tracer
+            /* keep track of the properties for solid geometry hits */
+            let hitSolid = 0; // whether we hit a solid wall or not
+            let isVerticalHit;
+            let solidTexture = self.assets.textures.wall.default;
+            let offsetLeft; // sampling offset for the texture
+            /* cast the ray until we either hit a solid wall or reach the max
+             * draw distance or go out of bounds of the map
+             */
+            while (!hitSolid && distCovered < sqrDrawDist
+                   && pointVsRect(0, 0, N_COLS, N_ROWS, tileX, tileY)) {
+              // read the current tile
+              const idxTile = N_COLS * tileY + tileX, tile = MAP[idxTile];
+              const tileType = tile[MAP_LEGEND.TYPE_TILE];
+              /* HIT: solid geometry (that extend from the floor all the way to
+               * the ceiling)
+               */
+              if (tileType === TYPE_TILES.WALL) {
+                /* determine which texture to draw */
+                if (isVerticalHit) {
+                  const isDoorDock = MAP[idxTile - rayDirX]
+                                        [MAP_LEGEND.TYPE_TILE] ===
+                                     TYPE_TILES.H_DOOR;
+                  solidTexture = isDoorDock
+                    ? self.assets.textures.wall.doorDock
+                    : self.assets.textures.wall[LEGEND_TEXTURES.WALL[
+                                                tile[rayDirX < 0
+                                                  ? MAP_LEGEND.TEX_WALL_E
+                                                  : MAP_LEGEND.TEX_WALL_W]]];
+                  offsetLeft = hitY - tileY;
+                } else {
+                  const isDoorDock = MAP[idxTile - rayDirY * N_COLS]
+                                        [MAP_LEGEND.TYPE_TILE] ===
+                                     TYPE_TILES.V_DOOR;
+                  solidTexture = isDoorDock
+                    ? self.assets.textures.wall.doorDock
+                    : self.assets.textures.wall[LEGEND_TEXTURES.WALL[
+                                                tile[rayDirY < 0
+                                                  ? MAP_LEGEND.TEX_WALL_S
+                                                  : MAP_LEGEND.TEX_WALL_N]]];
+                  offsetLeft = hitX - tileX;
                 }
-
-                // did we hit some SOLID obstacle?
-                // like walls, doors, or diagonal walls
-                else if (
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG ||
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
-                ) {
-                  const hitKey = self.util.coords2Key(sampleMap);
-                  const pHit = {"x": traceV.x, "y": traceV.y};
-
-                  // calculate point hit on the map
-                  if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) {
-                    pHit.x = sampleMap.x + 0.5;
-                    pHit.y += (sampleMap.x + 0.5 - traceV.x) * ray.slope;
-                  } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
-                    const pIntersect = self.util.getIntersect(
-                      self.player.x,
-                      self.player.y,
-                      traceV.x,
-                      traceV.y,
-                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][0],
-                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
-                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
-                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
-                    ); // FIXME: fix for parallel lines
-                    pHit.x = pIntersect[0];
-                    pHit.y = pIntersect[1];
-                  }
-
-                  // collision test - whether or not we hit a wall (or door)
-                  if (
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG &&
-                    pHit.x >= sampleMap.x && pHit.x < sampleMap.x + 1 ||
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR &&
-                    sampleMap.y + self.doors[hitKey].state * 0.1 > pHit.y &&
-                    pHit.y < sampleMap.y + 1
-                  ) {
-                    const hitEast = pHit.x > sampleMap.x;
-                    currentHit = "vertical";
-                    hitV = 1;
-                    distToWall = Math.min(self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE), sqrDrawDist);
-
-                    // determine the type of the texture to draw on the hit side of the wall
-                    typeWall = sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL
-                      ? (self.map[self.nCols * sampleMap.y + sampleMap.x + (hitEast ? 1 : -1)][self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
-                        ? self.assets.textures.wall.doorDock
-                        : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitEast ? self.mapLegend.TEX_WALL_E : self.mapLegend.TEX_WALL_W]]])
-                      : self.assets.textures.wall.door;
-
-                    // TODO: add texture-mapping for diagonal walls
-                    // determine how far from the left of the wall we should sample from the wall texture
-                    offsetLeft = pHit.y - sampleMap.y +
-                      (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
-                        ? (1 - self.doors[hitKey].state * 0.1)
-                        : 0);
-                  }
+                hitSolid = 1;
+              } else if (tileType === TYPE_TILES.V_DOOR) {
+                /* adjust hit point to intersect with the door */
+                const newHitX = tileX + 0.5;
+                const deltaX = newHitX - hitX;
+                const deltaY = deltaX * raySlope;
+                hitX = newHitX; hitY += deltaY;
+                /* has the door actually been hit? */
+                const hitKey = self.util.coords2Key(tileX, tileY);
+                const doorState = self.doors[hitKey].state * 0.1;
+                if (hitY >= tileY && hitY < tileY + doorState) {
+                  distCovered = eucDist(playerX, playerY, hitX, hitY,
+                                        1, MAP_TILE_SIZE);
+                  /* determine which texture to draw */
+                  solidTexture = self.assets.textures.wall.door;
+                  offsetLeft = hitY - tileY + 1 - doorState;
+                  hitSolid = 1;
                 }
-
-                // if we hit a horizontal door, no need to continue progressing
-                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) hitV = 1;
-
-                traceV.x += stepV.x;
-                traceV.y += stepV.y;
+              } else if (tileType === TYPE_TILES.H_DOOR) {
+                /* adjust hit point to intersect with the door */
+                const newHitY = tileY + 0.5;
+                const deltaY = newHitY - hitY;
+                const deltaX = deltaY * raySlope_;
+                hitX += deltaX; hitY = newHitY;
+                /* has the door actually been hit? */
+                const hitKey = self.util.coords2Key(tileX, tileY);
+                const doorState = self.doors[hitKey].state * 0.1;
+                if (hitX >= tileX + 1 - doorState && hitX < tileX + 1) {
+                  distCovered = eucDist(playerX, playerY, hitX, hitY,
+                                        1, MAP_TILE_SIZE);
+                  /* determine which texture to draw */
+                  solidTexture = self.assets.textures.wall.door;
+                  offsetLeft = hitX - tileX - (1 - doorState);
+                  hitSolid = 1;
+                }
+              } else if (tileType === TYPE_TILES.WALL_DIAG) {
+                const dOffsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
+                const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
+                const x1 = tileX + dOffsets[1][0], y1 = tileY + dOffsets[1][1];
+                // where the current ray hits the diagonal wall
+                const intersect = getIntersect(playerX, playerY, hitX, hitY,
+                                               x0, y0, x1, y1);
+                hitX = intersect[0]; hitY = intersect[1];
+                /* has the diagonal wall actually been hit? */
+                if (hitX >= tileX && hitX < tileX + 1) {
+                  distCovered = eucDist(playerX, playerY, hitX, hitY,
+                                        1, MAP_TILE_SIZE);
+                  // TODO: add texture-mapping
+                  solidTexture = self.assets.textures.wall.doorDock
+                  offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
+                  hitSolid = 1;
+                }
               }
-
-              // horizontal wall detection
-              const stepH  = {};
-              const traceH = {};
-              stepH.y      = up & 1 ? -1 : 1;
-              stepH.x      = stepH.y / ray.slope;
-              traceH.y     = up ? Math.floor(self.player.y) : Math.ceil(self.player.y);
-              traceH.x     = self.player.x + (traceH.y - self.player.y) / ray.slope;
-              let hitH     = 0;
-              while (
-                (hitH & 1) === 0 &&
-                traceH.x >= 0 && traceH.x < self.nCols &&
-                traceH.y > 0 && traceH.y < self.nRows
-              ) {
-                const sampleMap = {
-                  "x": Math.floor(traceH.x),
-                  "y": Math.floor(traceH.y + ((up & 1) ? -1 : 0))
-                };
-                const sample = self.map[self.nCols * sampleMap.y + sampleMap.x];
-
-                // max. draw distance exceeded, break out of loop
-                if (self.util.eucDist(traceH, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE) > sqrDrawDist) {
-                  hitH = 1;
-                  distToWall = distToWall ? distToWall : sqrDrawDist;
+              /* TODO:
+               * HIT: non-solid geometry (things, free-form blocks, translucent
+               * walls)
+               */
+              /* advance tracers unless a solid geometry has been hit already */
+              if (!hitSolid) {
+                /* keep track of the distances covered on the ray by each tracer
+                 */
+                const vDist = eucDist(playerX, playerY, vTraceX, vTraceY,
+                                      1, MAP_TILE_SIZE);
+                const hDist = eucDist(playerX, playerY, hTraceX, hTraceY,
+                                      1, MAP_TILE_SIZE);
+                /* determine whether the hit is on the y-axis */
+                isVerticalHit = vDist > hDist
+                  ? 0
+                  : vDist === hDist ? isVerticalHit : 1;
+                // take the minimum distance covered along the ray
+                distCovered = isVerticalHit ? vDist : hDist;
+                /* determine the location hit on the grid */
+                hitX = isVerticalHit ? vTraceX : hTraceX;
+                hitY = isVerticalHit ? vTraceY : hTraceY;
+                tileX = Math.floor(hitX -
+                                   (isVerticalHit && rayDirX < 0 ? 1 : 0));
+                tileY = Math.floor(hitY -
+                                   (!isVerticalHit && rayDirY < 0 ? 1 : 0));
+                /* advance the tracers themselves */
+                if (vDist <= hDist || Number.isNaN(hDist)) {
+                  vTraceX += vStepX; vTraceY += vStepY;
                 }
-
-                // did we hit some SOLID obstacle?
-                // like walls, doors, or diagonal walls
-                else if (
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG ||
-                  sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
-                ) {
-                  const hitKey = self.util.coords2Key(sampleMap);
-                  const pHit = {"x": traceH.x, "y": traceH.y};
-
-                  // calculate point hit on the map
-                  if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR) {
-                    pHit.x += (sampleMap.y + 0.5 - traceH.y) / ray.slope;
-                    pHit.y = sampleMap.y + 0.5;
-                  } else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG) {
-                    const pIntersect = self.util.getIntersect(
-                      self.player.x,
-                      self.player.y,
-                      traceH.x,
-                      traceH.y,
-                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][0],
-                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][0][1],
-                      sampleMap.x + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][0],
-                      sampleMap.y + self.const.OFFSET_DIAG_WALLS[sample[self.mapLegend.FACE_DIAG]][1][1]
-                    ); // FIXME: fix for parallel lines
-                    pHit.x = pIntersect[0];
-                    pHit.y = pIntersect[1];
-                  }
-
-                  // collision test - whether or not we hit a wall (or door)
-                  if (
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL ||
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL_DIAG &&
-                    pHit.y >= sampleMap.y && pHit.y < sampleMap.y + 1 ||
-                    sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR &&
-                    1 + sampleMap.x - self.doors[hitKey].state * 0.1 < pHit.x &&
-                    pHit.x < sampleMap.x + 1
-                  ) {
-                    const hitDist = Math.min(self.util.eucDist(pHit, {"x": self.player.x, "y": self.player.y}, true, self.MAP_TILE_SIZE), sqrDrawDist);
-
-                    // if current horizontal hit is closer than current vertical hit
-                    if (
-                      distToWall === undefined || distToWall > hitDist ||
-                      (distToWall === hitDist && previousHit === "horizontal")
-                    ) {
-                      const hitSouth = pHit.y > sampleMap.y;
-                      currentHit = "horizontal";
-                      distToWall = hitDist;
-
-                      // determine the type of the texture to draw on the hit side of the wall
-                      typeWall = sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.WALL
-                        ? (self.map[self.nCols * (sampleMap.y + (hitSouth ? 1 : -1)) + sampleMap.x][self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR
-                          ? self.assets.textures.wall.doorDock
-                          : self.assets.textures.wall[self.const.LEGEND_TEXTURES.WALL[sample[hitSouth ? self.mapLegend.TEX_WALL_S : self.mapLegend.TEX_WALL_N]]])
-                        : self.assets.textures.wall.door;
-
-                      // TODO: add texture-mapping for diagonal walls
-                      // determine how far from the left of the wall we should sample from the wall texture
-                      offsetLeft = pHit.x - sampleMap.x -
-                        (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.H_DOOR
-                          ? (1 - self.doors[hitKey].state * 0.1)
-                          : 0);
-                    }
-                    hitH = 1;
-                  }
+                if (hDist <= vDist || Number.isNaN(vDist)) {
+                  hTraceX += hStepX; hTraceY += hStepY;
                 }
-
-                // if we hit a vertical door, no need to continue progressing
-                else if (sample[self.mapLegend.TYPE_TILE] === self.const.TYPE_TILES.V_DOOR) hitH = 1;
-
-                traceH.x += stepH.x;
-                traceH.y += stepH.y;
-              }
-              previousHit = currentHit;
-
-              // calculate the real distance
-              distToWall = Math.sqrt(distToWall);
-              const realDist = distToWall;
-
-              // fix the fish-eye distortion by calculating the perpendicular
-              // distance to the wall
-              distToWall *= Math.cos(ray.angle - self.player.rotation);
-
-              // calculate ceiling, floor and wall height for current column
-              const scaleProj = self.VIEW_DIST / distToWall;
-              const yPlayer = self.mRows + H_FRSTM - self.player.z;
-              const hCeil = Math.floor(
-                scaleProj * (self.player.z - self.const.H_MAX_WORLD) + yPlayer
-              );
-              const yFloor = Math.floor(scaleProj * self.player.z + yPlayer);
-              const hWall = yFloor - hCeil;
-
-              if (self.const.VISPLANES || window.VISPLANES) {
-                // draw floor
-                self.util.render.col_floor(
-                  self,
-                  {}, // FIXME: occlusion for the current column
-                  undefined,
-                  iCol,
-                  yFloor,
-                  self.mRows - yFloor,
-                  ray.angle,
-                  0,
-                  self.player.anim.shooting.index === 0 ||
-                  self.player.anim.shooting.index === 1
-                    ? 0
-                    : 1
-                );
-                // draw ceiling
-                self.util.render.col_ceiling(
-                  self,
-                  {}, // FIXME: occlusion for the current column
-                  undefined,
-                  iCol,
-                  0,
-                  hCeil,
-                  ray.angle,
-                  0,
-                  self.player.anim.shooting.index === 0 ||
-                  self.player.anim.shooting.index === 1
-                    ? 0
-                    : 1
-                );
-              }
-
-              // draw wall
-              const texWall = typeWall;
-              const dataTexWall = texWall[currentHit || "vertical"];
-              self.util.render.col_wall(
-                self,
-                {}, // FIXME: occlusion for the current column
-                texWall,
-                self.const.H_SOLID_WALL / texWall.worldHeight,
-                offsetLeft * dataTexWall.width + dataTexWall.offset,
-                iCol,
-                hCeil,
-                hWall,
-                realDist / self.DRAW_DIST
-              );
-
-              // TODO: draw world-object sprites
-
-              if (window.DEBUG_MODE === 1) {
-                self.util.render.wallBounds(
-                  self, iCol, hCeil, hWall, self.DRAW_TILE_SIZE.y * 2
-                );
               }
             }
-          }
+            distCovered = Math.min(distCovered, sqrDrawDist);
+            /* at this point, we should have either hit a solid geometry or
+             * reached the max draw distance or go out of bounds of the grid
+             */
+            /* calculate the real distance between the player and the hit */
+            distCovered = Math.sqrt(distCovered);
+            const realDist = distCovered;
+            // fix the fish-eye distortion
+            distCovered *= Math.cos(rayAngle - playerRot);
+            /* calculate ceiling, floor and wall heights for the solid geometry
+             * that's been hit
+             */
+            const scaleProj = VIEW_DIST / distCovered;
+            const yPlayer = M_ROWS + frstmElev - playerElev;
+            const hCeil = Math.floor(scaleProj * (playerElev - H_MAX_WORLD) +
+                                     yPlayer);
+            const yFloor = Math.floor(scaleProj * playerElev + yPlayer);
+            const hWall = yFloor - hCeil;
+            /* DRAW: solid geometry (that occludes the entirety of the current
+             * column of pixels)
+             */
+            /* draw texture-mapped flats: ceiling & floor */
+            if (self.const.FLATS || window.FLATS) {
+              self.util.render.col_floor(
+                self,
+                {}, // FIXME: occlusion for the current column
+                undefined,
+                iCol,
+                yFloor,
+                M_ROWS - yFloor,
+                rayAngle,
+                0,
+                self.player.anim.shooting.index === 0 ||
+                self.player.anim.shooting.index === 1
+                  ? 0
+                  : 1
+              );
+              self.util.render.col_ceiling(
+                self,
+                {}, // FIXME: occlusion for the current column
+                undefined,
+                iCol,
+                0,
+                hCeil,
+                rayAngle,
+                0,
+                self.player.anim.shooting.index === 0 ||
+                self.player.anim.shooting.index === 1
+                  ? 0
+                  : 1
+              );
+            }
+            /* draw texture-mapped wall */
+            const dataTex = solidTexture[isVerticalHit
+                                          ? "vertical"
+                                          : "horizontal"];
+            self.util.render.col_wall(
+              self,
+              {}, // FIXME: occlusion for the current column
+              solidTexture,
+              self.const.H_SOLID_WALL / solidTexture.worldHeight,
+              offsetLeft * dataTex.width + dataTex.offset,
+              iCol,
+              hCeil,
+              hWall,
+              realDist / MAX_DRAW_DIST
+            );
+            /* draw debug artifacts it debug mode is active */
+            if (window.DEBUG_MODE === 1) {
+              self.util.render.wallBounds(
+                self, iCol, hCeil, hWall, self.DRAW_TILE_SIZE.y * 2
+              );
+            }
+            /* TODO:
+             * DRAW: non-solid geometry (that partially occludes the current
+             * column on pixels)
+             */
+          } // REPEAT: for each column of the screen buffer
         },
         "col_wall": function(
           self,
@@ -2075,7 +2036,7 @@
       },
       "renderLoop": function(self, deltaT) {
         // update the frame buffer
-        self.util.render.frame.rasterized(self);
+        self.util.render.playerView(self);
         self.util.render.globalSprite(
           self,
           self.assets.sprites.playerWeapons[self.player.weaponDrawn]

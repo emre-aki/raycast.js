@@ -57,10 +57,10 @@ You can check out the live demo [here](https://raycast-js.herokuapp.com)!
 - Skybox rendering for outdoors
 - Depth shading (fog effect)
 - Doors
+- Diagonal walls
 - Mini-map display
 
 ### TODOs
-- Diagonal walls
 - World-object sprites
 - Translucent walls
 - Slopes
