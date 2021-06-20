@@ -1100,17 +1100,20 @@
              * iterate over vertical and horizontal grid lines that intersect
              * with the current ray
              */
-            let vTraceX = rayDirX > 0 ? Math.ceil(playerX) : tileX;
+            let vTraceX = rayDirX > 0 ? Math.floor(playerX + 1) : tileX;
             let vTraceY = playerY + (vTraceX - playerX) * raySlope;
-            let hTraceY = rayDirY < 0 ? tileY : Math.ceil(playerY);
+            let hTraceY = rayDirY > 0 ? Math.floor(playerY + 1) : tileY;
             let hTraceX = playerX + (hTraceY - playerY) * raySlope_;
             /* how much each tracer will advance at each iteration */
             const vStepX = rayDirX, vStepY = vStepX * raySlope;
             const hStepY = rayDirY, hStepX = hStepY * raySlope_;
             let distCovered = 0; // the distance covered by the "closest" tracer
-            /* keep track of the properties for solid geometry hits */
+            // the perpendicular distance from the player to the closest solid
+            // geometry along the path of the current ray
+            let distSolid;
             let hitSolid = 0; // whether we hit a solid wall or not
             let isVerticalHit;
+            // which texture to draw on the surface of the solid geometry
             let solidTexture = self.assets.textures.wall.default;
             let offsetLeft; // sampling offset for the texture
             /* cast the ray until we either hit a solid wall or reach the max
@@ -1160,8 +1163,6 @@
                 const hitKey = self.util.coords2Key(tileX, tileY);
                 const doorState = self.doors[hitKey].state * 0.1;
                 if (hitY >= tileY && hitY < tileY + doorState) {
-                  distCovered = eucDist(playerX, playerY, hitX, hitY,
-                                        1, MAP_TILE_SIZE);
                   /* determine which texture to draw */
                   solidTexture = self.assets.textures.wall.door;
                   offsetLeft = hitY - tileY + 1 - doorState;
@@ -1177,8 +1178,6 @@
                 const hitKey = self.util.coords2Key(tileX, tileY);
                 const doorState = self.doors[hitKey].state * 0.1;
                 if (hitX >= tileX + 1 - doorState && hitX < tileX + 1) {
-                  distCovered = eucDist(playerX, playerY, hitX, hitY,
-                                        1, MAP_TILE_SIZE);
                   /* determine which texture to draw */
                   solidTexture = self.assets.textures.wall.door;
                   offsetLeft = hitX - tileX - (1 - doorState);
@@ -1194,10 +1193,10 @@
                 hitX = intersect[0]; hitY = intersect[1];
                 /* has the diagonal wall actually been hit? */
                 if (hitX >= tileX && hitX < tileX + 1) {
-                  distCovered = eucDist(playerX, playerY, hitX, hitY,
-                                        1, MAP_TILE_SIZE);
                   // TODO: add texture-mapping
                   solidTexture = self.assets.textures.wall.doorDock;
+                  // TODO: maybe better optimize the line below? without having
+                  // to resort to euclidean distance calculation?
                   offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
                   hitSolid = 1;
                 }
@@ -1208,47 +1207,41 @@
                */
               /* advance tracers unless a solid geometry has been hit already */
               if (!hitSolid) {
-                /* keep track of the distances covered on the ray by each tracer
-                 */
+                /* calculate the distances covered on the ray by each tracer */
                 const vDist = eucDist(playerX, playerY, vTraceX, vTraceY,
                                       1, MAP_TILE_SIZE);
                 const hDist = eucDist(playerX, playerY, hTraceX, hTraceY,
                                       1, MAP_TILE_SIZE);
-                /* determine whether the hit is on the y-axis */
+                /* determine whether the hit is on the vertical axis */
                 isVerticalHit = vDist > hDist
                   ? 0
                   : vDist === hDist ? isVerticalHit : 1;
                 // take the minimum distance covered along the ray
                 distCovered = isVerticalHit ? vDist : hDist;
-                /* determine the location hit on the grid */
-                hitX = isVerticalHit ? vTraceX : hTraceX;
-                hitY = isVerticalHit ? vTraceY : hTraceY;
-                tileX = Math.floor(hitX -
-                                   (isVerticalHit && rayDirX < 0 ? 1 : 0));
-                tileY = Math.floor(hitY -
-                                   (!isVerticalHit && rayDirY < 0 ? 1 : 0));
                 /* advance the tracers themselves */
-                if (vDist <= hDist || Number.isNaN(hDist)) {
-                  vTraceX += vStepX; vTraceY += vStepY;
-                }
-                if (hDist <= vDist || Number.isNaN(vDist)) {
-                  hTraceX += hStepX; hTraceY += hStepY;
+                if (isVerticalHit) {
+                  hitX = vTraceX; hitY = vTraceY; // hit by vertical tracer
+                  vTraceX += vStepX; vTraceY += vStepY; // advance the tracer
+                  tileX += rayDirX; // advance vertivally to the next tile
+                } else {
+                  hitX = hTraceX; hitY = hTraceY; // hit by horizontal tracer
+                  hTraceX += hStepX; hTraceY += hStepY; // advance the tracer
+                  tileY += rayDirY; // advance horizontally to the next tile
                 }
               }
             }
-            distCovered = Math.min(distCovered, sqrDrawDist);
+            distSolid = eucDist(playerX, playerY, hitX, hitY, 0, MAP_TILE_SIZE);
+            distSolid = Math.min(distSolid, MAX_DRAW_DIST);
             /* at this point, we should have either hit a solid geometry or
              * reached the max draw distance or go out of bounds of the grid
              */
-            /* calculate the real distance between the player and the hit */
-            distCovered = Math.sqrt(distCovered);
-            const realDist = distCovered;
+            const realDist = distSolid;
             // fix the fish-eye distortion
-            distCovered *= Math.cos(rayAngle - playerRot);
+            distSolid *= Math.cos(rayAngle - playerRot);
             /* calculate ceiling, floor and wall heights for the solid geometry
              * that's been hit
              */
-            const scaleProj = VIEW_DIST / distCovered;
+            const scaleProj = VIEW_DIST / distSolid;
             const yPlayer = M_ROWS + frstmElev - playerElev;
             const hCeil = Math.floor(scaleProj * (playerElev - H_MAX_WORLD) +
                                      yPlayer);
