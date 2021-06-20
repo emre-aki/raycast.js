@@ -33,7 +33,7 @@
  *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 06.13.2021                                        *
+ * Last updated: 06.20.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -1080,7 +1080,6 @@
           const pointVsRect = self.util.collision.pointVsRect;
           const eucDist = self.util.eucDist;
           const getIntersect = self.util.getIntersect;
-          const zBuffer = self.api.zBuffer;
 
           const playerX = self.player.x, playerY = self.player.y;
           const playerRot = self.player.rotation, playerTilt = self.player.tilt;
