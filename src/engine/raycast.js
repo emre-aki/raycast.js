@@ -365,6 +365,7 @@
             "worldHeight": 10
           }
         },
+        "animations": {},
         "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
             if (i === keys.length) return resolve(self.assets.textures);
@@ -1332,15 +1333,21 @@
           // early return if trying to render out of frustum bounds
           if (dy + dh <= 0 || dy >= offscreenBufferH) return;
 
+          const texBitmap = texture.bitmap;
+
           const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
           const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
           const DY = Math.floor(DRAW_TILE_SIZE_Y * dy);
           const DH = Math.ceil(DRAW_TILE_SIZE_Y * dh);
-          const SX = Math.floor(sx);
-
-          const th = texture.height, texBitmap = texture.bitmap;
+          const SX = Math.floor(sx +
+                                (texture.activeFrame !== undefined
+                                   ? texture.frames[texture.activeFrame].offset
+                                   : 0));
+          const th = texture.activeFrame !== undefined
+            ? texture.frames[texture.activeFrame].height
+            : texture.height;
 
           // texture-mapping scaling factor
           const scaleH = DH / (th * repeat);
@@ -1454,20 +1461,23 @@
             };
 
             let texFloor, tx, ty, tw, th;
-            // determine which texture to render by using the calculated world
-            // coordinates if no texture was given
+            /* determine which texture to draw by using the calculated world
+             * coordinates if no texture was given
+             */
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
               const typeFloor = tile[KEY_TEX_G_FLOOR];
               texFloor = FLOOR_TEXTURES[LEGEND_TEXTURES[typeFloor]];
-              tw = texFloor.width, th = texFloor.height;
-              tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
-              ty = Math.floor((pFloorTile.y - pMapTile.y) * th);
-            } else {
-              texFloor = texture, tw = texFloor.width, th = texFloor.height;
-              tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
-              ty = Math.floor((pFloorTile.y - pMapTile.y) * th);
-            }
+            } else texFloor = texture;
+            tw = texFloor.width; th = texFloor.height;
+            /* determine which texel to draw */
+            if (texFloor.activeFrame !== undefined) {
+              th = texFloor.frames[texFloor.activeFrame].height;
+              tx = Math.floor((pFloorTile.x - pMapTile.x) *
+                texFloor.frames[texFloor.activeFrame].width) +
+                texFloor.frames[texFloor.activeFrame].offset;
+            } else tx = Math.floor((pFloorTile.x - pMapTile.x) * tw);
+            ty = Math.floor((pFloorTile.y - pMapTile.y) * th);
 
             // sample the texture pixel
             const texBitmap = texFloor.bitmap;
@@ -1560,26 +1570,28 @@
               "y": Math.floor(pCeilTile.y)
             };
 
-            let texCeil, tx, ty, tw, th;
-            // determine which texture to render by using the calculated world
-            // coordinates if no texture was given
+            let texCeil, tx, ty, tw, th, isSky;
+            /* determine which texture to draw by using the calculated world
+             * coordinates if no texture was given
+             */
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
-              const typeCeil = tile[KEY_TEX_G_CEIL];
+              const typeCeil = tile[KEY_TEX_G_CEIL]; isSky = typeCeil === 0;
               texCeil = CEIL_TEXTURES[LEGEND_TEXTURES[typeCeil]];
-              tw = texCeil.width, th = texCeil.height;
-              if (typeCeil) { // if indoors ceiling
-                tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
-                ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
-              } else {        // if outdoors skybox
-                const ppr = tw / self.const.math.RAD_90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
-                tx = Math.floor((normalizeAngle(self, rayAngle) * ppr) % tw);
-                ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS); // FIXME: extreme MAX_TILTs
-              }
+            } else texCeil = texture;
+            tw = texCeil.width, th = texCeil.height;
+            /* determine which texel to draw */
+            if (isSky) {
+              const ppr = tw / self.const.math.RAD_90; // pixels per radiant (skybox repeats x4) // FIXME: don't calculate every time, cache instead
+              tx = Math.floor((normalizeAngle(self, rayAngle) * ppr) % tw);
+              ty = Math.floor(th * (MAX_TILT - self.player.tilt + iR) / M_ROWS); // FIXME: extreme MAX_TILTs
             } else {
-              texCeil = texture;
-              tw = texCeil.width, th = texCeil.height;
-              tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
+              if (texCeil.activeFrame !== undefined) {
+                th = texCeil.frames[texCeil.activeFrame].height;
+                tx = Math.floor((pCeilTile.x - pMapTile.x) *
+                  texCeil.frames[texCeil.activeFrame].width) +
+                  texCeil.frames[texCeil.activeFrame].offset;
+              } else tx = Math.floor((pCeilTile.x - pMapTile.x) * tw);
               ty = Math.floor((pCeilTile.y - pMapTile.y) * th);
             }
 
@@ -1732,6 +1744,28 @@
             })
             .then(function() {
               self.util.setOffscreenBufferDimensions(self.res[0], self.res[1]);
+            })
+
+            // setup texture animations
+            .then(function() {
+              const tAnimationsFrames = self.assets.textures.animations;
+              resolution.animations = Object.keys(tAnimationsFrames)
+                .map(function(tKey) {
+                  const animationFrames = tAnimationsFrames[tKey];
+                  const textureLookup = tKey[0] === "w"
+                    ? self.assets.textures.wall
+                    : tKey[0] === "f"
+                      ? self.assets.textures.floor
+                      : self.assets.textures.ceil;
+                  const texture = textureLookup[tKey.slice(2)];
+                  return self.api.animation(
+                    self,
+                    function(i) { // onFrame
+                      texture.activeFrame = animationFrames[i % animationFrames.length];
+                    },
+                    1000 / texture.FPS
+                  );
+                });
             })
 
             // FIXME: find a permanent fix for the audio-loading issues on iOS
@@ -2080,6 +2114,11 @@
 
       // quit loading animation
       resolution.loading.cancel();
+
+      // start world-object animations
+      resolution.animations.forEach(function(animation) {
+        animation.start();
+      });
 
       const animTitleScreen = self.util.render.titleScreen(self, function() {
         document.removeEventListener("keydown", runContainer);
