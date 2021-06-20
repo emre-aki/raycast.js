@@ -1281,21 +1281,31 @@
                   : 1
               );
             }
-            /* draw texture-mapped wall */
-            const dataTex = solidTexture[isVerticalHit
-                                          ? "vertical"
-                                          : "horizontal"];
-            self.util.render.col_wall(
-              self,
-              {}, // FIXME: occlusion for the current column
-              solidTexture,
-              self.const.H_SOLID_WALL / solidTexture.worldHeight,
-              offsetLeft * dataTex.width + dataTex.offset,
-              iCol,
-              hCeil,
-              hWall,
-              realDist / MAX_DRAW_DIST
-            );
+            /* draw texture-mapped wall unless max draw distance is exceeded,
+             * otherwise draw a column of all-black pixels
+             */
+            if (offsetLeft >= 0) {
+              const dataTex = solidTexture[isVerticalHit
+                                            ? "vertical"
+                                            : "horizontal"];
+              self.util.render.col_wall(
+                self,
+                {}, // FIXME: occlusion for the current column
+                solidTexture,
+                self.const.H_SOLID_WALL / solidTexture.worldHeight,
+                offsetLeft * dataTex.width + dataTex.offset,
+                iCol,
+                hCeil,
+                hWall,
+                realDist / MAX_DRAW_DIST
+              );
+            } else {
+              self.util.fillRect(iCol * self.DRAW_TILE_SIZE.x,
+                                 hCeil * self.DRAW_TILE_SIZE.y,
+                                 self.DRAW_TILE_SIZE.x,
+                                 hWall * self.DRAW_TILE_SIZE.y,
+                                 0, 0, 0, 1);
+            }
             /* draw debug artifacts it debug mode is active */
             if (window.DEBUG_MODE === 1) {
               self.util.render.wallBounds(
