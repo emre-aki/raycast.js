@@ -22,15 +22,14 @@
  *   https://youtu.be/xW8skO7MFYw                                  *
  *                                                                 *
  *   Features include:                                             *
- *     - Texture-mapped walls, floors & ceilings                   *
- *     - Alpha blending                                            *
- *     - Panoramic skybox                                          *
- *     - Shading with distance                                     *
+ *     - Fully texture-mapped walls, floors & ceilings             *
+ *     - Alpha-blending                                            *
+ *     - 360 parallaxed skies for outdoor spaces                   *
+ *     - Diminishing lighting (distance/depth-based shading)       *
  *     - Doors                                                     *
  *     - Diagonal walls                                            *
- *     - Ability to look up & down                                 *
+ *     - Freelook (perspective-incorrect, achieved via y-shearing) *
  *     - Player elevation                                          *
- *     - Walking animation & weapon bobbing                        *
  *     - Mini-map display                                          *
  *                                                                 *
  * Last updated: 06.20.2021                                        *

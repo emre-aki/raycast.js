@@ -54,17 +54,17 @@ You can check out the live demo [here](https://raycast-js.herokuapp.com)!
 - Player elevation
 - Fully texture-mapped walls, floors & ceiling
 - Alpha-blending
-- Skybox rendering for outdoors
-- Depth shading (fog effect)
+- 360 parallaxed skies for outdoor spaces
+- Diminishing lighting (distance/depth-based shading)
 - Doors
 - Diagonal walls
 - Mini-map display
 
 ### TODOs
-- World-object sprites
+- 2-D sprites for in-game `thing`s
 - Translucent walls
-- Slopes
-- Walls of different width/heights (`free-form tiles`)
+- Sloped surfaces
+- Blocks of varying widths, heights & depth (`free-form block`s)
 
 [LMB]: https://github.com/emre-aki/raycast.js/blob/master/images/lmb.png?raw=true (left mouse button)
 [MSW]: https://github.com/emre-aki/raycast.js/blob/master/images/msw.png?raw=true (mouse scroll whell)
