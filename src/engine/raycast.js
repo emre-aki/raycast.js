@@ -1197,7 +1197,7 @@
                   distCovered = eucDist(playerX, playerY, hitX, hitY,
                                         1, MAP_TILE_SIZE);
                   // TODO: add texture-mapping
-                  solidTexture = self.assets.textures.wall.doorDock
+                  solidTexture = self.assets.textures.wall.doorDock;
                   offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
                   hitSolid = 1;
                 }
