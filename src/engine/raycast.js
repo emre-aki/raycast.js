@@ -32,7 +32,7 @@
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 06.20.2021                                        *
+ * Last updated: 07.13.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -604,26 +604,24 @@
             const vNorth = (playerY - MARGIN_TO_WALL).toFixedNum(5);
             const vSouth = (playerY + MARGIN_TO_WALL).toFixedNum(5);
             const northBlocked = self.util.isBlockingMapCell(self, vX, vNorth);
-            const southBlocked = self.util.isBlockingMapCell(self, vX, vSouth);
-            const southEdgeTouching = Math.floor(vSouth) === vSouth;
+            const southBlocked = self.util.isBlockingMapCell(self, vX, vSouth)
+                                 && Math.floor(vSouth) !== vSouth;
             // a collision must have occurred if either the northern or the
             // the non-touching southern edge of the player bounding-box
             // is blocked
-            if (northBlocked || southBlocked && !southEdgeTouching)
-              return Math.floor(vX);
+            if (northBlocked || southBlocked) return Math.floor(vX);
           } else if (PACE) {             // if the movement is along the y-axis
             const newY = playerY + PACE;
             const vY = newY + MARGIN_TO_WALL * DIR;
             const vWest = (playerX - MARGIN_TO_WALL).toFixedNum(5);
             const vEast = (playerX + MARGIN_TO_WALL).toFixedNum(5);
             const westBlocked = self.util.isBlockingMapCell(self, vWest, vY);
-            const eastBlocked = self.util.isBlockingMapCell(self, vEast, vY);
-            const eastEdgeTouching = Math.floor(vEast) === vEast;
+            const eastBlocked = self.util.isBlockingMapCell(self, vEast, vY)
+                                && Math.floor(vEast) !== vEast;
             // a collision must have occurred if either the western or the
             // the non-touching eastern edge of the player bounding-box
             // is blocked
-            if (westBlocked || eastBlocked && !eastEdgeTouching)
-              return Math.floor(vY);
+            if (westBlocked || eastBlocked) return Math.floor(vY);
           }
         }
       },
