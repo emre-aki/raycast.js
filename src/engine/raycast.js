@@ -438,10 +438,10 @@
         "TELEPORTER": 5
       },
       "OFFSET_DIAG_WALLS": [
-        [[1, 0], [0, 1]], // #/
-        [[1, 1], [0, 0]], // \#
-        [[0, 1], [1, 0]], // /#
-        [[0, 0], [1, 1]]  // #\
+        [[0, 1], [1, 0]], // #/
+        [[0, 0], [1, 1]], // \#
+        [[1, 0], [0, 1]], // /#
+        [[1, 1], [0, 0]]  // #\
       ],
       "MINIMAP_COLORS": [
         "#55555599", // 0: FREE
@@ -1184,18 +1184,40 @@
                 const dOffsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
                 const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
                 const x1 = tileX + dOffsets[1][0], y1 = tileY + dOffsets[1][1];
-                // where the current ray hits the diagonal wall
+                /* HACK: for correctly calculating the intersection when the
+                 * player is currently situated in the diagonal wall tile
+                 */
+                const isInTile = playerX === hitX && playerY === hitY;
+                if (isInTile) {
+                  // take a step along whichever axis covers more distance
+                  if (Math.abs(raySlope) < 1) {
+                    hitX += rayDirX; hitY += vStepY;
+                  } else {
+                    hitY += rayDirY; hitX += hStepX;
+                  }
+                }
+                /* calculate the point of intersection between the ray line (or
+                 * vector) and the diagonal wall line (or vector)
+                 */
                 const intersect = getIntersect(playerX, playerY, hitX, hitY,
-                                               x0, y0, x1, y1);
-                hitX = intersect[0]; hitY = intersect[1];
-                /* has the diagonal wall actually been hit? */
-                if (hitX >= tileX && hitX < tileX + 1) {
-                  // TODO: add texture-mapping
-                  solidTexture = self.assets.textures.wall.doorDock;
-                  // TODO: maybe better optimize the line below? without having
-                  // to resort to euclidean distance calculation?
-                  offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
-                  hitSolid = 1;
+                                               x0, y0, x1, y1,
+                                               isInTile ? 1 : 0);
+                if (intersect) {
+                  hitX = intersect[0]; hitY = intersect[1];
+                  /* is the diagonal wall actually visible, i.e., is the current
+                   * ray actually intersecting with the diagonal wall vector?
+                   */
+                  if (isInTile
+                      || pointVsRect(Math.min(x0, x1), Math.min(y0, y1),
+                                     Math.abs(x0 - x1), Math.abs(y0 - y1),
+                                     hitX, hitY)) {
+                    // TODO: add texture-mapping
+                    solidTexture = self.assets.textures.wall.doorDock;
+                    // TODO: maybe better optimize the line below? without having
+                    // to resort to euclidean distance calculation?
+                    offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
+                    hitSolid = 1;
+                  }
                 }
               }
               /* TODO:
