@@ -1102,9 +1102,8 @@
             let vTraceY = playerY + (vTraceX - playerX) * raySlope;
             let hTraceY = rayDirY > 0 ? Math.floor(playerY + 1) : tileY;
             let hTraceX = playerX + (hTraceY - playerY) * raySlope_;
-            /* how much each tracer will advance at each iteration */
-            const vStepX = rayDirX, vStepY = vStepX * raySlope;
-            const hStepY = rayDirY, hStepX = hStepY * raySlope_;
+            // how much each tracer will advance at each iteration
+            const vStepY = rayDirX * raySlope, hStepX = rayDirY * raySlope_;
             let distCovered = 0; // the distance covered by the "closest" tracer
             // the perpendicular distance from the player to the closest solid
             // geometry along the path of the current ray
@@ -1219,11 +1218,11 @@
                 /* advance the tracers themselves */
                 if (isVerticalHit) {
                   hitX = vTraceX; hitY = vTraceY; // hit by vertical tracer
-                  vTraceX += vStepX; vTraceY += vStepY; // advance the tracer
+                  vTraceX += rayDirX; vTraceY += vStepY; // advance the tracer
                   tileX += rayDirX; // advance vertivally to the next tile
                 } else {
                   hitX = hTraceX; hitY = hTraceY; // hit by horizontal tracer
-                  hTraceX += hStepX; hTraceY += hStepY; // advance the tracer
+                  hTraceX += hStepX; hTraceY += rayDirY; // advance the tracer
                   tileY += rayDirY; // advance horizontally to the next tile
                 }
               }
