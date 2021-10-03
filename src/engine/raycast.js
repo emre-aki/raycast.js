@@ -427,7 +427,8 @@
         // TODO: Make sin/cos && sqrt tables for optimization
         "RAD_TO_DEG": 180 / Math.PI,
         "RAD_90": 0.5 * Math.PI,
-        "RAD_360": 2 * Math.PI
+        "RAD_360": 2 * Math.PI,
+        "CLOCKWISE": [0, 1, 3, 2]
       },
       "TYPE_TILES": {
         "FREE": 0,
@@ -502,14 +503,6 @@
           "cancel": function() { cleanUp(); },
           "isAnimating": function() { return !!self.intervals[id]; }
         };
-      },
-      "memo": function(data) {
-        let _data = data;
-
-        return {
-          "get": function() { return _data; },
-          "reset": function(data) { _data = data; }
-        };
       }
     },
     "util": {
@@ -555,15 +548,18 @@
         const l0 = [l0x1 - l0x0, l0y1 - l0y0], l1 = [l1x1 - l1x0, l1y1 - l1y0];
         const denom = vec2dCross(l0, l1);
         const numer = [l1x0 - l0x0, l1y0 - l0y0];
-        const X = vec2dCross(numer, l1) / denom;
+        const X = vec2dCross(numer, l1) / denom, safeX = X.toFixedNum(5);
         if (seg) {
-          const Y = vec2dCross(numer, l0) / denom;
+          const Y = vec2dCross(numer, l0) / denom, safeY = Y.toFixedNum(5);
           // if given vectors l0 and l1 are line segments, their intersection
           // parameters X and Y must be within the range [0, 1], that is,
           // the point of intersection must be sitting on both line segments
-          if (X < 0 || X > 1 || Y < 0 || Y > 1) return;
+          if (safeX < 0 || safeX > 1 || safeY < 0 || safeY > 1) return;
         }
         return [l0x0 + X * l0[0], l0y0 + X * l0[1]];
+      },
+      "isOnTheLeft": function(x0, y0, x1, y1, x, y) {
+          return ((x1 - x0) * (y - y0) - (y1 - y0) * (x - x0)).toFixedNum(5) < 0;
       },
       "collision": {
         "pointVsRect": function(xr, yr, w, h, x, y) {
@@ -593,36 +589,209 @@
           }
           return nColls % 2 > 0;
         },
-        "playerAABBvsGrid": function(self, pace, movingAlongX) {
+        "vectorVsMap": function(self, px, py, sx, sy, dx, dy) {
+          const N_COLS = self.nCols, N_ROWS = self.nRows;
+          const MAP = self.map;
+          const LEGEND_TYPE_TILE = self.mapLegend.TYPE_TILE;
+          const LEGEND_FACE_DIAG = self.mapLegend.FACE_DIAG;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const OFFSET_DIAG_WALLS = self.const.OFFSET_DIAG_WALLS;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
-          const playerX = self.player.x, playerY = self.player.y;
-          const PACE = pace.toFixedNum(5);
-          const DIR = Math.sign(PACE);
-          if (PACE && movingAlongX) {    // if the movement is along the x-axis
-            const newX = playerX + PACE;
-            const vX = newX + MARGIN_TO_WALL * DIR;
-            const vNorth = (playerY - MARGIN_TO_WALL).toFixedNum(5);
-            const vSouth = (playerY + MARGIN_TO_WALL).toFixedNum(5);
-            const northBlocked = self.util.isBlockingMapCell(self, vX, vNorth);
-            const southBlocked = self.util.isBlockingMapCell(self, vX, vSouth)
-                                 && Math.floor(vSouth) !== vSouth;
-            // a collision must have occurred if either the northern or the
-            // the non-touching southern edge of the player bounding-box
-            // is blocked
-            if (northBlocked || southBlocked) return Math.floor(vX);
-          } else if (PACE) {             // if the movement is along the y-axis
-            const newY = playerY + PACE;
-            const vY = newY + MARGIN_TO_WALL * DIR;
-            const vWest = (playerX - MARGIN_TO_WALL).toFixedNum(5);
-            const vEast = (playerX + MARGIN_TO_WALL).toFixedNum(5);
-            const westBlocked = self.util.isBlockingMapCell(self, vWest, vY);
-            const eastBlocked = self.util.isBlockingMapCell(self, vEast, vY)
-                                && Math.floor(vEast) !== vEast;
-            // a collision must have occurred if either the western or the
-            // the non-touching eastern edge of the player bounding-box
-            // is blocked
-            if (westBlocked || eastBlocked) return Math.floor(vY);
+          const CLOCKWISE = self.const.math.CLOCKWISE;
+          const pointVsRect = self.util.collision.pointVsRect;
+          const eucDist = self.util.eucDist;
+          const getIntersect = self.util.getIntersect;
+          const isOnTheLeft = self.util.isOnTheLeft;
+          const isBlockingMapCell = self.util.isBlockingMapCell;
+          /* NOTE: using `toFixedNum` here in order to prevent floating-point
+           * rounding errors messing up the ray-casting routine, e.g.:
+           * 3.6000000000000005 -> 3.6
+           */
+          const sX = sx.toFixedNum(5), sY = sy.toFixedNum(5);
+          const dX = dx.toFixedNum(5), dY = dy.toFixedNum(5);
+          /* calculate the properties for the movement ray */
+          const deltaX = dX - sX, deltaY = dY - sY;
+          const rayDirX = Math.sign(deltaX), rayDirY = Math.sign(deltaY);
+          const raySlope = deltaY / deltaX, raySlope_ = deltaX / deltaY;
+          // start casting the movement ray from the starting position
+          let hitX = sX, hitY = sY;
+          let tileX = Math.floor(hitX), tileY = Math.floor(hitY);
+          /* vertical & horizontal tracers:
+           * iterate over vertical and horizontal grid lines that intersect
+           * with the movement ray
+           */
+          let vTraceX = rayDirX > 0 ? Math.floor(sX + 1) : tileX;
+          let vTraceY = sY + (vTraceX - sX) * raySlope;
+          let hTraceY = rayDirY > 0 ? Math.floor(sY + 1) : tileY;
+          let hTraceX = sX + (hTraceY - sY) * raySlope_;
+          /* how much each tracer will advance at each iteration */
+          const vStepX = rayDirX, vStepY = vStepX * raySlope;
+          const hStepY = rayDirY, hStepX = hStepY * raySlope_;
+          let distCovered = 0; // the distance covered by the "closer" tracer
+          let hitSolid = 0; // whether we hit a solid geometry or not
+          let isVerticalHit;
+          // how much distance the step the player took will cover
+          const distanceToCover = eucDist(sX, sY, dX, dY, 1);
+          /* the tile data we are currently inspecting */
+          let tile = MAP[N_COLS * tileY + tileX];
+          let typeTile = tile[LEGEND_TYPE_TILE];
+          while (!hitSolid && distCovered < distanceToCover
+                 && pointVsRect(0, 0, N_COLS, N_ROWS, tileX, tileY)) {
+            hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
+            if (typeTile === TYPE_TILES.WALL_DIAG) {
+              const dOffsets = OFFSET_DIAG_WALLS[tile[LEGEND_FACE_DIAG]];
+              const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
+              const x1 = tileX + dOffsets[1][0], y1 = tileY + dOffsets[1][1];
+              /* check all 4 vertices of the player AABB against collisions with
+               * the diagonal wall when moving towards the goal
+               */
+              let iGX, iGY, distTrespassEarlistHit;
+              for (let i = 0; i < 4; ++i) {
+                const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
+                const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
+                const iDX = px + deltaX + offsetX, iDY = py + deltaY + offsetY;
+                const isDInside = isOnTheLeft(x0, y0, x1, y1, iDX, iDY);
+                /* is the player attempting to clip through the diagonal wall? */
+                if (isDInside) {
+                  const iSX = iDX - deltaX, iSY = iDY - deltaY;
+                  const isect = getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
+                  const isectX = isect[0], isectY = isect[1];
+                  /* account for the floating-point rounding errors in
+                   * `isDInside`, e.g.: (+/-)0.00001
+                   */
+                  if (!Number.isFinite(isectX) || !Number.isFinite(isectY))
+                    continue;
+                  // how far did the current vertex clipped through (trespassed)
+                  // the diagonal wall
+                  const distTrespass = eucDist(isectX, isectY, iDX, iDY);
+                  /* we need to resolve the collision for the vertex that had
+                   * clipped the farthest through the diagonal wall, as the
+                   * farther a vertex has trespassed the diagonal wall, the
+                   * earlier it must have collided with it
+                   */
+                  if ((distTrespassEarlistHit || 0) < distTrespass) {
+                    distTrespassEarlistHit = distTrespass;
+                    hitX = isectX; hitY = isectY;
+                    iGX = iDX; iGY = iDY;
+                  }
+                }
+              }
+              /* if a valid collision has been found, calculate the normal
+               * on the surface of the diagonal wall, and return immediately
+               */
+              if (distTrespassEarlistHit)
+              // TODO: generalize for other rotations of non-axis-aligned walls
+                return [Math.SQRT1_2 * (y0 - y1), Math.SQRT1_2 * (x1 - x0),
+                        hitX, hitY, iGX, iGY];
+              // no collisions has been found, continue with the ray-casting
+              hitSolid = 0;
+            }
+            /* advance tracers unless a solid geometry has been already hit */
+            if (!hitSolid) {
+              /* calculate the distances covered on the ray by each tracer */
+              const vDist = eucDist(sX, sY, vTraceX, vTraceY, 1);
+              const hDist = eucDist(sX, sY, hTraceX, hTraceY, 1);
+              /* determine whether the hit is on the vertical axis */
+              isVerticalHit = Number.isNaN(vDist) || vDist > hDist
+                ? 0
+                : vDist === hDist ? isVerticalHit : 1;
+              distCovered = isVerticalHit ? vDist : hDist;
+              if (isVerticalHit) {
+                hitX = vTraceX; hitY = vTraceY; // hit by vertical tracer
+                vTraceX += vStepX; vTraceY += vStepY; // advance the tracer
+                tileX += rayDirX; // advance vertically to the next tile
+              } else {
+                hitX = hTraceX; hitY = hTraceY; // hit by horizontal tracer
+                hTraceX += hStepX; hTraceY += hStepY; // advance the tracer
+                tileY += rayDirY; // advance horizontally to the next tile
+              }
+              tile = MAP[N_COLS * tileY + tileX];
+              typeTile = tile[LEGEND_TYPE_TILE];
+            }
           }
+          if (!hitSolid) return; // early return if there was no collision
+          /* calculate the unit normal of the collided geometry */
+          let normalX = 0, normalY = 0;
+          const isHitOnVertical = (hitX === tileX || hitX === tileX + 1)
+                                   && (px - hitX) * rayDirX <= 0;
+          const isHitOnHorizontal = (hitY === tileY || hitY === tileY + 1)
+                                    && (py - hitY) * rayDirY <= 0;
+          if (isHitOnVertical && rayDirX) {
+            /* CORNER CASE: if the movement vector collides with a corner of the
+             * tile, resolve the collision against the other axis of the
+             * movement vector unless that would cause another collision
+             */
+            if (isHitOnHorizontal && !isBlockingMapCell(self, px + rayDirX, py))
+              normalY -= rayDirY;
+            // EDGE CASE: resolve collision against the vertical edge of the
+            // tile that has been hit
+            else normalX -= rayDirX;
+          } else if (isHitOnHorizontal && rayDirY) {
+            /* CORNER CASE: the same as above */
+            if (isHitOnVertical && !isBlockingMapCell(self, px, py + rayDirY))
+              normalX -= rayDirX;
+            // EDGE CASE: resolve collision against the horizontal edge of the
+            // tile that has been hit
+            else normalY -= rayDirY;
+          }
+          // return `undefined` if the normal vector is of zero length, as that
+          // means there's actually no collisions to resolve
+          if (!(normalX || normalY)) return;
+          return [normalX, normalY, hitX, hitY];
+        },
+        "collisionResponse": function(self, px, py, gx, gy) {
+          const CLOCKWISE = self.const.math.CLOCKWISE;
+          const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
+          const eucDist = self.util.eucDist;
+          const vectorVsMap = self.util.collision.vectorVsMap;
+          const collisionResponse = self.util.collision.collisionResponse;
+          /* check all 4 vertices of the player AABB against collisions along
+           * the movement vector
+           */
+          const vx = gx - px, vy = gy - py;
+          /* use the first vertex of the player AABB that collides with a
+           * blocking geometry to resolve the collision
+           */
+          let goalX, goalY, closestCollision, distClosestCollision;
+          let hitNonOrdinary;
+          for (let i = 0; i < 4 && !hitNonOrdinary; ++i) {
+            const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
+            const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
+            let sx = px + offsetX, sy = py + offsetY;
+            let dx = sx + vx, dy = sy + vy;
+            const collision = vectorVsMap(self, px, py, sx, sy, dx, dy);
+            if (collision) {
+              const hitX = collision[2], hitY = collision[3];
+              /* if the 4th and 5th elements of the collision data are occupied,
+               * that means the actual collision had occurred at some other
+               * vertex of player AABB than the current (ith) vertex
+               */
+              if (Number.isFinite(collision[4])
+                  && Number.isFinite(collision[5])) {
+                hitNonOrdinary = 1;
+                dx = collision[4]; dy = collision[5];
+                sx = dx - vx; sy = dy - vy;
+              }
+              const dist = eucDist(sx, sy, hitX, hitY, 1);
+              if (!closestCollision || dist < distClosestCollision) {
+                distClosestCollision = dist; closestCollision = collision;
+                goalX = dx; goalY = dy;
+              }
+            }
+          }
+          // return the goal position, i.e., the position to travel to had there
+          // been no collisions whatsoever
+          if (!closestCollision) return [gx, gy];
+          /* resolve the collision with the sliding-against-the-wall response */
+          const normalX = closestCollision[0], normalY = closestCollision[1];
+          const hitX = closestCollision[2], hitY = closestCollision[3];
+          const lenRes = (hitX - goalX) * normalX + (hitY - goalY) * normalY;
+          const resolveX = normalX * lenRes, resolveY = normalY * lenRes;
+          const newX = gx + resolveX, newY = gy + resolveY;
+          // FIXME: consider converting this routine into a loop, instead of
+          // using recursion
+          // repeat the process recursively until all collisions are resolved
+          return collisionResponse(self, px, py, newX, newY);
         }
       },
       "isBlockingMapCell": function(self, x, y) {
@@ -1087,7 +1256,7 @@
             let hTraceX = playerX + (hTraceY - playerY) * raySlope_;
             // how much each tracer will advance at each iteration
             const vStepY = rayDirX * raySlope, hStepX = rayDirY * raySlope_;
-            let distCovered = 0; // the distance covered by the "closest" tracer
+            let distCovered = 0; // the distance covered by the "closer" tracer
             // the perpendicular distance from the player to the closest solid
             // geometry along the path of the current ray
             let distSolid;
@@ -1222,7 +1391,7 @@
                 if (isVerticalHit) {
                   hitX = vTraceX; hitY = vTraceY; // hit by vertical tracer
                   vTraceX += rayDirX; vTraceY += vStepY; // advance the tracer
-                  tileX += rayDirX; // advance vertivally to the next tile
+                  tileX += rayDirX; // advance vertically to the next tile
                 } else {
                   hitX = hTraceX; hitY = hTraceY; // hit by horizontal tracer
                   hTraceX += hStepX; hTraceY += rayDirY; // advance the tracer
@@ -1856,61 +2025,40 @@
           self.player.frstmElev = hPlayerCrouch - self.const.PLAYER_HEIGHT;
       },
       "movePlayer": function(self, mult) {
-        // memoize current position
-        const memoPos = self.api.memo([self.player.x, self.player.y]);
-        // calculate displacement vector
-        const dir = {
-          "x": Math.cos(self.player.rotation),
-          "y": Math.sin(self.player.rotation)
-        };
-        const displacement = {"x": 0, "y": 0};
-        if (self.keyState.W & 1) {
-          displacement.x += dir.x;
-          displacement.y += dir.y;
-        } if (self.keyState.S & 1) {
-          displacement.x -= dir.x;
-          displacement.y -= dir.y;
-        } if (self.keyState.A & 1) {
-          displacement.x += dir.y;
-          displacement.y -= dir.x;
-        } if (self.keyState.D & 1) {
-          displacement.x -= dir.y;
-          displacement.y += dir.x;
-        }
-        // rotate player in-place
+        const updatePlayerTilt = self.exec.updatePlayerTilt;
+        const updatePlayerZ = self.exec.updatePlayerZ;
+        const collisionResponse = self.util.collision.collisionResponse;
+        const animateWalking = self.exec.animateWalking;
+        // remember the current position of the player
+        const pX = self.player.x, pY = self.player.y;
+        /* calculate the movement vector */
+        const dirX = Math.cos(self.player.rotation);
+        const dirY = Math.sin(self.player.rotation);
+        let moveX = 0, moveY = 0;
+        if (self.keyState.W & 1) { moveX += dirX; moveY += dirY; }
+        if (self.keyState.S & 1) { moveX -= dirX; moveY -= dirY; }
+        if (self.keyState.A & 1) { moveX += dirY; moveY -= dirX; }
+        if (self.keyState.D & 1) { moveX -= dirY; moveY += dirX; }
+        /* rotate player in-place */
         const magRot = 0.075 * mult;
         if (self.keyState.ARW_RIGHT & 1) self.player.rotation += magRot;
         if (self.keyState.ARW_LEFT & 1) self.player.rotation -= magRot;
-        // tilt player's head
+        /* tilt player's head */
         const magTilt = 5 * mult;
-        if (self.keyState.ARW_UP & 1) self.exec.updatePlayerTilt(self, magTilt);
-        if (self.keyState.ARW_DOWN & 1) self.exec.updatePlayerTilt(self, 0 - magTilt);
-        // update player elevation
-        if (self.keyState.E & 1) self.exec.updatePlayerZ(self, magTilt);
-        if (self.keyState.Q & 1) self.exec.updatePlayerZ(self, 0 - magTilt);
-        // calculate updated player position
-        const paceX = displacement.x * self.STEP_SIZE * mult;
-        const paceY = displacement.y * self.STEP_SIZE * mult;
-        // detect collisions when moving along x-axis
-        const collnX = self.util.collision.playerAABBvsGrid(self, paceX, 1);
-        // update player position unless a collision has occurred
-        if (isNaN(collnX)) self.player.x += paceX;
-        // if collided with a solid geometry, resolve it accordingly
-        else {
-          const resolve = self.const.MARGIN_TO_WALL * (0 - Math.sign(paceX));
-          self.player.x = collnX + (resolve > 0 ? 1 : 0) + resolve;
-        }
-        // detect collisions when moving along y-axis
-        const collnY = self.util.collision.playerAABBvsGrid(self, paceY);
-        // update player position unless a collision has occurred
-        if (isNaN(collnY)) self.player.y += paceY;
-        // if collided with a solid geometry, resolve it accordingly
-        else {
-          const resolve = self.const.MARGIN_TO_WALL * (0 - Math.sign(paceY));
-          self.player.y = collnY + (resolve > 0 ? 1 : 0) + resolve;
+        if (self.keyState.ARW_UP & 1) updatePlayerTilt(self, magTilt);
+        if (self.keyState.ARW_DOWN & 1) updatePlayerTilt(self, 0 - magTilt);
+        /* update player elevation */
+        if (self.keyState.E & 1) updatePlayerZ(self, magTilt);
+        if (self.keyState.Q & 1) updatePlayerZ(self, 0 - magTilt);
+        /* calculate the goal position and resolve collisions if any */
+        const goalX = pX + moveX * self.STEP_SIZE * mult;
+        const goalY = pY + moveY * self.STEP_SIZE * mult;
+        if (moveX || moveY) {
+          const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY);
+          self.player.x = resolvedPos[0]; self.player.y = resolvedPos[1];
         }
         // walking animation
-        self.exec.animateWalking(self, [self.player.x, self.player.y], memoPos.get());
+        animateWalking(self, [self.player.x, self.player.y], [pX, pY]);
       },
       "animateWalking": function(self, newPos, prevPos) {
         const defaultWeaponFrame = self.assets.sprites.playerWeapons[self.player.weaponDrawn].frames[0];
@@ -1968,47 +2116,49 @@
         }
       },
       "interactWDoor": function(self) {
-        if ((self.keyState.RTN & 1) > 0) {
-          const dir    = {
-            "x": Math.cos(self.player.rotation),
-            "y": Math.sin(self.player.rotation)
-          };
-          const slope  = dir.y / dir.x;
-          const up     = dir.y < 0 ? 1 : 0;
-          const right  = dir.x > 0 ? 1 : 0;
-          const traceV = {};
-          traceV.x = (right & 1) > 0 ? Math.ceil(self.player.x) : Math.floor(self.player.x);
-          traceV.y = self.player.y + (traceV.x - self.player.x) * slope;
-          const sampleMapV = {
-            "x": Math.floor(traceV.x - ((right & 1) > 0 ? 0 : 1)),
-            "y": Math.floor(traceV.y)
-          };
-          const sampleV = self.map[self.nCols * sampleMapV.y + sampleMapV.x];
-          const tileV = sampleV ? sampleV[self.mapLegend.TYPE_TILE] : undefined;
-          const doorDataV = self.doors[self.util.coords2Key(sampleMapV)];
-          const traceH = {};
-          traceH.y = (up & 1) > 0 ? Math.floor(self.player.y) : Math.ceil(self.player.y);
-          traceH.x = self.player.x + (traceH.y - self.player.y) / slope;
-          const sampleMapH = {
-            "x": Math.floor(traceH.x),
-            "y": Math.floor(traceH.y - ((up & 1) > 0 ? 1 : 0))
-          };
-          const sampleH = self.map[self.nCols * sampleMapH.y + sampleMapH.x];
-          const tileH = sampleH ? sampleH[self.mapLegend.TYPE_TILE] : undefined;
-          const doorDataH = self.doors[self.util.coords2Key(sampleMapH)];
-          if (tileV === self.const.TYPE_TILES.V_DOOR && doorDataV)
+        if (self.keyState.RTN & 1) {
+          const MAP = self.map, N_COLS = self.nCols;
+          const TYPE_TILE = self.mapLegend.TYPE_TILE;
+          const TYPE_V_DOOR = self.const.TYPE_TILES.V_DOOR;
+          const TYPE_H_DOOR = self.const.TYPE_TILES.H_DOOR;
+          const DOORS = self.doors;
+          const coords2Key = self.util.coords2Key;
+          /* lookup the tiles exactly one unit ahead of the player in both axes
+           * to see whether they are doors or not
+           */
+          const playerRot = self.player.rotation;
+          const playerX = self.player.x, playerY = self.player.y;
+          const pX = Math.floor(playerX), pY = Math.floor(playerY);
+          const lookupX = pX + Math.sign(Math.cos(playerRot));
+          const lookupY = pY + Math.sign(Math.sin(playerRot));
+          const tileV = MAP[N_COLS * pY + lookupX][TYPE_TILE];
+          const doorDataV = DOORS[coords2Key(lookupX, pY)];
+          const tileH = MAP[N_COLS * lookupY + pX][TYPE_TILE];
+          const doorDataH = DOORS[coords2Key(pX, lookupY)];
+          if (Math.abs(playerX - lookupX) >= self.const.MARGIN_TO_WALL
+              && tileV === TYPE_V_DOOR)
             self.exec.animateDoor(self, doorDataV);
-          else if (tileH === self.const.TYPE_TILES.H_DOOR && doorDataH)
+          else if (Math.abs(playerY - lookupY) >= self.const.MARGIN_TO_WALL
+                   && tileH === TYPE_H_DOOR)
             self.exec.animateDoor(self, doorDataH);
         }
       },
       "tryAndCloseDoor": function(self, door) {
-        if (
-          Math.floor(self.player.x) !== door.loc.x ||
-          Math.floor(self.player.y) !== door.loc.y
-        ) {
-          self.exec.animateDoor(self, door);
-        } else {
+        const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
+        const CLOCKWISE = self.const.math.CLOCKWISE;
+        /* make sure the player AABB does not collide with the wall before
+         * going ahead and closing it
+         */
+        const pX = self.player.x, pY = self.player.y;
+        const doorX = door.loc.x, doorY = door.loc.y;
+        let isInDoorway = false;
+        for (let iVertex = 0; iVertex < 4 && !isInDoorway; ++iVertex) {
+          const vX = pX + MARGIN_TO_WALL * ((CLOCKWISE[iVertex] & 1) ? 1 : -1);
+          const vY = pY + MARGIN_TO_WALL * ((CLOCKWISE[iVertex] & 2) ? 1 : -1);
+          isInDoorway = Math.floor(vX) === doorX && Math.floor(vY) === doorY;
+        }
+        if (!isInDoorway) self.exec.animateDoor(self, door);
+        else {
           clearTimeout(door.timeout);
           door.timeout = setTimeout(function() {
             self.exec.tryAndCloseDoor(self, door);

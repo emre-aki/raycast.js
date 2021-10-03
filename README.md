@@ -49,13 +49,13 @@ You can check out the live demo [here](https://raycast-js.herokuapp.com)!
 *Coming soon...*
 
 ### Features include
-- AABB collision detection & resolution
+- A custom collision system that supports collisions against non-axis-aligned geometries
 - Free-look via y-shearing
 - Player elevation
 - Fully texture-mapped walls, floors & ceiling
 - Alpha-blending
 - 360 parallaxed skies for outdoor spaces
-- Diminishing lighting (distance/depth-based shading)
+- Light diminishing (distance/depth-based shading)
 - Doors
 - Diagonal walls
 - Mini-map display
