@@ -1876,13 +1876,6 @@
           theme.audio.play().catch(function(error) {});
         }
       },
-      "addPortal": function(self, fromX, toX, fromY, toY, toAngle) {
-        if (Math.floor(self.player.x) === fromX && Math.floor(self.player.y) === fromY) {
-          self.player.x = toX;
-          self.player.y = toY;
-          self.player.rotation = toAngle;
-        }
-      },
       "updatePlayerTilt": function(self, deltaTilt) {
         self.player.tilt += deltaTilt;
         if (self.player.tilt > self.const.MAX_TILT)
@@ -2107,7 +2100,6 @@
         self.util.render.stats(self, deltaT);
       },
       "playerLoop": function(self, mult) {
-        // TODO: add portals dynamically by reading from the map
         self.exec.movePlayer(self, mult);
         self.exec.interactWDoor(self);
         self.exec.animateShooting(self);
