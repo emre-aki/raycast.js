@@ -1194,11 +1194,9 @@
                       || pointVsRect(Math.min(x0, x1), Math.min(y0, y1),
                                      Math.abs(x0 - x1), Math.abs(y0 - y1),
                                      hitX, hitY)) {
-                    // TODO: add texture-mapping
+                    // TODO: dynamically set textures for diagonal walls
                     solidTexture = self.assets.textures.wall.doorDock;
-                    // TODO: maybe better optimize the line below? without having
-                    // to resort to euclidean distance calculation?
-                    offsetLeft = eucDist(x0, y0, hitX, hitY) / Math.sqrt(2);
+                    offsetLeft = (hitX - x0) / (x1 - x0);
                     hitSolid = 1;
                   }
                 }
