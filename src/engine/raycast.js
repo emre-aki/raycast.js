@@ -32,7 +32,7 @@
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 07.13.2021                                        *
+ * Last updated: 10.03.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -815,69 +815,52 @@
         }
       },
       "drawImage": function(imgData, sx, sy, sw, sh, dx, dy, dw, dh, options) {
-        const imgBuffer = imgData.bitmap, imgWidth = imgData.width, imgHeight = imgData.height;
-        // early return if either source or destination is out of bounds
-        if (
-          sx + sw <= 0 || sy + sh <= 0 || sx >= imgWidth || sy >= imgHeight ||
-          dx + dw <= 0 || dy + dh <= 0 || dx >= offscreenBufferW ||
-          dy >= offscreenBufferH
-        ) return;
-
-        // calculate source & destination coordinates & the scaling factor
-        const SX = Math.floor(sx), SY = Math.floor(sy), SW = Math.ceil(sw), SH = Math.ceil(sh);
-        const DX = Math.floor(dx), DY = Math.floor(dy), DW = Math.ceil(dw), DH = Math.ceil(dh);
+        const imgWidth = imgData.width, imgHeight = imgData.height;
+        const imgBuffer = imgData.bitmap;
+        /* early return if either source or destination is out of bounds */
+        if (sx + sw <= 0 || sy + sh <= 0 || sx >= imgWidth || sy >= imgHeight
+            || dx + dw <= 0 || dy + dh <= 0 || dx >= offscreenBufferW
+            || dy >= offscreenBufferH)
+          return;
+        /* determine how bright & translucent the image is going to be drawn */
         const shade = options && options.shade ? options.shade : 0;
-        const opacity = options && options.alpha ? options.alpha : 1;
-        const scaleX = DW / SW, scaleY = DH / SH;
-        // clip image from top and left
-        const dClipW = Math.max(0 - DX, 0), dClipH = Math.max(0 - DY, 0);
-        const dClippedW = DW - dClipW, dClippedH = DH - dClipH;
-        const sClipW = Math.floor(dClipW * SW / DW), sClipH = Math.floor(dClipH * SH / DH);
-        // calculate starting coordinates and dimensions for source & destination
-        const sStartX = SX + sClipW, dStartX = DX + dClipW;
-        const sStartY = SY + sClipH, dStartY = DY + dClipH;
-        const dW = dClippedW, dH = dClippedH;
-        // draw scaled image
-        let sX = sStartX, dX = dStartX, drawCol = scaleX - dClipW % scaleX;
-        while (sX < imgWidth && dX < dStartX + dW && dX < offscreenBufferW) {
-          while (drawCol > 0 && dX < dStartX + dW && dX < offscreenBufferW) {
-            let sY = sStartY, dY = dStartY, drawRow = scaleY - dClipH % scaleY;
-            while (sY < imgHeight && dY < dStartY + dH && dY < offscreenBufferH) {
-              const offIm = 4 * (imgHeight * sX + sY);
-              const iRed = imgBuffer[offIm];
-              const iGreen = imgBuffer[offIm + 1];
-              const iBlue = imgBuffer[offIm + 2];
-              const iAlpha = imgBuffer[offIm + 3];
-              while (drawRow > 0 && dY < dStartY + dH && dY < offscreenBufferH) {
-                if (sX >= 0 && sY >= 0) {
-                  const offBuff = 4 * (offscreenBufferW * dY + dX);
-                  const bRed = offscreenBufferData.data[offBuff];
-                  const bGreen = offscreenBufferData.data[offBuff + 1];
-                  const bBlue = offscreenBufferData.data[offBuff + 2];
-                  const bAlpha = offscreenBufferData.data[offBuff + 3] || 255;
-                  const rBlend = iAlpha * opacity / bAlpha;
-                  const newRed = iRed * (1 - shade) * rBlend + bRed * (1 - rBlend);
-                  const newGreen = iGreen * (1 - shade) * rBlend + bGreen * (1 - rBlend);
-                  const newBlue = iBlue * (1 - shade) * rBlend + bBlue * (1 - rBlend);
-                  offscreenBufferData.data[offBuff] = newRed;
-                  offscreenBufferData.data[offBuff + 1] = newGreen;
-                  offscreenBufferData.data[offBuff + 2] = newBlue;
-                  offscreenBufferData.data[offBuff + 3] = 255;
-                }
-                drawRow -= 1;
-                dY += 1;
-              }
-              while (drawRow <= 0) {
-                drawRow += scaleY;
-                sY += 1;
-              }
+        const lightLevel = 1 - shade;
+        const opacity = options
+                        && Number.isFinite(options.alpha) ? options.alpha : 1;
+        const scaleX = dw / sw, scaleY = dh / sh;
+        /* clip the draw coordinates against the bounds of the buffer */
+        const clipLeft = Math.max(0 - dx, 0), clipTop = Math.max(0 - dy, 0);
+        const clipRight = Math.max(dx + dw - offscreenBufferW, 0);
+        const clipBottom = Math.max(dy + dh - offscreenBufferH, 0);
+        /* calculate the draw coordinates */
+        const clippedW = Math.ceil(dw - clipLeft - clipRight);
+        const clippedH = Math.ceil(dh - clipTop - clipBottom);
+        const startX = Math.floor(dx + clipLeft), endX = startX + clippedW;
+        const startY = Math.floor(dy + clipTop), endY = startY + clippedH;
+        /* draw scaled image */
+        let sX = 0, sY = 0;
+        for (let x = startX; x < endX && sX < imgWidth; ++x) {
+          sX = Math.floor(sx + (clipLeft + (x - startX)) / scaleX);
+          for (let y = startY; y < endY && sY < imgHeight; ++y) {
+            sY = Math.floor(sy + (clipTop + (y - startY)) / scaleY);
+            if (sX >= 0 && sX < imgWidth && sY >= 0 && sY < imgHeight) {
+              const iImgPx = 4 * (imgHeight * sX + sY);
+              const imgR = imgBuffer[iImgPx], imgG = imgBuffer[iImgPx + 1];
+              const imgB = imgBuffer[iImgPx + 2], imgA = imgBuffer[iImgPx + 3];
+              const iBuffPx = 4 * (offscreenBufferW * y + x);
+              const buffR = offscreenBufferData.data[iBuffPx];
+              const buffG = offscreenBufferData.data[iBuffPx + 1];
+              const buffB = offscreenBufferData.data[iBuffPx + 2];
+              const buffA = offscreenBufferData.data[iBuffPx + 3] || 255;
+              const rBlend = opacity * imgA / buffA, rBlend_ = 1 - rBlend;
+              const newR = lightLevel * rBlend * imgR + rBlend_ * buffR;
+              const newG = lightLevel * rBlend * imgG + rBlend_ * buffG;
+              const newB = lightLevel * rBlend * imgB + rBlend_ * buffB;
+              offscreenBufferData.data[iBuffPx] = newR;
+              offscreenBufferData.data[iBuffPx + 1] = newG;
+              offscreenBufferData.data[iBuffPx + 2] = newB;
+              offscreenBufferData.data[iBuffPx + 3] = 255;
             }
-            drawCol -= 1;
-            dX += 1;
-          }
-          while (drawCol <= 0) {
-            drawCol += scaleX;
-            sX += 1;
           }
         }
       },
@@ -1351,72 +1334,53 @@
         ) {
           // early return if trying to render out of frustum bounds
           if (dy + dh <= 0 || dy >= offscreenBufferH) return;
-
+          const DTS_X = self.DRAW_TILE_SIZE.x;
+          const DTS_Y = self.DRAW_TILE_SIZE.y;
+          // calculate the screen coordinates & dimensions for the projection
+          const DX = dx * DTS_X, DY = dy * DTS_Y, DH = dh * DTS_Y;
+          /* calculate the sampling coordinates & dimensions for the texture */
           const texBitmap = texture.bitmap;
-
-          const DRAW_TILE_SIZE_X = self.DRAW_TILE_SIZE.x;
-          const DRAW_TILE_SIZE_Y = self.DRAW_TILE_SIZE.y;
-
-          const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
-          const DY = Math.floor(DRAW_TILE_SIZE_Y * dy);
-          const DH = Math.ceil(DRAW_TILE_SIZE_Y * dh);
           const SX = Math.floor(sx +
                                 (texture.activeFrame !== undefined
                                    ? texture.frames[texture.activeFrame].offset
                                    : 0));
-          const th = texture.activeFrame !== undefined
+          const SH = texture.activeFrame !== undefined
             ? texture.frames[texture.activeFrame].height
             : texture.height;
-
-          // texture-mapping scaling factor
-          const scaleH = DH / (th * repeat);
-
+          const scaleH = DH / (SH * repeat); // texture-mapping scaling
+          /* determine how bright & translucent the wall texture is going to be
+           * drawn
+           */
           const lightLevel = 1 - (shade || 0);
-          const translucency = 1 - (opacity || 1);
-
-          // clip texture & its projection against occlusion table
-          const occTop = Math.floor(
-            Math.max(occlusion.top || 0, 0) * DRAW_TILE_SIZE_Y
-          );
-          const occBottom = Math.floor(
-            Math.max(occlusion.bottom || 0, 0) * DRAW_TILE_SIZE_Y
-          );
-          const wallClipTop = Math.max(occTop - DY, 0);
-          const wallClipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
-          const wallClipped = DH - wallClipTop - wallClipBottom;
-          const texClipTop = Math.floor(wallClipTop / scaleH);
-          const dStart = DY + wallClipTop, sStart = texClipTop % th;
-
-          for (let x = 0; x < DRAW_TILE_SIZE_X; x += 1) {
-            let sY = sStart, dY = dStart, drawRow = scaleH - wallClipTop % scaleH;
-            while (dY < dStart + wallClipped) {
-              const offIm = 4 * (th * SX + sY);
-              const iRed = texBitmap[offIm];
-              const iGreen = texBitmap[offIm + 1];
-              const iBlue = texBitmap[offIm + 2];
-              const iAlpha = texBitmap[offIm + 3];
-              while (drawRow > 0 && dY < dStart + wallClipped) {
-                const offBuff = 4 * (offscreenBufferW * dY + DX + x);
-                const bRed = offscreenBufferData.data[offBuff];
-                const bGreen = offscreenBufferData.data[offBuff + 1];
-                const bBlue = offscreenBufferData.data[offBuff + 2];
-                const bAlpha = offscreenBufferData.data[offBuff + 3] || 255;
-                const rBlend = iAlpha * (1 - translucency) / bAlpha;
-                const newRed = iRed * lightLevel * rBlend + bRed * (1 - rBlend);
-                const newGreen = iGreen * lightLevel * rBlend + bGreen * (1 - rBlend);
-                const newBlue = iBlue * lightLevel * rBlend + bBlue * (1 - rBlend);
-                offscreenBufferData.data[offBuff] = newRed;
-                offscreenBufferData.data[offBuff + 1] = newGreen;
-                offscreenBufferData.data[offBuff + 2] = newBlue;
-                offscreenBufferData.data[offBuff + 3] = 255;
-                drawRow -= 1;
-                dY += 1;
-              }
-              while (drawRow <= 0) {
-                drawRow += scaleH;
-                sY += 1;
-              }
-              if (sY >= th) sY %= th;
+          const translucency = 1 - (Number.isFinite(opacity) ? opacity : 1);
+          /* clip the projection against the occlusion table */
+          const occTop = Math.max(occlusion.top || 0, 0) * DTS_Y;
+          const occBottom = Math.max(occlusion.bottom || 0, 0) * DTS_Y;
+          const clipTop = Math.max(occTop - DY, 0);
+          const clipBottom = Math.max(DY + DH - self.res[1] + occBottom, 0);
+          const hClipped = Math.ceil(DH - clipTop - clipBottom);
+          const yStart = Math.floor(DY + clipTop), yEnd = yStart + hClipped;
+          /* draw the wall projection, i.e., column of texture-mapped pixels */
+          for (let x = 0; x < DTS_X; ++x) {
+            for (let y = yStart; y < yEnd; ++y) {
+              const sY = Math.floor((clipTop + (y - yStart)) / scaleH) % SH;
+              const iTexel = 4 * (SH * SX + sY);
+              const texR = texBitmap[iTexel], texG = texBitmap[iTexel + 1];
+              const texB = texBitmap[iTexel + 2], texA = texBitmap[iTexel + 3];
+              const iBuffPx = 4 * (offscreenBufferW * y + (DX + x));
+              const buffR = offscreenBufferData.data[iBuffPx];
+              const buffG = offscreenBufferData.data[iBuffPx + 1];
+              const buffB = offscreenBufferData.data[iBuffPx + 2];
+              const buffA = offscreenBufferData.data[iBuffPx + 3] || 255;
+              const rBlend = (1 - translucency) * texA / buffA;
+              const rBlend_ = 1 - rBlend;
+              const newR = lightLevel * rBlend * texR + rBlend_ * buffR;
+              const newG = lightLevel * rBlend * texG + rBlend_ * buffG;
+              const newB = lightLevel * rBlend * texB + rBlend_ * buffB;
+              offscreenBufferData.data[iBuffPx] = newR;
+              offscreenBufferData.data[iBuffPx + 1] = newG;
+              offscreenBufferData.data[iBuffPx + 2] = newB;
+              offscreenBufferData.data[iBuffPx + 3] = 255;
             }
           }
         },
