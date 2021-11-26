@@ -32,7 +32,7 @@
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 10.03.2021                                        *
+ * Last updated: 11.26.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -468,7 +468,6 @@
       "DRAW_DIST": 15,
       "H_SOLID_WALL": 10,
       "H_MAX_WORLD": 480,
-      "CLIP_PROJ_EXTRA_CEIL": 0, // initialized at `setup`
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
     },
@@ -1794,7 +1793,6 @@
           "x": self.res[0] / self.mCols,
           "y": self.res[1] / self.mRows
         };
-        self.const.CLIP_PROJ_EXTRA_CEIL = self.const.H_MAX_WORLD - self.mRows;
         self.const.PLAYER_HEIGHT = self.mRows * 0.5;
         self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
         self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
