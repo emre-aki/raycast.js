@@ -96,14 +96,15 @@
       "rotation": window.__player__.ROTATION,
       "anim": {
         "shooting": {"index": -1, "animating": 0},
-        "walking": {"index": 0, "reverse": 0, "apex": 12},
-        "weaponBob": {"index": 0, "reverse": 0, "apex": 6}
+        "walking": {"index": 0, "reverse": 0, "apex": 50},
+        "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
       },
       "tilt": 0,
-      "frstmElev": window.__player__.Z,
+      "viewport": window.__player__.Z,
+      "feet": window.__player__.Z,
+      "head": 0, // re-initialized at setup
       "x": window.__player__.X,
-      "y": window.__player__.Y,
-      "z": 0 // re-initialized at setup
+      "y": window.__player__.Y
     },
     "assets": {
       "sprites": {
@@ -507,17 +508,17 @@
     "util": {
       "getWalkingPlayerHeight": function(self) {
         const walkingState = self.player.anim.walking;
-        const index = walkingState.index + (walkingState.reverse ? 1 : -1);
+        const index = walkingState.index + (walkingState.reverse ? 5 : -5);
         walkingState.reverse = index === -1 * walkingState.apex ? 1 : index === 0
           ? 0
           : walkingState.reverse;
         walkingState.index = index;
-        return self.player.frstmElev + self.const.PLAYER_HEIGHT + index;
+        return self.player.feet + self.const.PLAYER_HEIGHT + index;
       },
       "getWeaponBob": function(self) {
         const bobState = self.player.anim.weaponBob;
         const x = bobState.index + (bobState.reverse ? -0.5 : 0.5);
-        const y = -0.75 * x * x;
+        const y = -1.75 * x * x;
         bobState.reverse = x === bobState.apex ? 1 : x === -1 * bobState.apex
           ? 0
           : bobState.reverse;
@@ -1043,15 +1044,17 @@
       },
       "render": {
         "stats": function(self, deltaT) {
+          const playerX = self.player.x, playerY = self.playerY;
+          const playerRotation = self.player.rotation;
+          const rad2Deg = self.util.rad2Deg;
           self.util.print(
-            "pos: <" + Math.floor(self.player.x) + ", " +
+            "pos: <" + Math.floor(playerX) + ", " +
                        Math.floor(self.player.y) + ", " +
-                       (self.player.z / self.MAP_TILE_SIZE).toFixed(1) + ">" +
-            " | rot: " + Math.round(self.util.rad2Deg(self, self.player.rotation))
-              + " deg" +
+                       (self.player.head / self.MAP_TILE_SIZE).toFixed(1) +
+                  ">" +
+            " | rot: " + Math.round(rad2Deg(self, playerRotation)) + " deg" +
             " | fps: " + Math.round(1000 / deltaT),
-            5,
-            15,
+            5, 15,
             {"size": 14, "color": "#FF0000"}
           );
         },
@@ -1232,8 +1235,8 @@
 
           const playerX = self.player.x, playerY = self.player.y;
           const playerRot = self.player.rotation, playerTilt = self.player.tilt;
-          const playerElev = self.player.z;
-          const frstmElev = self.player.frstmElev + playerTilt;
+          const playerHeadElev = self.player.head;
+          const viewportElev = self.player.viewport + playerTilt;
           /* render an entire frame of pixel columns by ray-casting */
           for (let iCol = 0; iCol < M_COLS; ++iCol) {
             /* calculate the properties for the current ray */
@@ -1410,10 +1413,10 @@
              * that's been hit
              */
             const scaleProj = VIEW_DIST / distSolid;
-            const yPlayer = M_ROWS + frstmElev - playerElev;
-            const hCeil = Math.floor(scaleProj * (playerElev - H_MAX_WORLD) +
-                                     yPlayer);
-            const yFloor = Math.floor(scaleProj * playerElev + yPlayer);
+            const yPlayer = M_ROWS + viewportElev - playerHeadElev;
+            const hCeil = Math.floor(scaleProj *
+                                     (playerHeadElev - H_MAX_WORLD) + yPlayer);
+            const yFloor = Math.floor(scaleProj * playerHeadElev + yPlayer);
             const hWall = yFloor - hCeil;
             /* DRAW: solid geometry (that occludes the entirety of the current
              * column of pixels)
@@ -1576,8 +1579,9 @@
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
 
-          const H_FRSTM = self.player.frstmElev + self.player.tilt;
-          const yPlayer = H_FRSTM + M_ROWS - self.player.z;
+          const yViewPort = self.player.viewport + self.player.tilt;
+          const yHead = self.player.head;
+          const yPlayer = yViewPort + M_ROWS - yHead;
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
@@ -1596,8 +1600,8 @@
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the floor
             // at the given world-z (wz)
-            const dFloorTile = VIEW_DIST * (self.player.z - wz) /
-              (dStart + 1 + iR - yPlayer) / Math.cos(relAngle);
+            const dFloorTile = (VIEW_DIST * (yHead - wz)) /
+                               ((dStart + 1 + iR - yPlayer) * Math.cos(relAngle));
             // get the distance vector to the floor
             const pFloorTile = {
               "x": dFloorTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1686,8 +1690,9 @@
           const normalizeAngle = self.util.normalizeAngle;
 
           const H_MAX_WORLD = self.const.H_MAX_WORLD;
-          const H_FRSTM = self.player.frstmElev + self.player.tilt;
-          const yPlayer = H_FRSTM + M_ROWS - self.player.z;
+          const yViewPort = self.player.viewport + self.player.tilt;
+          const yHead = self.player.head;
+          const yPlayer = yViewPort + M_ROWS - yHead;
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
@@ -1706,8 +1711,8 @@
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the ceiling
             // that has a height of world-height (wh)
-            const dCeilTile = VIEW_DIST * (self.player.z + wh - H_MAX_WORLD) /
-              (dStart + iR - yPlayer) / Math.cos(relAngle);
+            const dCeilTile = (VIEW_DIST * (yHead + wh - H_MAX_WORLD)) /
+                              ((dStart + iR - yPlayer) * Math.cos(relAngle));
             // get the distance vector to the ceiling
             const pCeilTile = {
               "x": dCeilTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1794,7 +1799,7 @@
           "y": self.res[1] / self.mRows
         };
         self.const.PLAYER_HEIGHT = self.mRows * 0.5;
-        self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+        self.player.head = self.player.feet + self.const.PLAYER_HEIGHT;
         self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
 
         // setup minimap
@@ -1950,7 +1955,7 @@
           e.preventDefault(); // prevent scrolling the page
           // update the player height using the change in the mouse scroll
           self.exec.updatePlayerZ(self, 0 - e.deltaY / 5);
-          self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+          self.player.head = self.player.feet + self.const.PLAYER_HEIGHT;
         };
         const isPointerLocked = function() {
           return document.pointerLockElement === element ||
@@ -2013,14 +2018,15 @@
           self.player.tilt = 0 - self.const.MAX_TILT;
       },
       "updatePlayerZ": function(self, deltaZ) {
-        self.player.frstmElev += deltaZ;
+        self.player.feet += deltaZ;
         const hPlayerCrouch = self.player.anim.walking.apex;
-        const zPlayerHead = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+        const zPlayerHead = self.player.feet + self.const.PLAYER_HEIGHT;
         if (zPlayerHead > self.const.H_MAX_WORLD - hPlayerCrouch)
-          self.player.frstmElev = self.const.H_MAX_WORLD - hPlayerCrouch -
-            self.const.PLAYER_HEIGHT;
+          self.player.feet = self.const.H_MAX_WORLD - hPlayerCrouch -
+                             self.const.PLAYER_HEIGHT;
         else if (zPlayerHead < hPlayerCrouch)
-          self.player.frstmElev = hPlayerCrouch - self.const.PLAYER_HEIGHT;
+          self.player.feet = hPlayerCrouch - self.const.PLAYER_HEIGHT;
+        self.player.viewport = self.player.feet;
       },
       "movePlayer": function(self, mult) {
         const updatePlayerTilt = self.exec.updatePlayerTilt;
@@ -2063,8 +2069,7 @@
         const defaultLocOnScreen = defaultWeaponFrame.defaultLocOnScreen;
         if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
           // animate head tilt
-          self.player.z = self.util.getWalkingPlayerHeight(self);
-
+          self.player.head = self.util.getWalkingPlayerHeight(self);
           // animate weapon bob
           if (self.player.anim.shooting.index < 0) {
             const bob = self.util.getWeaponBob(self);
@@ -2072,12 +2077,13 @@
             defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y + bob.y;
           }
         } else {
-          self.player.z = self.player.frstmElev + self.const.PLAYER_HEIGHT;
+          self.player.head = self.player.feet + self.const.PLAYER_HEIGHT;
           self.player.anim.walking = {"index": 0, "reverse": 0, "apex": self.player.anim.walking.apex};
           defaultWeaponFrame.locOnScreen.x = defaultLocOnScreen.x;
           defaultWeaponFrame.locOnScreen.y = defaultLocOnScreen.y;
           self.player.anim.weaponBob = {"index": 0, "reverse": 0, "apex": self.player.anim.weaponBob.apex};
         }
+        self.player.viewport = self.player.head - self.const.PLAYER_HEIGHT;
       },
       "animateShooting": function(self) {
         if (
