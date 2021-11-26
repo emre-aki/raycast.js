@@ -680,9 +680,9 @@
                * on the surface of the diagonal wall, and return immediately
                */
               if (distTrespassEarlistHit)
-              // TODO: generalize for other rotations of non-axis-aligned walls
+                // TODO: generalize for other rotations of non-axis-aligned walls
                 return [Math.SQRT1_2 * (y0 - y1), Math.SQRT1_2 * (x1 - x0),
-                        hitX, hitY, iGX, iGY];
+                        hitX, hitY, iGX, iGY, 1];
               // no collisions has been found, continue with the ray-casting
               hitSolid = 0;
             }
@@ -745,6 +745,7 @@
           const eucDist = self.util.eucDist;
           const vectorVsMap = self.util.collision.vectorVsMap;
           const collisionResponse = self.util.collision.collisionResponse;
+          // TODO: detect collisions along the z-axis
           /* check all 4 vertices of the player AABB against collisions along
            * the movement vector
            */
@@ -752,7 +753,7 @@
           /* use the first vertex of the player AABB that collides with a
            * blocking geometry to resolve the collision
            */
-          let goalX, goalY, closestCollision, distClosestCollision;
+          let goalX, goalY, closestCollision, distTrespassEarlistHit;
           let hitNonOrdinary;
           for (let i = 0; i < 4 && !hitNonOrdinary; ++i) {
             const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
@@ -762,19 +763,23 @@
             const collision = vectorVsMap(self, px, py, sx, sy, dx, dy);
             if (collision) {
               const hitX = collision[2], hitY = collision[3];
-              /* if the 4th and 5th elements of the collision data are occupied,
+              /* if the 4th and 5th elements in the collision data are occupied,
                * that means the actual collision had occurred at some other
                * vertex of player AABB than the current (ith) vertex
                */
               if (Number.isFinite(collision[4])
                   && Number.isFinite(collision[5])) {
-                hitNonOrdinary = 1;
                 dx = collision[4]; dy = collision[5];
-                sx = dx - vx; sy = dy - vy;
               }
-              const dist = eucDist(sx, sy, hitX, hitY, 1);
-              if (!closestCollision || dist < distClosestCollision) {
-                distClosestCollision = dist; closestCollision = collision;
+              // if the 6th element in the collision data is `1`, that means the
+              // point of collision described by the 4th and 5th elements *is*
+              // the first vertex of the player AABB that'd collided with a
+              // blocking geometry, so we can safely break out of the loop
+              if (collision[6]) hitNonOrdinary = 1;
+              const distTrespass = eucDist(hitX, hitY, dx, dy, 1);
+              if ((distTrespassEarlistHit || 0) < distTrespass) {
+                distTrespassEarlistHit = distTrespass;
+                closestCollision = collision;
                 goalX = dx; goalY = dy;
               }
             }
