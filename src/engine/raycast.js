@@ -589,6 +589,9 @@
           }
           return nColls % 2 > 0;
         },
+        "rectVsRect": function(x0, y0, w0, h0, x1, y1, w1, h1) {
+          return x0 + w0 > x1 && x1 + w1 > x0 && y0 + h0 > y1 && y1 + h1 > y0;
+        },
         "vectorVsMap": function(self, px, py, sx, sy, dx, dy) {
           const N_COLS = self.nCols, N_ROWS = self.nRows;
           const MAP = self.map;
@@ -2131,7 +2134,10 @@
           const TYPE_V_DOOR = self.const.TYPE_TILES.V_DOOR;
           const TYPE_H_DOOR = self.const.TYPE_TILES.H_DOOR;
           const DOORS = self.doors;
+          const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
+          const PLAYER_BB_LEN = MARGIN_TO_WALL * 2;
           const coords2Key = self.util.coords2Key;
+          const rectVsRect = self.util.collision.rectVsRect;
           /* lookup the tiles exactly one unit ahead of the player in both axes
            * to see whether they are doors or not
            */
@@ -2144,29 +2150,40 @@
           const doorDataV = DOORS[coords2Key(lookupX, pY)];
           const tileH = MAP[N_COLS * lookupY + pX][TYPE_TILE];
           const doorDataH = DOORS[coords2Key(pX, lookupY)];
-          if (Math.abs(playerX - lookupX) >= self.const.MARGIN_TO_WALL
-              && tileV === TYPE_V_DOOR)
+          /* interact with the vertical door that is ahead of the player unless
+           * they are colliding with it
+           */
+          if (tileV === TYPE_V_DOOR &&
+              !rectVsRect(playerX - MARGIN_TO_WALL, playerY - MARGIN_TO_WALL,
+                          PLAYER_BB_LEN, PLAYER_BB_LEN, lookupX, pY, 1, 1))
             self.exec.animateDoor(self, doorDataV);
-          else if (Math.abs(playerY - lookupY) >= self.const.MARGIN_TO_WALL
-                   && tileH === TYPE_H_DOOR)
+          /* interact with the horizontal door that is ahead of the player
+           * unless they are colliding with it
+           */
+          else if (tileH === TYPE_H_DOOR &&
+                   !rectVsRect(playerX - MARGIN_TO_WALL,
+                               playerY - MARGIN_TO_WALL,
+                               PLAYER_BB_LEN, PLAYER_BB_LEN,
+                               pX, lookupY, 1, 1))
             self.exec.animateDoor(self, doorDataH);
         }
       },
       "tryAndCloseDoor": function(self, door) {
         const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
-        const CLOCKWISE = self.const.math.CLOCKWISE;
-        /* make sure the player AABB does not collide with the wall before
-         * going ahead and closing it
+        const PLAYER_BB_LEN = MARGIN_TO_WALL * 2;
+        const rectVsRect = self.util.collision.rectVsRect;
+        /* make sure the player AABB does not collide with the door before going
+         * ahead and closing it
          */
         const pX = self.player.x, pY = self.player.y;
         const doorX = door.loc.x, doorY = door.loc.y;
-        let isInDoorway = false;
-        for (let iVertex = 0; iVertex < 4 && !isInDoorway; ++iVertex) {
-          const vX = pX + MARGIN_TO_WALL * ((CLOCKWISE[iVertex] & 1) ? 1 : -1);
-          const vY = pY + MARGIN_TO_WALL * ((CLOCKWISE[iVertex] & 2) ? 1 : -1);
-          isInDoorway = Math.floor(vX) === doorX && Math.floor(vY) === doorY;
-        }
+        const isInDoorway = rectVsRect(pX - MARGIN_TO_WALL, pY - MARGIN_TO_WALL,
+                                       PLAYER_BB_LEN, PLAYER_BB_LEN,
+                                       doorX, doorY, 1, 1);
         if (!isInDoorway) self.exec.animateDoor(self, door);
+        /* if player is in the doorway, wait for a bit before trying to close
+         * again
+         */
         else {
           clearTimeout(door.timeout);
           door.timeout = setTimeout(function() {
