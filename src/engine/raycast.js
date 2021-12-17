@@ -685,7 +685,7 @@
               if (distTrespassEarlistHit)
                 // TODO: generalize for other rotations of non-axis-aligned walls
                 return [Math.SQRT1_2 * (y0 - y1), Math.SQRT1_2 * (x1 - x0),
-                        hitX, hitY, iGX, iGY, 1];
+                        hitX, hitY, iGX, iGY];
               // no collisions has been found, continue with the ray-casting
               hitSolid = 0;
             }
@@ -757,8 +757,7 @@
            * blocking geometry to resolve the collision
            */
           let goalX, goalY, closestCollision, distTrespassEarlistHit;
-          let hitNonOrdinary;
-          for (let i = 0; i < 4 && !hitNonOrdinary; ++i) {
+          for (let i = 0; i < 4; ++i) {
             const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
             const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
             let sx = px + offsetX, sy = py + offsetY;
@@ -774,11 +773,6 @@
                   && Number.isFinite(collision[5])) {
                 dx = collision[4]; dy = collision[5];
               }
-              // if the 6th element in the collision data is `1`, that means the
-              // point of collision described by the 4th and 5th elements *is*
-              // the first vertex of the player AABB that'd collided with a
-              // blocking geometry, so we can safely break out of the loop
-              if (collision[6]) hitNonOrdinary = 1;
               const distTrespass = eucDist(hitX, hitY, dx, dy, 1);
               if ((distTrespassEarlistHit || 0) < distTrespass) {
                 distTrespassEarlistHit = distTrespass;
