@@ -32,7 +32,7 @@
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 11.26.2021                                        *
+ * Last updated: 12.17.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -78,7 +78,7 @@
       "ARW_LEFT": 0,
       "ARW_RIGHT": 0
     },
-    "mouseButtonState": {
+    "mouseButtonState": {
       "LEFT": 0,
       "MIDDLE": 0,
       "RIGHT": 0,
