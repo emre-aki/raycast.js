@@ -548,13 +548,13 @@
         const l0 = [l0x1 - l0x0, l0y1 - l0y0], l1 = [l1x1 - l1x0, l1y1 - l1y0];
         const denom = vec2dCross(l0, l1);
         const numer = [l1x0 - l0x0, l1y0 - l0y0];
-        const X = vec2dCross(numer, l1) / denom, safeX = X.toFixedNum(5);
+        const X = vec2dCross(numer, l1) / denom;
         if (seg) {
-          const Y = vec2dCross(numer, l0) / denom, safeY = Y.toFixedNum(5);
+          const Y = vec2dCross(numer, l0) / denom;
           // if given vectors l0 and l1 are line segments, their intersection
           // parameters X and Y must be within the range [0, 1], that is,
           // the point of intersection must be sitting on both line segments
-          if (safeX < 0 || safeX > 1 || safeY < 0 || safeY > 1) return;
+          if (X < 0 || X > 1 || Y < 0 || Y > 1) return;
         }
         return [l0x0 + X * l0[0], l0y0 + X * l0[1]];
       },
@@ -606,27 +606,21 @@
           const getIntersect = self.util.getIntersect;
           const isOnTheLeft = self.util.isOnTheLeft;
           const isBlockingMapCell = self.util.isBlockingMapCell;
-          /* NOTE: using `toFixedNum` here in order to prevent floating-point
-           * rounding errors messing up the ray-casting routine, e.g.:
-           * 3.6000000000000005 -> 3.6
-           */
-          const sX = sx.toFixedNum(5), sY = sy.toFixedNum(5);
-          const dX = dx.toFixedNum(5), dY = dy.toFixedNum(5);
           /* calculate the properties for the movement ray */
-          const deltaX = dX - sX, deltaY = dY - sY;
+          const deltaX = dx - sx, deltaY = dy - sy;
           const rayDirX = Math.sign(deltaX), rayDirY = Math.sign(deltaY);
           const raySlope = deltaY / deltaX, raySlope_ = deltaX / deltaY;
           // start casting the movement ray from the starting position
-          let hitX = sX, hitY = sY;
+          let hitX = sx, hitY = sy;
           let tileX = Math.floor(hitX), tileY = Math.floor(hitY);
           /* vertical & horizontal tracers:
            * iterate over vertical and horizontal grid lines that intersect
            * with the movement ray
            */
-          let vTraceX = rayDirX > 0 ? Math.floor(sX + 1) : tileX;
-          let vTraceY = sY + (vTraceX - sX) * raySlope;
-          let hTraceY = rayDirY > 0 ? Math.floor(sY + 1) : tileY;
-          let hTraceX = sX + (hTraceY - sY) * raySlope_;
+          let vTraceX = rayDirX > 0 ? Math.floor(sx + 1) : tileX;
+          let vTraceY = sy + (vTraceX - sx) * raySlope;
+          let hTraceY = rayDirY > 0 ? Math.floor(sy + 1) : tileY;
+          let hTraceX = sx + (hTraceY - sy) * raySlope_;
           /* how much each tracer will advance at each iteration */
           const vStepX = rayDirX, vStepY = vStepX * raySlope;
           const hStepY = rayDirY, hStepX = hStepY * raySlope_;
@@ -634,7 +628,7 @@
           let hitSolid = 0; // whether we hit a solid geometry or not
           let isVerticalHit;
           // how much distance the step the player took will cover
-          const distanceToCover = eucDist(sX, sY, dX, dY, 1);
+          const distanceToCover = eucDist(sx, sy, dx, dy, 1);
           /* the tile data we are currently inspecting */
           let tile = MAP[N_COLS * tileY + tileX];
           let typeTile = tile[LEGEND_TYPE_TILE];
@@ -659,9 +653,10 @@
                   const iSX = iDX - deltaX, iSY = iDY - deltaY;
                   const isect = getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
                   const isectX = isect[0], isectY = isect[1];
-                  /* account for the floating-point rounding errors in
-                   * `isDInside`, e.g.: (+/-)0.00001
+                  /* FIXME: do not skip resolving, maybe, come up with a better
+                   * resolution approach??
                    */
+                  /* if the movement vector and the diagonal wall are parallel */
                   if (!Number.isFinite(isectX) || !Number.isFinite(isectY))
                     continue;
                   // how far did the current vertex clipped through (trespassed)
@@ -692,8 +687,8 @@
             /* advance tracers unless a solid geometry has been already hit */
             if (!hitSolid) {
               /* calculate the distances covered on the ray by each tracer */
-              const vDist = eucDist(sX, sY, vTraceX, vTraceY, 1);
-              const hDist = eucDist(sX, sY, hTraceX, hTraceY, 1);
+              const vDist = eucDist(sx, sy, vTraceX, vTraceY, 1);
+              const hDist = eucDist(sx, sy, hTraceX, hTraceY, 1);
               /* determine whether the hit is on the vertical axis */
               isVerticalHit = Number.isNaN(vDist) || vDist > hDist
                 ? 0
@@ -715,15 +710,18 @@
           if (!hitSolid) return; // early return if there was no collision
           /* calculate the unit normal of the collided geometry */
           let normalX = 0, normalY = 0;
-          const isHitOnVertical = (hitX === tileX || hitX === tileX + 1)
-                                   && (px - hitX) * rayDirX <= 0;
-          const isHitOnHorizontal = (hitY === tileY || hitY === tileY + 1)
-                                    && (py - hitY) * rayDirY <= 0;
+          const testX = hitX.toFixedNum(5), testY = hitY.toFixedNum(5);
+          const isHitOnVertical = (testX === tileX || testX === tileX + 1) &&
+                                  (px - testX) * rayDirX <= 0;
+          const isHitOnHorizontal = (testY === tileY || testY === tileY + 1) &&
+                                    (py - testY) * rayDirY <= 0;
           if (isHitOnVertical && rayDirX) {
             /* CORNER CASE: if the movement vector collides with a corner of the
              * tile, resolve the collision against the other axis of the
              * movement vector unless that would cause another collision
              */
+            // FIXME: `isBlockingMapCell` may not cut it here unless the tile
+            // being tested against is a solid tile
             if (isHitOnHorizontal && !isBlockingMapCell(self, px + rayDirX, py))
               normalY -= rayDirY;
             // EDGE CASE: resolve collision against the vertical edge of the
@@ -731,6 +729,8 @@
             else normalX -= rayDirX;
           } else if (isHitOnHorizontal && rayDirY) {
             /* CORNER CASE: the same as above */
+            // FIXME: `isBlockingMapCell` may not cut it here unless the tile
+            // being tested against is a solid tile
             if (isHitOnVertical && !isBlockingMapCell(self, px, py + rayDirY))
               normalX -= rayDirX;
             // EDGE CASE: resolve collision against the horizontal edge of the
@@ -2061,7 +2061,8 @@
         const goalY = pY + moveY * self.STEP_SIZE * mult;
         if (moveX || moveY) {
           const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY);
-          self.player.x = resolvedPos[0]; self.player.y = resolvedPos[1];
+          self.player.x = resolvedPos[0].toFixedNum(5);
+          self.player.y = resolvedPos[1].toFixedNum(5);
         }
         // walking animation
         animateWalking(self, [self.player.x, self.player.y], [pX, pY]);
