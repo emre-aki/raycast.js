@@ -32,7 +32,7 @@
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
  *                                                                 *
- * Last updated: 12.17.2021                                        *
+ * Last updated: 12.24.2021                                        *
  *******************************************************************/
 
 (function() {
@@ -760,7 +760,7 @@
           for (let i = 0; i < 4; ++i) {
             const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
             const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
-            let sx = px + offsetX, sy = py + offsetY;
+            const sx = px + offsetX, sy = py + offsetY;
             let dx = sx + vx, dy = sy + vy;
             const collision = vectorVsMap(self, px, py, sx, sy, dx, dy);
             if (collision) {
