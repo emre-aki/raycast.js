@@ -575,7 +575,7 @@
           for (let i = 0; i < nLines; ++i) {
             const v0 = linedefs[i][0], v1 = linedefs[i][1];
             const x0 = v0[0], y0 = v0[1], x1 = v1[0], y1 = v1[1];
-            const colln = self.util.getIntersect(x, y, 0, y, x0, y0, x1, y1, 1);
+            const colln = getIntersect(x, y, x || -1, y, x0, y0, x1, y1, 1);
             if (!colln) continue;
             /* determine if the collision classifies as an "inside" collision */
             const collnX = colln[0], collnY = colln[1];
