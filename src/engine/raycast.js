@@ -556,6 +556,9 @@
           // the point of intersection must be sitting on both line segments
           if (X < 0 || X > 1 || Y < 0 || Y > 1) return;
         }
+        // if the vectors do not intersect at a single point, they are either
+        // parallel or on the same line – thus, return early
+        if (!Number.isFinite(X)) return;
         return [l0x0 + X * l0[0], l0y0 + X * l0[1]];
       },
       "isOnTheLeft": function(x0, y0, x1, y1, x, y) {
@@ -566,26 +569,27 @@
           return x >= xr && x < xr + w && y >= yr && y < yr + h;
         },
         "pointVsPolygon": function(self, x, y, linedefs) {
+          const getIntersect = self.util.getIntersect;
           const nLines = linedefs.length;
           let nColls = 0;
-          for (let i = 0; i < nLines; i += 1) {
+          for (let i = 0; i < nLines; ++i) {
             const v0 = linedefs[i][0], v1 = linedefs[i][1];
             const x0 = v0[0], y0 = v0[1], x1 = v1[0], y1 = v1[1];
             const colln = self.util.getIntersect(x, y, 0, y, x0, y0, x1, y1, 1);
+            if (!colln) continue;
+            /* determine if the collision classifies as an "inside" collision */
+            const collnX = colln[0], collnY = colln[1];
             if (
-              // if the ray intersects with an edge of the polygon
-              colln && isFinite(colln[0]) && (
-                // if the intersection is on either one of the vertices of the
-                // polygon edge, the other vertex of the edge should be situated
-                // below the ray
-                colln[0] === x0 && colln[1] === y0 && y0 < y1 ||
-                colln[0] === x1 && colln[1] === y1 && y0 > y1 ||
-                // if the intersection is on neither one of the vertices of the
-                // polygon edge
-                (colln[0] !== x0 || colln[1] !== y0) &&
-                (colln[0] !== x1 || colln[1] !== y1)
-              )
-            ) nColls += 1;
+              // if the intersection is on either one of the vertices of the
+              // polygon edge, the other vertex of the edge should be situated
+              // below the ray, for the collision to count as "inside"
+              collnX === x0 && collnY === y0 && y0 < y1 ||
+              collnX === x1 && collnY === y1 && y0 > y1 ||
+              // the collision is "inside" if the intersection is on neither
+              // one of the vertices of the polygon edge
+              (collnX !== x0 || collnY !== y0) &&
+              (collnX !== x1 || collnY !== y1)
+            ) ++nColls;
           }
           return nColls % 2 > 0;
         },
@@ -652,13 +656,12 @@
                 if (isDInside) {
                   const iSX = iDX - deltaX, iSY = iDY - deltaY;
                   const isect = getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
-                  const isectX = isect[0], isectY = isect[1];
                   /* FIXME: do not skip resolving, maybe, come up with a better
                    * resolution approach??
                    */
-                  /* if the movement vector and the diagonal wall are parallel */
-                  if (!Number.isFinite(isectX) || !Number.isFinite(isectY))
-                    continue;
+                  // if the movement vector and the diagonal wall are parallel
+                  if (!isect) continue;
+                  const isectX = isect[0], isectY = isect[1];
                   // how far did the current vertex clipped through (trespassed)
                   // the diagonal wall
                   const distTrespass = eucDist(isectX, isectY, iDX, iDY);
