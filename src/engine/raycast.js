@@ -566,7 +566,7 @@
       },
       "collision": {
         "pointVsRect": function(xr, yr, w, h, x, y) {
-          return x >= xr && x < xr + w && y >= yr && y < yr + h;
+          return x > xr && x < xr + w && y > yr && y < yr + h;
         },
         "pointVsPolygon": function(self, x, y, linedefs) {
           const getIntersect = self.util.getIntersect;
@@ -636,8 +636,8 @@
           /* the tile data we are currently inspecting */
           let tile = MAP[N_COLS * tileY + tileX];
           let typeTile = tile[LEGEND_TYPE_TILE];
-          while (!hitSolid && distCovered < distanceToCover
-                 && pointVsRect(0, 0, N_COLS, N_ROWS, tileX, tileY)) {
+          while (!hitSolid && distCovered < distanceToCover &&
+                 pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
             if (typeTile === TYPE_TILES.WALL_DIAG) {
               const dOffsets = OFFSET_DIAG_WALLS[tile[LEGEND_FACE_DIAG]];
@@ -1275,8 +1275,8 @@
             /* cast the ray until we either hit a solid wall or reach the max
              * draw distance or go out of bounds of the map
              */
-            while (!hitSolid && distCovered < sqrDrawDist
-                   && pointVsRect(0, 0, N_COLS, N_ROWS, tileX, tileY)) {
+            while (!hitSolid && distCovered < sqrDrawDist &&
+                   pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
               // read the current tile
               const idxTile = N_COLS * tileY + tileX, tile = MAP[idxTile];
               const tileType = tile[MAP_LEGEND.TYPE_TILE];
@@ -1366,10 +1366,10 @@
                   /* is the diagonal wall actually visible, i.e., is the current
                    * ray actually intersecting with the diagonal wall vector?
                    */
-                  if (isInTile
-                      || pointVsRect(Math.min(x0, x1), Math.min(y0, y1),
-                                     Math.abs(x0 - x1), Math.abs(y0 - y1),
-                                     hitX, hitY)) {
+                  if (isInTile ||
+                      pointVsRect(Math.min(x0, x1), Math.min(y0, y1),
+                                  Math.abs(x0 - x1), Math.abs(y0 - y1),
+                                  hitX, hitY)) {
                     // TODO: dynamically set textures for diagonal walls
                     solidTexture = self.assets.textures.wall.doorDock;
                     offsetLeft = (hitX - x0) / (x1 - x0);
