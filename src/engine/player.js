@@ -1,8 +1,9 @@
 (function() {
   window.__player__ = {
-    "X": 6.5,
-    "Y": 3,
+    "X": 1.4,
+    "Y": 2.4,
     "Z": 0,
-    "ROTATION": Math.PI * 0.5
+    "ROTATION": 0,
+    "KNEE_HEIGHT": 48,
   };
 })();

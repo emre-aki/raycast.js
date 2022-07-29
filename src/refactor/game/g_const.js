@@ -1,0 +1,59 @@
+(function ()
+{
+
+  const FOV = Math.PI / 3;
+  const WALKING_APEX = 12;
+  const BOB_APEX = 6;
+  const MAX_PITCH = 80;
+  const STEP_SIZE = 0.15;
+  const MARGIN_TO_WALL = 0.4;
+  const SHOOTING_ANIM_INTERVAL = 110;
+  const DOOR_ANIM_INTERVAL = 20;
+  const DOOR_RESET_DELAY = 3000;
+
+  const SOLID_WALL_H = 10;
+  const MAP_TILE_SIZE = 240;
+  const WORLD_H = 480;
+
+  const RENDER_VISPLANES = 1;
+
+  const R_AUTOMAP = 12, PX_SIZE_AUTOMAP = 4;
+  const SCREEN_W = 640, SCREEN_H = 480, BUFFER_W = 320, BUFFER_H = 240;
+  const PX_SIZE_X = SCREEN_W / BUFFER_W, PX_SIZE_Y = SCREEN_H / BUFFER_H;
+
+  const VIEW_DIST = BUFFER_W * 0.5 / Math.tan(FOV * 0.5);
+  const DRAW_DIST = 15 * MAP_TILE_SIZE;
+
+  const FPS = 30;
+
+  window.__import__G_Const = function ()
+  {
+    return {
+      FOV: FOV,
+      WALKING_APEX: WALKING_APEX,
+      BOB_APEX: BOB_APEX,
+      MAX_PITCH: MAX_PITCH,
+      STEP_SIZE: STEP_SIZE,
+      MARGIN_TO_WALL: MARGIN_TO_WALL,
+      SHOOTING_ANIM_INTERVAL: SHOOTING_ANIM_INTERVAL,
+      DOOR_ANIM_INTERVAL: DOOR_ANIM_INTERVAL,
+      DOOR_RESET_DELAY: DOOR_RESET_DELAY,
+      SOLID_WALL_H: SOLID_WALL_H,
+      MAP_TILE_SIZE: MAP_TILE_SIZE,
+      WORLD_H: WORLD_H,
+      RENDER_VISPLANES: RENDER_VISPLANES,
+      R_AUTOMAP: R_AUTOMAP,
+      PX_SIZE_AUTOMAP: PX_SIZE_AUTOMAP,
+      SCREEN_W: SCREEN_W,
+      SCREEN_H: SCREEN_H,
+      BUFFER_W: BUFFER_W,
+      BUFFER_H: BUFFER_H,
+      PX_SIZE_X: PX_SIZE_X,
+      PX_SIZE_Y: PX_SIZE_Y,
+      VIEW_DIST: VIEW_DIST,
+      DRAW_DIST: DRAW_DIST,
+      FPS: FPS,
+    };
+  };
+
+})();

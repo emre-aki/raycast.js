@@ -28,6 +28,9 @@
  *     - Diminishing lighting (distance/depth-based shading)       *
  *     - Doors                                                     *
  *     - Diagonal walls                                            *
+ *     - Walls of varying widths, heights & depths                 *
+ *     - Sloped surfaces                                           *
+ *     - 2-D sprites for in-game `thing`s                          *
  *     - Freelook (perspective-incorrect, achieved via y-shearing) *
  *     - Player elevation                                          *
  *     - Mini-map display                                          *
@@ -35,6 +38,8 @@
  * Last updated: 12.24.2021                                        *
  *******************************************************************/
 
+// res: 640x480 - scan: 160x120 - fps: 30
+// res: 512x384 - scan: 256x192 - fps: 30
 (function() {
   // game canvas
   const canvas = document.getElementById("canvas");
@@ -100,6 +105,7 @@
         "weaponBob": {"index": 0, "reverse": 0, "apex": 5}
       },
       "tilt": 0,
+      "kneeHeight": window.__player__.KNEE_HEIGHT,
       "viewport": window.__player__.Z,
       "feet": window.__player__.Z,
       "head": 0, // re-initialized at setup
@@ -189,9 +195,55 @@
             ]
           }
         },
+        "thing": {
+          "spDude0": {
+            "img": new Image(),
+            "name": "SP_DUDE0.png",
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "FPS": 7,
+            "activeFrame": 0,
+            "frames": [
+              {
+                "width": 64,
+                "height": 128,
+                "offset": 0
+              },
+              {
+                "width": 64,
+                "height": 128,
+                "offset": 64
+              },
+              {
+                "width": 64,
+                "height": 128,
+                "offset": 128
+              },
+              {
+                "width": 64,
+                "height": 128,
+                "offset": 192
+              },
+              {
+                "width": 64,
+                "height": 128,
+                "offset": 256
+              }
+            ]
+          },
+          "spDude1": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "SP_DUDE1.png"
+          }
+        },
         "animations": {
           "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
-          "menu": {"skull": [0, 1]}
+          "menu": {"skull": [0, 1]},
+          "thing": {"spDude0": [0, 1, 2, 3, 4]}
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
@@ -256,6 +308,39 @@
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "f_manhole.png"
+          },
+          "hexSteel": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "f_hexsteel.png"
+          },
+          "slime": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "f_slime.png",
+            "FPS": 5,
+            "activeFrame": 0,
+            "frames": [
+              {
+                "width": 63,
+                "height": 63,
+                "offset": 0
+              },
+              {
+                "width": 63,
+                "height": 63,
+                "offset": 63
+              },
+              {
+                "width": 63,
+                "height": 63,
+                "offset": 126
+              }
+            ]
           }
         },
         "ceil": {
@@ -272,6 +357,20 @@
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "f_lights.png"
+          },
+          "exit": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "f_exit.png"
+          },
+          "stone": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "f_stone.png"
           }
         },
         "wall": {
@@ -364,9 +463,97 @@
               "offset": 0
             },
             "worldHeight": 10
+          },
+          "stairs": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "w_stairs.png",
+            "vertical": {
+              "width": 64,
+              "height": 10,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 10,
+              "offset": 64
+            },
+            "worldHeight": 1
+          },
+          "exit": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "w_exit.png",
+            "vertical": {
+              "width": 32,
+              "height": 16,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 8,
+              "height": 16,
+              "offset": 32
+            },
+            "worldHeight": 1
+          },
+          "beamSteel": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "w_beamsteel.png",
+            "vertical": {
+              "width": 64,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 128,
+              "offset": 64
+            },
+            "worldHeight": 10
+          },
+          "slime": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "w_slime.png",
+            "vertical": {
+              "width": 128,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 128,
+              "height": 128,
+              "offset": 0
+            },
+            "worldHeight": 4,
+            "FPS": 5,
+            "activeFrame": 0,
+            "frames": [
+              {
+                "height": 128,
+                "offset": 0
+              },
+              {
+                "height": 128,
+                "offset": 128
+              },
+              {
+                "height": 128,
+                "offset": 256
+              }
+            ]
           }
         },
-        "animations": {},
+        "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
         "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
             if (i === keys.length) return resolve(self.assets.textures);
@@ -437,7 +624,9 @@
         "WALL_DIAG": 2,
         "V_DOOR": 3,
         "H_DOOR": 4,
-        "TELEPORTER": 5
+        "TELEPORTER": 5,
+        "THING": 6,
+        "FREEFORM": 7
       },
       "OFFSET_DIAG_WALLS": [
         [[0, 1], [1, 0]], // #/
@@ -451,13 +640,26 @@
         "#FFFFFF",   // 2: WALL_DIAG
         "#264E73",   // 3: V_DOOR
         "#264E73",   // 4: H_DOOR
-        "#EB4034"    // 5: TELEPORTER
+        "#EB4034",   // 5: TELEPORTER
+        "#55555599", // 6: THING
+        "#55555599"  // 7: FREEFORM
       ],
       "LEGEND_TEXTURES": {
-        "WALL": ["default", "door", "doorDock", "alt", "alt_1"],
-        "CEIL": ["skybox", "lights"],
-        "FLOOR": ["hexStone", "teleporter", "manhole"]
+        "WALL": [
+          "default",
+          "door",
+          "doorDock",
+          "alt",
+          "alt_1",
+          "exit",
+          "stairs",
+          "beamSteel",
+          "slime"
+        ],
+        "CEIL": ["skybox", "lights", "exit", "stone"],
+        "FLOOR": ["hexStone", "hexSteel", "teleporter", "manhole", "slime"]
       },
+      "LEGEND_THINGS": ["spDude0", "spDude1"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
@@ -543,18 +745,21 @@
                            multiplier * multiplier;
         return pseudo ? pseudoDist : Math.sqrt(pseudoDist);
       },
+      "clamp": function(number, lower, upper) {
+        return Math.min(Math.max(number, lower), upper);
+      },
       "getIntersect": function(l0x0, l0y0, l0x1, l0y1, l1x0, l1y0, l1x1, l1y1, seg) {
         const vec2dCross = (u, v) => u[0] * v[1] - u[1] * v[0]; // FIXME: remove as a separate function
         const l0 = [l0x1 - l0x0, l0y1 - l0y0], l1 = [l1x1 - l1x0, l1y1 - l1y0];
         const denom = vec2dCross(l0, l1);
         const numer = [l1x0 - l0x0, l1y0 - l0y0];
-        const X = vec2dCross(numer, l1) / denom;
+        const X = vec2dCross(numer, l1) / denom, safeX = X.toFixedNum(5);
         if (seg) {
-          const Y = vec2dCross(numer, l0) / denom;
+          const Y = vec2dCross(numer, l0) / denom, safeY = Y.toFixedNum(5);
           // if given vectors l0 and l1 are line segments, their intersection
           // parameters X and Y must be within the range [0, 1], that is,
           // the point of intersection must be sitting on both line segments
-          if (X < 0 || X > 1 || Y < 0 || Y > 1) return;
+          if (safeX < 0 || safeX > 1 || safeY < 0 || safeY > 1) return;
         }
         // if the vectors do not intersect at a single point, they are either
         // parallel or on the same line – thus, return early
@@ -594,22 +799,80 @@
           return nColls & 1;
         },
         "rectVsRect": function(x0, y0, w0, h0, x1, y1, w1, h1) {
-          return x0 + w0 > x1 && x1 + w1 > x0 && y0 + h0 > y1 && y1 + h1 > y0;
+          /* TODO: could there have been a better way so that we could avoid
+           * `toFixedNum`ing every step of the way?
+           */
+          const X0 = x0.toFixedNum(5), Y0 = y0.toFixedNum(5);
+          const X1 = x1.toFixedNum(5), Y1 = y1.toFixedNum(5);
+          return X0 + w0 > X1 && X1 + w1 > X0 && Y0 + h0 > Y1 && Y1 + h1 > Y0;
+        },
+        "pointVsTileHeight": function(self, x, y, tx, ty, tw, th) {
+          const MAP_LEGEND = self.mapLegend;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const H_MAX_WORLD = self.const.H_MAX_WORLD;
+          const clamp = self.util.clamp;
+          /* */
+          const tile = self.map[self.nCols * Math.floor(ty) + Math.floor(tx)];
+          if (tile[MAP_LEGEND.TYPE_TILE] !== TYPE_TILES.FREEFORM) return [0, 0];
+          /* */
+          const H_MAX_WORLD_10 = H_MAX_WORLD * 0.1;
+          const isVerticalSlope = tile[MAP_LEGEND.FFT_SLOPE_DIR];
+          const floorStart = tile[MAP_LEGEND.H_FFT_LOWER_SLOPE_START];
+          const floorEnd = tile[MAP_LEGEND.H_FFT_LOWER_SLOPE_END];
+          const deltaFloor = floorEnd - floorStart;
+          const ceilStart = tile[MAP_LEGEND.H_FFT_UPPER_SLOPE_START];
+          const ceilEnd = tile[MAP_LEGEND.H_FFT_UPPER_SLOPE_END];
+          const deltaCeil = ceilEnd - ceilStart;
+          const offset = isVerticalSlope
+            ? clamp((y - ty) / th, 0, 1)
+            : clamp((x - tx) / tw, 0, 1);
+          return [(floorStart + offset * deltaFloor) * H_MAX_WORLD_10,
+                  (ceilStart + offset * deltaCeil) * H_MAX_WORLD_10];
+        },
+        "rectVsMapHeight": function(self, x, y, w, h) {
+          const MAP_LEGEND = self.mapLegend;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const CLOCKWISE = self.const.math.CLOCKWISE;
+          const rectVsRect = self.util.collision.rectVsRect;
+          const pointVsTileHeight = self.util.collision.pointVsTileHeight;
+          /* */
+          let maxHeight = 0;
+          for (let i = 0; i < 4; ++i) {
+            const vx = x + ((CLOCKWISE[i] & 1) ? w : 0);
+            const vy = y + ((CLOCKWISE[i] & 2) ? h : 0);
+            /* */
+            const tx = Math.floor(vx), ty = Math.floor(vy);
+            const tile = self.map[self.nCols * ty + tx];
+            //
+            if (tile[MAP_LEGEND.TYPE_TILE] !== TYPE_TILES.FREEFORM) continue;
+            /* */
+            const tX = tx + tile[MAP_LEGEND.MARGIN_FFT_X] * 0.1;
+            const tY = ty + tile[MAP_LEGEND.MARGIN_FFT_Y] * 0.1;
+            const tW = tile[MAP_LEGEND.LEN_FFT_X] * 0.1;
+            const tH = tile[MAP_LEGEND.LEN_FFT_Y] * 0.1;
+            if (!rectVsRect(x, y, w, h, tX, tY, tW, tH)) continue;
+            /* */
+            const height = pointVsTileHeight(self, vx, vy, tX, tY, tW, tH)[0];
+            maxHeight = Math.max(height, maxHeight);
+          }
+          return maxHeight;
         },
         "vectorVsMap": function(self, px, py, sx, sy, dx, dy) {
           const N_COLS = self.nCols, N_ROWS = self.nRows;
           const MAP = self.map;
-          const LEGEND_TYPE_TILE = self.mapLegend.TYPE_TILE;
-          const LEGEND_FACE_DIAG = self.mapLegend.FACE_DIAG;
+          const MAP_LEGEND = self.mapLegend;
           const TYPE_TILES = self.const.TYPE_TILES;
           const OFFSET_DIAG_WALLS = self.const.OFFSET_DIAG_WALLS;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
+          const KNEE_HEIGHT = self.player.kneeHeight;
+          const PLAYER_HEIGHT = self.const.PLAYER_HEIGHT;
           const CLOCKWISE = self.const.math.CLOCKWISE;
           const pointVsRect = self.util.collision.pointVsRect;
           const eucDist = self.util.eucDist;
           const getIntersect = self.util.getIntersect;
           const isOnTheLeft = self.util.isOnTheLeft;
           const isBlockingMapCell = self.util.isBlockingMapCell;
+          const pointVsTileHeight = self.util.collision.pointVsTileHeight;
           /* calculate the properties for the movement ray */
           const deltaX = dx - sx, deltaY = dy - sy;
           const rayDirX = Math.sign(deltaX), rayDirY = Math.sign(deltaY);
@@ -635,12 +898,12 @@
           const distanceToCover = eucDist(sx, sy, dx, dy, 1);
           /* the tile data we are currently inspecting */
           let tile = MAP[N_COLS * tileY + tileX];
-          let typeTile = tile[LEGEND_TYPE_TILE];
+          let typeTile = tile[MAP_LEGEND.TYPE_TILE];
           while (!hitSolid && distCovered < distanceToCover &&
                  pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
             if (typeTile === TYPE_TILES.WALL_DIAG) {
-              const dOffsets = OFFSET_DIAG_WALLS[tile[LEGEND_FACE_DIAG]];
+              const dOffsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
               const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
               const x1 = tileX + dOffsets[1][0], y1 = tileY + dOffsets[1][1];
               /* check all 4 vertices of the player AABB against collisions with
@@ -686,6 +949,83 @@
                         hitX, hitY, iGX, iGY];
               // no collisions has been found, continue with the ray-casting
               hitSolid = 0;
+            } else if (typeTile === TYPE_TILES.FREEFORM) {
+              // TODO: detect freeform tile collisions
+              /* calculate the "virtual" bounds of the free-form tile */
+              const tX = tileX + tile[MAP_LEGEND.MARGIN_FFT_X] * 0.1 - MARGIN_TO_WALL;
+              const tY = tileY + tile[MAP_LEGEND.MARGIN_FFT_Y] * 0.1 - MARGIN_TO_WALL;
+              const tW = tile[MAP_LEGEND.LEN_FFT_X] * 0.1 + 2 * MARGIN_TO_WALL;
+              const tH = tile[MAP_LEGEND.LEN_FFT_Y] * 0.1 + 2 * MARGIN_TO_WALL;
+              /* is the player (potentially) attempting to clip through the
+               * free-form tile?
+               */
+              const gx = px + deltaX, gy = py + deltaY;
+              let isXTrespassing, isYTrespassing;
+              if (rayDirX > 0) isXTrespassing = gx > tX;
+              else if (rayDirX < 0) isXTrespassing = gx < tX + tW;
+              else isXTrespassing = gx > tX && gx < tX + tW;
+              if (rayDirY > 0) isYTrespassing = gy > tY;
+              else if (rayDirY < 0) isYTrespassing = gy < tY + tH;
+              else isYTrespassing = gy > tY && gy < tY + tH;
+              /* */
+              if (isXTrespassing && isYTrespassing) {
+                /* */
+                let vX, vSY, vEY;
+                if (rayDirX > 0) { vX = tX; vSY = tY; vEY = tY + tH; }
+                else if (rayDirX < 0) { vX = tX + tW; vSY = tY + tH; vEY = tY; }
+                /* */
+                let hSX, hEX, hY;
+                if (rayDirY > 0) { hSX = tX + tW; hEX = tX; hY = tY; }
+                else if (rayDirY < 0) { hSX = tX; hEX = tX + tW; hY = tY + tH; }
+                /* */
+                let horizontalHit, verticalHit, fftHit, isVerticalFFTHit = 0;
+                if (rayDirX)
+                  verticalHit = getIntersect(vX, vSY, vX, vEY,
+                                             px, py, gx, gy, 1);
+                if (rayDirY)
+                  horizontalHit = getIntersect(hSX, hY, hEX, hY,
+                                               px, py, gx, gy, 1);
+                /* corner case */
+                if (verticalHit && horizontalHit) {
+                  // FIXME: `isBlockingMapCell` may not cut it here unless the tile
+                  // being tested against is a solid tile
+                  if (isBlockingMapCell(self, px + rayDirX, py)) {
+                    fftHit = verticalHit;
+                    isVerticalFFTHit = 1;
+                  }
+                  else fftHit = horizontalHit;
+                } else if (verticalHit) {
+                  fftHit = verticalHit;
+                  isVerticalFFTHit = 1;
+                }
+                else if (horizontalHit) fftHit = horizontalHit;
+                /* */
+                if (fftHit) {
+                  // const adjX = vX + rayDirX * MARGIN_TO_WALL;
+                  // const adjY = hY + rayDirY * MARGIN_TO_WALL;
+                  // fftHit = isVerticalFFTHit
+                  //   ? getIntersect(sx, sy, dx, dy, adjX, vSY, adjX, vEY)
+                  //   : getIntersect(sx, sy, dx, dy, hSX, adjY, hEX, adjY);
+                  const heights = pointVsTileHeight(self, fftHit[0], fftHit[1],
+                                                    tX + MARGIN_TO_WALL,
+                                                    tY + MARGIN_TO_WALL,
+                                                    tW - 2 * MARGIN_TO_WALL,
+                                                    tH - 2 * MARGIN_TO_WALL);
+                  const yFloor = heights[0];
+                  const yCeil = self.const.H_MAX_WORLD - heights[1];
+                  const walkApex = self.player.anim.walking.apex;
+                  /* */
+                  if (yFloor - self.player.feet > KNEE_HEIGHT ||
+                      PLAYER_HEIGHT + walkApex > yCeil - yFloor)
+                    return isVerticalFFTHit
+                        ? [-rayDirX, 0, fftHit[0], fftHit[1], gx, gy]
+                        : [0, -rayDirY, fftHit[0], fftHit[1], gx, gy];
+                        // ? [-rayDirX, 0, fftHit[0], fftHit[1]]
+                        // : [0, -rayDirY, fftHit[0], fftHit[1]];
+                }
+              }
+              // no collisions has been found, continue with the ray-casting
+              hitSolid = 0;
             }
             /* advance tracers unless a solid geometry has been already hit */
             if (!hitSolid) {
@@ -707,11 +1047,13 @@
                 tileY += rayDirY; // advance horizontally to the next tile
               }
               tile = MAP[N_COLS * tileY + tileX];
-              typeTile = tile[LEGEND_TYPE_TILE];
+              typeTile = tile[MAP_LEGEND.TYPE_TILE];
             }
           }
           if (!hitSolid) return; // early return if there was no collision
-          /* calculate the unit normal of the collided geometry */
+          /* the ray hit a solid wall, calculate the unit normal of the
+           * collided geometry
+           */
           let normalX = 0, normalY = 0;
           const testX = hitX.toFixedNum(5), testY = hitY.toFixedNum(5);
           const isHitOnVertical = (testX === tileX || testX === tileX + 1) &&
@@ -743,15 +1085,15 @@
           // return `undefined` if the normal vector is of zero length, as that
           // means there's actually no collisions to resolve
           if (!(normalX || normalY)) return;
-          return [normalX, normalY, hitX, hitY];
+          return [normalX, normalY, testX, testY];
         },
         "collisionResponse": function(self, px, py, gx, gy) {
           const CLOCKWISE = self.const.math.CLOCKWISE;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
           const eucDist = self.util.eucDist;
           const vectorVsMap = self.util.collision.vectorVsMap;
+          const rectVsMapHeight = self.util.collision.rectVsMapHeight;
           const collisionResponse = self.util.collision.collisionResponse;
-          // TODO: detect collisions along the z-axis
           /* check all 4 vertices of the player AABB against collisions along
            * the movement vector
            */
@@ -772,8 +1114,8 @@
                * that means the actual collision had occurred at some other
                * vertex of player AABB than the current (ith) vertex
                */
-              if (Number.isFinite(collision[4])
-                  && Number.isFinite(collision[5])) {
+              if (Number.isFinite(collision[4]) &&
+                  Number.isFinite(collision[5])) {
                 dx = collision[4]; dy = collision[5];
               }
               const distTrespass = eucDist(hitX, hitY, dx, dy, 1);
@@ -784,9 +1126,15 @@
               }
             }
           }
-          // return the goal position, i.e., the position to travel to had there
-          // been no collisions whatsoever
-          if (!closestCollision) return [gx, gy];
+          /* return the goal position, i.e., the position to travel to had there
+           * been no collisions whatsoever
+           */
+          if (!closestCollision)
+            return [gx, gy, rectVsMapHeight(self,
+                                            gx - MARGIN_TO_WALL,
+                                            gy - MARGIN_TO_WALL,
+                                            MARGIN_TO_WALL * 2,
+                                            MARGIN_TO_WALL * 2)];
           /* resolve the collision with the sliding-against-the-wall response */
           const normalX = closestCollision[0], normalY = closestCollision[1];
           const hitX = closestCollision[2], hitY = closestCollision[3];
@@ -804,9 +1152,254 @@
         const typeCell = self.map[self.nCols * Y + X][self.mapLegend.TYPE_TILE];
         return typeCell === self.const.TYPE_TILES.WALL ||
           typeCell === self.const.TYPE_TILES.WALL_DIAG ||
+          typeCell === self.const.TYPE_TILES.FREEFORM ||
+          typeCell === self.const.TYPE_TILES.THING ||
           (typeCell === self.const.TYPE_TILES.V_DOOR ||
             typeCell === self.const.TYPE_TILES.H_DOOR) &&
             self.doors[self.util.coords2Key(X, Y)].state;
+      },
+      "getThingCollnData": function(self, player, pTile, pHit, vRay) {
+        const THING_TYPE = self.const.TYPE_TILES.THING;
+        const LEGEND_THINGS = self.const.LEGEND_THINGS;
+        const MAP_LEGEND = self.mapLegend;
+        const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
+        const H_MAX_WORLD = self.const.H_MAX_WORLD;
+        const pointVsRect = self.util.collision.pointVsRect;
+        const getIntersect = self.util.getIntersect;
+        const isOnTheLeft = self.util.isOnTheLeft;
+        const eucDist = self.util.eucDist;
+
+        const playerX = player.x, playerY = player.y;
+        const playerRot = player.rotation;
+        const tileX = pTile.x, tileY = pTile.y;
+        let hitX = pHit.x, hitY = pHit.y;
+        /* HACK: for correctly calculating the intersection when the player is
+         * currently situated in the thing tile
+         */
+        if (vRay) {
+          const rayX = vRay.x, rayY = vRay.y;
+          const raySlope = rayY / rayX, raySlope_ = rayX / rayY;
+          const rayDirX = Math.sign(rayX), rayDirY = Math.sign(rayY);
+          if (Math.abs(raySlope) < 1) {
+            hitX += rayDirX; hitY += rayDirX * raySlope;
+          } else {
+            hitY += rayDirY; hitX += rayDirY * raySlope_;
+          }
+        }
+        // the pivot around which the thing should rotate
+        const pivotX = tileX + 0.5, pivotY = tileY + 0.5;
+        const tile = self.map[self.nCols * tileY + tileX]; // read the tile data
+        /* the sprite should always be perfectly facing the player */
+        const playerRotX = Math.cos(playerRot);
+        const playerRotY = Math.sin(playerRot);
+        const thingSlope = 0 - playerRotX / playerRotY;
+        const thingSlope_ = 0 - playerRotY / playerRotX;
+        // whether the sprite intersects with the tile on the horizontal axis
+        const isHorizHit = Math.abs(thingSlope) > 1;
+        let intersect; // where the current ray hits the sprite
+        if (isHorizHit) {
+          const deltaX = 0.5 * thingSlope_;
+          intersect = getIntersect(playerX, playerY, hitX, hitY,
+                                   pivotX - deltaX, tileY,
+                                   pivotX + deltaX, tileY + 1,
+                                   vRay ? 1 : 0);
+        } else {
+          const deltaY = 0.5 * thingSlope;
+          intersect = getIntersect(playerX, playerY, hitX, hitY,
+                                   tileX, pivotY - deltaY,
+                                   tileX + 1, pivotY + deltaY,
+                                   vRay ? 1 : 0);
+        }
+        /* proceed only if the sprite is actually hit */
+        if (!intersect) return;
+        const intersectX = intersect[0], intersectY = intersect[1];
+        if (!pointVsRect(tileX, tileY, 1, 1, intersectX, intersectY)) return;
+        const distToSprite = eucDist(playerX, playerY, intersectX, intersectY,
+                                     1, MAP_TILE_SIZE);
+        // the world-height of the thing
+        const hThing = tile[MAP_LEGEND.WOH] * 0.1 * H_MAX_WORLD;
+        const thingKey = LEGEND_THINGS[tile[MAP_LEGEND.WOTYPE]];
+        const sprite = self.assets.sprites.thing[thingKey];
+        let offsetLeft; // the sampling offset for the thing sprite
+        let intsectTile0X, intsectTile0Y, intsectTile1X, intsectTile1Y;
+        if (isHorizHit) {
+          /* where exactly does the slope of the thing hit the north and south
+           * faces of the tile?
+           */
+          intsectTile0Y = tileY; intsectTile1Y = tileY + 1;
+          intsectTile0X = pivotX - 0.5 * thingSlope_;
+          intsectTile1X = tileX + 1 - (intsectTile0X - tileX);
+        } else {
+          /* where exactly does the slope of the thing hit the west and east
+           * faces of the tile?
+           */
+          intsectTile0X = tileX, intsectTile1X = tileX + 1;
+          intsectTile0Y = pivotY - 0.5 * thingSlope;
+          intsectTile1Y = tileY + 1 - (intsectTile0Y - tileY);
+        }
+        /* determine on which side of the thing the player is currently
+         * standing, to be able to determine the starting and ending vertices
+         * of the thing
+         */
+        const isStandingOnTheLeft = isOnTheLeft(intsectTile0X, intsectTile0Y,
+                                                intsectTile1X, intsectTile1Y,
+                                                playerX, playerY);
+        let startThingX, startThingY, endThingX, endThingY;
+        if (isStandingOnTheLeft) {
+          startThingX = intsectTile1X; startThingY = intsectTile1Y;
+          endThingX = intsectTile0X; endThingY = intsectTile0Y;
+        } else {
+          startThingX = intsectTile0X; startThingY = intsectTile0Y;
+          endThingX = intsectTile1X; endThingY = intsectTile1Y;
+        }
+        // the distance between the starting and ending vertices of the thing
+        const lenBeam = eucDist(startThingX, startThingY, endThingX, endThingY);
+        // the distance between the starting vertex of the thing and the
+        // point of intersection of the current ray and the thing
+        const lenCovered = eucDist(startThingX, startThingY,
+                                   intersectX, intersectY);
+        /* restrict the length of the thing to the unit length */
+        const spriteStart = (lenBeam - 1) * 0.5;
+        const spriteEnd = (lenBeam + 1) * 0.5;
+        if (lenCovered >= spriteStart && lenCovered < spriteEnd)
+          offsetLeft = lenCovered - spriteStart;
+        // do not sample if the current ray does not intersect with the sprite
+        // dead-on
+        else return;
+        return {
+          type: THING_TYPE,
+          meta: { slope: thingSlope, passesThru: { x: pivotX, y: pivotY } },
+          height: hThing,
+          pseudoDistToPlayer: distToSprite,
+          offsetLeft: offsetLeft,
+          sprite: sprite
+        };
+      },
+      // FIXME: refactor & dissect this function into reasonable sub-routines
+      "getFreeformTileCollnData": function(self, pPlayer, pTile, ray) {
+        const pointVsTileHeight = self.util.collision.pointVsTileHeight;
+        // read tile data
+        const tile = self.map[self.nCols * pTile.y + pTile.x];
+        const tMargX = tile[self.mapLegend.MARGIN_FFT_X] * 0.1;
+        const tMargY = tile[self.mapLegend.MARGIN_FFT_Y] * 0.1;
+        const tLenX = tile[self.mapLegend.LEN_FFT_X] * 0.1;
+        const tLenY = tile[self.mapLegend.LEN_FFT_Y] * 0.1;
+        // check for collisions with the freeform tile
+        const intersections = [];
+        const collNY = pTile.y + tMargY;
+        const collNX = pPlayer.x + (collNY - pPlayer.y) / ray.slope;
+        const collEX = pTile.x + tMargX + tLenX;
+        const collEY = pPlayer.y + (collEX - pPlayer.x) * ray.slope;
+        const collSY = pTile.y + tMargY + tLenY;
+        const collSX = pPlayer.x + (collSY - pPlayer.y) / ray.slope;
+        const collWX = pTile.x + tMargX;
+        const collWY = pPlayer.y + (collWX - pPlayer.x) * ray.slope;
+        if (collNX >= pTile.x + tMargX && collNX < pTile.x + tMargX + tLenX) intersections.push([collNX, collNY]);
+        if (collEY >= pTile.y + tMargY && collEY < pTile.y + tMargY + tLenY) intersections.push([collEX, collEY]);
+        if (collSX >= pTile.x + tMargX && collSX < pTile.x + tMargX + tLenX) intersections.push([collSX, collSY]);
+        if (collWY >= pTile.y + tMargY && collWY < pTile.y + tMargY + tLenY) intersections.push([collWX, collWY]);
+        // early return if there were no collisions with the tile
+        if (intersections.length < 2) return;
+
+        // comparing either one of the direction components will suffice because
+        // the sign of the other component will always conform to ray's slope
+        const signRayDirX = Math.sign(ray.dir.x);
+        const signCollnX = Math.sign(intersections[0][0] - intersections[1][0]);
+        // sort points of intersection:
+        // index 0: front-wall intersection, index 1: rear-wall instersection
+        if (signRayDirX === signCollnX) {
+          const aux = intersections[0];
+          intersections[0] = intersections[1];
+          intersections[1] = aux;
+        }
+
+        // check if player is right below/above the freeform tile
+        const isInTile = self.util.collision.pointVsRect(pTile.x + tMargX,
+                                                         pTile.y + tMargY,
+                                                         tLenX,
+                                                         tLenY,
+                                                         pPlayer.x,
+                                                         pPlayer.y);
+
+        // determine edges hit
+        const hitF = intersections[0], hitR = intersections[1];
+        const hitType_F = hitF[0] === pTile.x + tMargX ||
+            hitF[0] === pTile.x + tMargX + tLenX
+          ? "vertical"
+          : "horizontal";
+        const hitType_R = hitR[0] === pTile.x + tMargX ||
+            hitR[0] === pTile.x + tMargX + tLenX
+          ? "vertical"
+          : "horizontal";
+
+        // calculate distance(s) to edge(s) hit
+        const pseudoDistF = self.util.eucDist(
+          pPlayer.x,
+          pPlayer.y,
+          hitF[0],
+          hitF[1],
+          true,
+          self.MAP_TILE_SIZE
+        );
+        const pseudoDistR = self.util.eucDist(
+          pPlayer.x,
+          pPlayer.y,
+          hitR[0],
+          hitR[1],
+          true,
+          self.MAP_TILE_SIZE
+        );
+
+        // calculate the horizontal offset for the sampling of the wall texture
+        const texWall = self.assets.textures.wall[
+          self.const.LEGEND_TEXTURES.WALL[tile[self.mapLegend.TEX_FFT_WALL]]
+        ];
+        let offsetLeft;
+        switch (hitType_F) {
+          case "vertical":
+            offsetLeft = texWall[hitType_F].offset + texWall[hitType_F].width /
+              tLenY * (hitF[0] === pTile.x + tMargX
+                ? hitF[1] - pTile.y - tMargY
+                : pTile.y + tMargY + tLenY - hitF[1]);
+            break;
+
+          case "horizontal":
+            offsetLeft = texWall[hitType_F].offset + texWall[hitType_F].width /
+              tLenX * (hitF[0] - pTile.x - tMargX);
+            break;
+
+          default:
+            break;
+        }
+
+        const texCeil = self.assets.textures.ceil[
+          self.const.LEGEND_TEXTURES.CEIL[tile[self.mapLegend.TEX_FFT_CEIL]]
+        ];
+        const texFloor = self.assets.textures.floor[
+          self.const.LEGEND_TEXTURES.FLOOR[tile[self.mapLegend.TEX_FFT_FLOOR]]
+        ];
+
+        const tx = pTile.x + tMargX, ty = pTile.y + tMargY;
+        const heights_F = pointVsTileHeight(self, hitF[0], hitF[1],
+                                            tx, ty, tLenX, tLenY);
+        const heights_R = pointVsTileHeight(self, hitR[0], hitR[1],
+                                            tx, ty, tLenX, tLenY);
+
+        return {
+          "shouldTryVisplanes": isInTile || pseudoDistF < pseudoDistR,
+          "shouldTryWall": !isInTile && pseudoDistF < pseudoDistR,
+          "hUpper": [heights_F[1], heights_R[1]],
+          "hLower": [heights_F[0], heights_R[0]],
+          "meta": {"isInTile": isInTile, "pTile": pTile},
+          "offsetLeft": offsetLeft,
+          /* falling back to a distance of 1 here to avoid divide-by-zero
+           * when projecting to screen coordinates
+           */
+          "pseudoDistToPlayer": pseudoDistF || 1,
+          "pseudoDistToPlayerRear": pseudoDistR || 1,
+          "textures": [texCeil, texWall, texFloor],
+          "type": self.const.TYPE_TILES.FREEFORM
+        };
       },
       "getBitmap": function(self, img) {
         const buffCanvas = document.createElement("canvas");
@@ -1245,6 +1838,8 @@
           const pointVsRect = self.util.collision.pointVsRect;
           const eucDist = self.util.eucDist;
           const getIntersect = self.util.getIntersect;
+          const getThingCollnData = self.util.getThingCollnData;
+          const getFreeformTileCollnData = self.util.getFreeformTileCollnData;
 
           const playerX = self.player.x, playerY = self.player.y;
           const playerRot = self.player.rotation, playerTilt = self.player.tilt;
@@ -1280,6 +1875,10 @@
             // which texture to draw on the surface of the solid geometry
             let solidTexture = self.assets.textures.wall.default;
             let offsetLeft; // sampling offset for the texture
+            /* initialize a depth-buffer for the sorting of non-solid geometries
+             * encountered along the path of the current ray
+             */
+            const depthBuffer = [];
             /* cast the ray until we either hit a solid wall or reach the max
              * draw distance or go out of bounds of the map
              */
@@ -1385,11 +1984,28 @@
                   }
                 }
               }
-              /* TODO:
-               * HIT: non-solid geometry (things, free-form blocks, translucent
+              /* HIT: non-solid geometry (things, free-form blocks, translucent
                * walls)
                */
-              /* advance tracers unless a solid geometry has been hit already */
+              else if (tileType === TYPE_TILES.THING) {
+                const isInTile = playerX === hitX && playerY === hitY;
+                const collnData = getThingCollnData(self, self.player,
+                                                    { x: tileX, y: tileY },
+                                                    { x: hitX, y: hitY },
+                                                    isInTile
+                                                      ? { x: rayX, y: rayY }
+                                                      : undefined);
+                if (collnData) depthBuffer.push(collnData);
+              } else if (tileType === TYPE_TILES.FREEFORM) {
+                const collnData = getFreeformTileCollnData(
+                  self,
+                  { x: playerX, y: playerY },
+                  { x: tileX, y: tileY },
+                  { slope: raySlope, dir: { x: rayDirX } }
+                );
+                if (collnData) depthBuffer.push(collnData);
+              }
+              /* advance tracers unless a solid geometry has been already hit */
               if (!hitSolid) {
                 /* calculate the distances covered on the ray by each tracer */
                 const vDist = eucDist(playerX, playerY, vTraceX, vTraceY,
@@ -1444,7 +2060,8 @@
                 yFloor,
                 M_ROWS - yFloor,
                 rayAngle,
-                0,
+                [0, 0],
+                [undefined, undefined],
                 self.player.anim.shooting.index === 0 ||
                 self.player.anim.shooting.index === 1
                   ? 0
@@ -1458,7 +2075,8 @@
                 0,
                 hCeil,
                 rayAngle,
-                0,
+                [0, 0],
+                [undefined, undefined],
                 self.player.anim.shooting.index === 0 ||
                 self.player.anim.shooting.index === 1
                   ? 0
@@ -1496,10 +2114,29 @@
                 self, iCol, hCeil, hWall, self.DRAW_TILE_SIZE.y * 2
               );
             }
-            /* TODO:
-             * DRAW: non-solid geometry (that partially occludes the current
+            /* DRAW: non-solid geometry (that partially occludes the current
              * column on pixels)
              */
+            for (let i = depthBuffer.length - 1; i >= 0; --i) {
+              const data = depthBuffer[i];
+              const distToObj = Math.sqrt(data.pseudoDistToPlayer) *
+                                Math.cos(rayAngle - playerRot);
+              /* draw thing (masked 2-D sprite) */
+              if (distToObj < distSolid
+                  && data.type === TYPE_TILES.THING) {
+                const hObj = data.height, hProj = VIEW_DIST * hObj / distToObj;
+                const hCeilObj = (playerHeadElev - H_MAX_WORLD) *
+                                 VIEW_DIST / distToObj + yPlayer;
+                const shade = distToObj / MAX_DRAW_DIST;
+                self.util.render.col_thing(self, iCol, hCeilObj, hProj,
+                                           data, shade);
+              }
+              /* draw freeform tile */
+              else if ((distToObj < distSolid || data.meta.isInTile)
+                       && data.type === TYPE_TILES.FREEFORM)
+                self.util.render.col_freeformTile(self, iCol, distToObj,
+                                                  rayAngle, data);
+            }
           } // REPEAT: for each column of the screen buffer
         },
         "col_wall": function(
@@ -1574,7 +2211,8 @@
           dy,
           dh,
           rayAngle,
-          wz,
+          wallHeights,
+          wallDistances,
           shade
         ) {
           // early return if trying to render out of frustum bounds
@@ -1598,6 +2236,11 @@
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
+          const dist_F = wallDistances[0], dist_R = wallDistances[1];
+          const hWall_F = wallHeights[0], hWall_R = wallHeights[1];
+          // determine whether the flat surface of the tile is sloped or not
+          const isSlopedFlat = hWall_F !== hWall_R;
+
           // clip projection against occlusion table
           const occTop = Math.max(occlusion.top || 0, 0);
           const occBottom = Math.max(occlusion.bottom || 0, 0);
@@ -1612,9 +2255,13 @@
             // extend an imaginary line from the current y-coordinate of the screen
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the floor
-            // at the given world-z (wz)
-            const dFloorTile = (VIEW_DIST * (yHead - wz)) /
-                               ((dStart + 1 + iR - yPlayer) * Math.cos(relAngle));
+            // at the corresponding height
+            const dFloorTile = (isSlopedFlat
+              ? self.util.getIntersect(0, yHead, VIEW_DIST, yViewPort + M_ROWS -
+                                                            (dStart + iR + 1),
+                                       dist_F, hWall_F, dist_R, hWall_R)[0]
+              : VIEW_DIST * (yHead - hWall_F) / (dStart + 1 + iR - yPlayer)
+              ) / Math.cos(relAngle);
             // get the distance vector to the floor
             const pFloorTile = {
               "x": dFloorTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1682,7 +2329,8 @@
           dy,
           dh,
           rayAngle,
-          wh,
+          wallHeights,
+          wallDistances,
           shade
         ) {
           // early return if trying to render out of frustum bounds
@@ -1709,6 +2357,11 @@
 
           const DX = Math.floor(DRAW_TILE_SIZE_X * dx);
 
+          const dist_F = wallDistances[0], dist_R = wallDistances[1];
+          const hWall_F = wallHeights[0], hWall_R = wallHeights[1];
+          // determine whether the flat surface of the tile is sloped or not
+          const isSlopedFlat = hWall_F !== hWall_R;
+
           // clip projection against occlusion table
           const occTop = Math.max(occlusion.top || 0, 0);
           const occBottom = Math.max(occlusion.bottom || 0, 0);
@@ -1723,9 +2376,16 @@
             // extend an imaginary line from the current y-coordinate of the screen
             // to player's viewpoint, and find the actual distance from the player
             // to the point where the imaginary line intersects with the ceiling
-            // that has a height of world-height (wh)
-            const dCeilTile = (VIEW_DIST * (yHead + wh - H_MAX_WORLD)) /
-                              ((dStart + iR - yPlayer) * Math.cos(relAngle));
+            // at the corresponding height
+            const dCeilTile = (isSlopedFlat
+              ? self.util.getIntersect(0, yHead,
+                                       VIEW_DIST, yViewPort + M_ROWS -
+                                                  (dStart + iR),
+                                       dist_F, H_MAX_WORLD - hWall_F,
+                                       dist_R, H_MAX_WORLD - hWall_R)[0]
+              : VIEW_DIST * (yHead + hWall_F - H_MAX_WORLD) /
+                (dStart + iR - yPlayer))
+              / Math.cos(relAngle);
             // get the distance vector to the ceiling
             const pCeilTile = {
               "x": dCeilTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -1790,6 +2450,171 @@
               }
             }
           }
+        },
+        "col_thing": function(self, dx, dy, dh, data, shade, opacity) {
+          const activeFrame = data.sprite.frames
+            ? data.sprite.frames[data.sprite.activeFrame]
+            : undefined;
+          const offsetLeft = activeFrame
+            ? data.offsetLeft * activeFrame.width
+            : data.offsetLeft * data.sprite.width;
+          self.util.render.col_wall(
+            self,
+            {}, // FIXME: occlusion for the current column
+            data.sprite,
+            1, // NOTE: do not repeat the sprite
+            offsetLeft,
+            dx,
+            dy,
+            dh,
+            shade,
+            opacity
+          );
+        },
+        "col_freeformTile": function(
+          self,
+          dx,
+          distTile,
+          rayAngle,
+          data,
+          alpha
+        ) {
+          const H_MAX_WORLD = self.const.H_MAX_WORLD;
+          // read collision data
+          const shouldTryWall = data.shouldTryWall;           // is the free-form tile wall potentially visible?
+          const shouldTryVisplanes = data.shouldTryVisplanes; // is the free-form tile floor and ceiling potentially visible?
+          const hUpper_F = data.hUpper[0], hUpper_R = data.hUpper[1];
+          const hLower_F = data.hLower[0], hLower_R = data.hLower[1];
+          // calculate y-projection properties relative to the viewport
+          const yViewPort = self.player.viewport + self.player.tilt;
+          const yPlayer = self.mRows + yViewPort - self.player.head;
+          const dltCeil = self.player.head - H_MAX_WORLD;
+          const dltFloor = self.player.head;
+
+          // calculate front-wall projection properties
+          const scaleProj_F = self.VIEW_DIST / distTile;
+          const hCeil_F = Math.floor(scaleProj_F * dltCeil + yPlayer);
+          const yFloor_F = Math.floor(scaleProj_F * dltFloor + yPlayer);
+          // properties for upper wall portion
+          const projEndYUpper_F = Math.floor(scaleProj_F *
+                                             (dltCeil + hUpper_F) + yPlayer);
+          const hWallUpper_F = projEndYUpper_F - hCeil_F;
+          // properties for lower wall portion
+          const screenYLower_F = Math.floor(scaleProj_F *
+                                            (dltFloor - hLower_F) + yPlayer);
+          const hWallLower_F = yFloor_F - screenYLower_F;
+
+          // calculate rear-wall projection properties
+          const distTile_R = Math.sqrt(data.pseudoDistToPlayerRear) *
+            Math.cos(rayAngle - self.player.rotation);
+          const scaleProj_R = self.VIEW_DIST / distTile_R;
+          const projEndYUpper_R = Math.floor(scaleProj_R *
+                                             (dltCeil + hUpper_R) + yPlayer);
+          const screenYLower_R = Math.floor(scaleProj_R *
+                                            (dltFloor - hLower_R) + yPlayer);
+
+          if (shouldTryWall) {
+            const texture = data.textures[1];
+            const sx = data.offsetLeft;
+
+            // calculate occlusion for the clipping of the wall
+            const occTop = hCeil_F, occBottom = self.mRows - yFloor_F;
+
+            // draw upper wall portion of the freeform tile
+            self.util.render.col_wall(
+              self,
+              {"top": occTop, "bottom": occBottom}, // FIXME: occlusion for the current column
+              texture,
+              10 * hUpper_F / (texture.worldHeight * H_MAX_WORLD),
+              sx,
+              dx,
+              hCeil_F,
+              hWallUpper_F,
+              distTile / self.DRAW_DIST,
+              alpha
+            );
+            // draw lower wall portion of the freeform tile
+            self.util.render.col_wall(
+              self,
+              {"top": occTop, "bottom": occBottom}, // FIXME: occlusion for the current column
+              texture,
+              10 * hLower_F / (texture.worldHeight * H_MAX_WORLD),
+              sx,
+              dx,
+              screenYLower_F,
+              hWallLower_F,
+              distTile / self.DRAW_DIST,
+              alpha
+            );
+          }
+
+          if (shouldTryVisplanes) {
+            const textures = data.textures;
+            const texCeil = textures[0], texFloor = textures[2];
+
+            // only draw the ceiling if the upper wall portion of the
+            // freeform tile has a non-zero height
+            const shouldRenderCeil = hUpper_F || hUpper_R;
+            /* determine the height of the ceiling slice */
+            let hCeiling = 0;
+            if (shouldRenderCeil && shouldTryWall)
+              hCeiling = projEndYUpper_R - projEndYUpper_F;
+            else if (shouldRenderCeil) hCeiling = projEndYUpper_R;
+            /* draw ceiling if it is actually visible from the player's pov */
+            if (hCeiling > 0) {
+              self.util.render.col_ceiling(
+                self,
+                {
+                  bottom: self.mRows - (shouldTryWall
+                    ? Math.min(screenYLower_F, screenYLower_R)
+                    : screenYLower_R)
+                }, // FIXME: occlusion for the current column
+                texCeil,
+                dx,
+                shouldTryWall ? projEndYUpper_F : 0,
+                hCeiling,
+                rayAngle,
+                [hUpper_F, hUpper_R],
+                [shouldTryWall ? distTile : 0 - distTile, distTile_R],
+                self.player.anim.shooting.index === 0 ||
+                self.player.anim.shooting.index === 1
+                  ? 0
+                  : 1
+              );
+            }
+
+            // only draw the floor if the lower wall portion of the
+            // freeform tile has a non-zero height
+            const shouldRenderFloor = hLower_F || hLower_R;
+            /* determine the height of the floor slice */
+            let hFloor = 0;
+            if (shouldRenderFloor && shouldTryWall)
+              hFloor = screenYLower_F - screenYLower_R;
+            else if (shouldRenderFloor)
+              hFloor = self.mRows - screenYLower_R;
+            /* draw floor if it is actually visible from the player's pov */
+            if (hFloor > 0) {
+              self.util.render.col_floor(
+                self,
+                {
+                  top: shouldTryWall
+                    ? Math.max(projEndYUpper_F, projEndYUpper_R)
+                    : projEndYUpper_R
+                }, // FIXME: occlusion for the current column
+                texFloor,
+                dx,
+                screenYLower_R,
+                hFloor,
+                rayAngle,
+                [hLower_F, hLower_R],
+                [shouldTryWall ? distTile : 0 - distTile, distTile_R],
+                self.player.anim.shooting.index === 0 ||
+                self.player.anim.shooting.index === 1
+                  ? 0
+                  : 1
+              );
+            }
+          }
         }
       }
     },
@@ -1839,7 +2664,9 @@
           // setup sprites // TODO: why strings? - why not objects themselves?
           self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
-            "menu.skull"
+            "menu.skull",
+            "thing.spDude0",
+            "thing.spDude1"
           ])
             .then(function(sprites) {
               sprites.menu.skull.frames = sprites.menu.skull.frames
@@ -1868,6 +2695,7 @@
               return self.assets.textures.setup(self, [
                 "ceil.skybox",
                 "ceil.lights",
+                "ceil.stone",
                 "floor.hexStone",
                 "floor.teleporter",
                 "floor.manhole",
@@ -1875,7 +2703,14 @@
                 "wall.alt",
                 "wall.alt_1",
                 "wall.door",
-                "wall.doorDock"
+                "wall.doorDock",
+                "wall.stairs",
+                "wall.beamSteel",
+                "floor.hexSteel",
+                "wall.exit",
+                "ceil.exit",
+                "wall.slime",
+                "floor.slime"
               ]);
             })
 
@@ -1912,11 +2747,27 @@
               self.util.setOffscreenBufferDimensions(self.res[0], self.res[1]);
             })
 
+            // setup world-object animations
+            .then(function() {
+              const woAnimationsFrames = self.assets.sprites.animations.thing;
+              resolution.animations =
+                Object.keys(woAnimationsFrames).map(function(objKey) {
+                  const animationFrames = woAnimationsFrames[objKey];
+                  const sprite = self.assets.sprites.thing[objKey];
+                  return self.api.animation(
+                    self,
+                    function(i) { // onFrame
+                      sprite.activeFrame = animationFrames[i % animationFrames.length];
+                    },
+                    1000 / sprite.FPS
+                  );
+                });
+            })
             // setup texture animations
             .then(function() {
               const tAnimationsFrames = self.assets.textures.animations;
-              resolution.animations = Object.keys(tAnimationsFrames)
-                .map(function(tKey) {
+              resolution.animations = resolution.animations.concat(
+                Object.keys(tAnimationsFrames).map(function(tKey) {
                   const animationFrames = tAnimationsFrames[tKey];
                   const textureLookup = tKey[0] === "w"
                     ? self.assets.textures.wall
@@ -1931,7 +2782,7 @@
                     },
                     1000 / texture.FPS
                   );
-                });
+                }));
             })
 
             // FIXME: find a permanent fix for the audio-loading issues on iOS
@@ -2074,6 +2925,8 @@
           const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY);
           self.player.x = resolvedPos[0].toFixedNum(5);
           self.player.y = resolvedPos[1].toFixedNum(5);
+          self.player.feet = resolvedPos[2];
+          console.log(`(${self.player.x}, ${self.player.y}, ${self.player.feet})`);
         }
         // walking animation
         animateWalking(self, [self.player.x, self.player.y], [pX, pY]);
