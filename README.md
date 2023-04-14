@@ -43,7 +43,7 @@ $ npm run start
 
 ### Live Demo
 
-You can check out the live demo [here](https://raycast-js.herokuapp.com), and follow the latest updates [here](https://www.youtube.com/watch?v=iX-yo-U8l5o&list=PLmmhlHT3LkQw6AK3LfPpzxSeb_4RTyIRX)!
+You can check out the live demo [here](https://undefbehav.itch.io/raycast-js), and follow the latest updates [here](https://www.youtube.com/watch?v=iX-yo-U8l5o&list=PLmmhlHT3LkQw6AK3LfPpzxSeb_4RTyIRX)!
 
 
 ### Map Editor GUI
