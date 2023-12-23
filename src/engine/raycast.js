@@ -1109,16 +1109,17 @@
         },
         "minimap": function(self, offsetX, offsetY) {
           const R = self.const.R_MINIMAP;
+          const anchor = R + 0.5;
           const tileSize = self.const.TILE_SIZE_MINIMAP;
 
           minimapCanvasCtx.fillStyle = "#000000";
           minimapCanvasCtx.beginPath();
-          minimapCanvasCtx.arc(R * tileSize, R * tileSize, R * tileSize, 0, 2 * Math.PI);
+          minimapCanvasCtx.arc(anchor * tileSize, anchor * tileSize, R * tileSize, 0, 2 * Math.PI);
           minimapCanvasCtx.fill();
 
           minimapCanvasCtx.globalCompositeOperation = "source-atop";
-          for (let offsetRow = -1 * R; offsetRow < R; offsetRow += 1) {
-            for (let offsetCol = -1 * R; offsetCol < R; offsetCol += 1) {
+          for (let offsetRow = -1 * R; offsetRow <= R; offsetRow += 1) {
+            for (let offsetCol = -1 * R; offsetCol <= R; offsetCol += 1) {
               const sampleMap = {
                 "x": Math.floor(self.player.x) + offsetCol,
                 "y": Math.floor(self.player.y) + offsetRow,
@@ -1142,9 +1143,9 @@
 
           self.util.drawCaret(
             minimapCanvasCtx,
-            {"x": (R + 0.5 + Math.cos(self.player.rotation)) * tileSize,                   "y": (R + 0.5 + Math.sin(self.player.rotation)) * tileSize},
-            {"x": (R + 0.5 + Math.cos(self.player.rotation + Math.PI * 4 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.rotation + Math.PI * 4 / 3)) * tileSize},
-            {"x": (R + 0.5 + Math.cos(self.player.rotation + Math.PI * 2 / 3)) * tileSize, "y": (R + 0.5 + Math.sin(self.player.rotation + Math.PI * 2 / 3)) * tileSize},
+            {"x": (anchor + Math.cos(self.player.rotation)) * tileSize,                   "y": (anchor + Math.sin(self.player.rotation)) * tileSize},
+            {"x": (anchor + Math.cos(self.player.rotation + Math.PI * 4 / 3)) * tileSize, "y": (anchor + Math.sin(self.player.rotation + Math.PI * 4 / 3)) * tileSize},
+            {"x": (anchor + Math.cos(self.player.rotation + Math.PI * 2 / 3)) * tileSize, "y": (anchor + Math.sin(self.player.rotation + Math.PI * 2 / 3)) * tileSize},
             {"border": {"color": "#000000", "thickness": 2}}
           );
 
@@ -1153,9 +1154,16 @@
           ctx.arc(offsetX, offsetY, (R + 1) * tileSize, 0, 2 * Math.PI);
           ctx.fill();
 
+          const drawOffset = 0.5 * tileSize;
+          const drawWidth = minimapCanvas.width - drawOffset;
+          const drawHeight = minimapCanvas.height - drawOffset;
           ctx.translate(offsetX, offsetY);
           ctx.rotate(-1 * Math.PI * 0.5 - self.player.rotation);
-          ctx.drawImage(minimapCanvas, -1 * R * tileSize, -1 * R * tileSize, minimapCanvas.width, minimapCanvas.height);
+          ctx.drawImage(minimapCanvas,
+                        drawOffset, drawOffset,
+                        drawWidth, drawHeight,
+                        -1 * R * tileSize, -1 * R * tileSize,
+                        drawWidth, drawHeight);
           ctx.rotate(Math.PI * 0.5 + self.player.rotation);
           ctx.translate(-1 * offsetX, -1 * offsetY);
         },
@@ -1808,7 +1816,7 @@
         self.player.weaponDrawn = self.const.WEAPONS.SHOTGUN;
 
         // setup minimap
-        minimapCanvas.width  = 2 * self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP;
+        minimapCanvas.width  = (2 * self.const.R_MINIMAP + 0.5) * self.const.TILE_SIZE_MINIMAP;
         minimapCanvas.height = minimapCanvas.width;
 
         // setup doors
