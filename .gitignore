@@ -1,6 +1,7 @@
 # directories
-node_modules/*
-screenshots/*
+node_modules
+screenshots
+dist
 
 # dotfiles
 .DS_Store
@@ -9,4 +10,3 @@ screenshots/*
 
 # misc.
 *.zip
-Procfile

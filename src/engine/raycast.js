@@ -54,13 +54,16 @@
   const minimapCanvas = document.createElement("canvas");
   const minimapCanvasCtx = minimapCanvas.getContext("2d");
 
+  // level data
+  const level = JSON.parse(document.getElementById("level").textContent);
+  const textures = {};
+
   const fs = {
-    "__dirname__": "/engine/",
-    "__file__": "/engine/raycast.js",
-    "__sprites__": "/sprites/",
-    "__textures__": "/textures/",
-    "__audio__": "/audio/"
+    "__sprites__": "sprites/",
+    "__textures__": "textures/",
+    "__audio__": "audio/"
   };
+
   const game = {
     "res": [640, 480],
     "FPS": 30,
@@ -90,12 +93,12 @@
       "BRWS_BWD": 0,
       "BRWS_FWD": 0,
     },
-    "map": window.__map__.MAP,
+    "map": level.map,
     "mapLegend": window.__map__.LEGEND,
     "mRows": 240,
     "mCols": 320,
-    "nRows": window.__map__.N_ROWS,
-    "nCols": window.__map__.N_COLS,
+    "nRows": level.rows,
+    "nCols": level.cols,
     "doors": {},
     "player": {
       "rotation": window.__player__.ROTATION,
@@ -238,12 +241,70 @@
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
             "name": "SP_DUDE1.png"
+          },
+          "spPaluk": {
+            "img": new Image(),
+            "name": "SP_PALUK.png",
+            "bitmap": [],
+            "width": 0,
+            "height": 0,
+            "FPS": 10,
+            "activeFrame": 0,
+            "frames": [
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 0
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 527
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 1054,
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 1581,
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 2108,
+              },
+              {
+
+                "width": 527,
+                "height": 1083,
+                "offset": 2635,
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 3162,
+              },
+              {
+
+                "width": 527,
+                "height": 1083,
+                "offset": 3689,
+              },
+              {
+                "width": 527,
+                "height": 1083,
+                "offset": 4216,
+              }
+            ]
           }
         },
         "animations": {
           "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
           "menu": {"skull": [0, 1]},
-          "thing": {"spDude0": [0, 1, 2, 3, 4]}
+          "thing": {"spDude0": [0, 1, 2, 3, 4], "spPaluk": [0, 1, 2, 3, 4, 5, 6, 7, 8]},
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
@@ -659,7 +720,7 @@
         "CEIL": ["skybox", "lights", "exit", "stone"],
         "FLOOR": ["hexStone", "hexSteel", "teleporter", "manhole", "slime"]
       },
-      "LEGEND_THINGS": ["spDude0", "spDude1"],
+      "LEGEND_THINGS": ["spDude0", "spDude1", "spPaluk"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
@@ -2666,7 +2727,8 @@
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull",
             "thing.spDude0",
-            "thing.spDude1"
+            "thing.spDude1",
+            "thing.spPaluk"
           ])
             .then(function(sprites) {
               sprites.menu.skull.frames = sprites.menu.skull.frames
