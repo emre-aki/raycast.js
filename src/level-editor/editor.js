@@ -11,13 +11,7 @@
   const mouseState = {"x": 0, "y": 0};
   const keyState = {"ARW_UP": 0, "ARW_RIGHT": 0, "ARW_DOWN": 0, "ARW_LEFT": 0};
 
-  const fs = {
-    "__dirname__": "/editor/",
-    "__file__": "/editor/raycasting.js",
-    "__sprites__": "/sprites/",
-    "__textures__": "/textures/",
-    "__audio__": "/audio/"
-  };
+  const fs = { "__textures__": "/textures/" };
 
   function clamp (x, low, high)
   {

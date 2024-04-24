@@ -1,0 +1,5 @@
+{
+    "watch": ["src", "tools/server.js", "tools/watch.js", "tools/build.js"],
+    "ext": "js,ejs",
+    "delay": 3
+}
