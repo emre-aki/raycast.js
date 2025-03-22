@@ -53,7 +53,7 @@
   function R_DebugStats (player, deltaT)
   {
     R_Print("pos: <" + Math.floor(player.x) + ", " + Math.floor(player.y) +
-              ", " + U_ToFixed(player.elev / MAP_TILE_SIZE, 1) + ">" +
+              ", " + U_ToFixed(player.feet / MAP_TILE_SIZE, 1) + ">" +
             " | rot: " + Math.round(U_ToDegrees(player.rotation)) + " deg" +
             " | fps: " + Math.round(1000 / deltaT), 5, 15,
             { size: 14, color: "#FF0000" });

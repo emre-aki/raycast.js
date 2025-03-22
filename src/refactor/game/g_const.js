@@ -1,6 +1,8 @@
 (function ()
 {
 
+  const KNEE_HEIGHT = 48;
+
   const FOV = Math.PI / 3;
   const WALKING_APEX = 12;
   const BOB_APEX = 6;
@@ -29,6 +31,7 @@
   window.__import__G_Const = function ()
   {
     return {
+      KNEE_HEIGHT: KNEE_HEIGHT,
       FOV: FOV,
       WALKING_APEX: WALKING_APEX,
       BOB_APEX: BOB_APEX,

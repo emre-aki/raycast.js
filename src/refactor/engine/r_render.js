@@ -48,23 +48,17 @@
     const currentLen = buffer.length;
     if (currentLen === 1) return buffer;
     const lenHalf = Math.floor(currentLen * 0.5);
-    const upper = sort(buffer.slice(0, lenHalf));
-    const lower = sort(buffer.slice(lenHalf, currentLen));
+    const upper = R_DepthBufferSort(buffer.slice(0, lenHalf));
+    const lower = R_DepthBufferSort(buffer.slice(lenHalf, currentLen));
     const sorted = [];
     let i = 0, j = 0;
     while (i < upper.length && j < lower.length) {
       const valU = upper[i].pseudoDist_F;
       const valL = lower[j].pseudoDist_F;
       if (sortDesc && (valU >= valL) || !sortDesc && (valU <= valL))
-      {
-        sorted.push(upper[i]);
-        i += 1;
-      }
+        sorted.push(upper[i++]);
       else
-      {
-        sorted.push(lower[j]);
-        j += 1;
-      }
+        sorted.push(lower[j++]);
     }
     for (; i < upper.length; i += 1) sorted.push(upper[i]);
     for (; j < lower.length; j += 1) sorted.push(lower[j]);
@@ -73,8 +67,8 @@
 
   function R_Ray (angle)
   {
-    this.x = Math.cos(angle); this.y = Math.sin(angle);
-    this.slope = this.y / this.x; this.angle = angle;
+    const x = Math.cos(angle), y = Math.sin(angle), slope = y / x;
+    return { x, y, slope, angle };
   }
 
   // FIXME: refactor & dissect this function into reasonable sub-routines
@@ -189,11 +183,13 @@
   }
 
   function R_CastRay ()
-  {}
+  {
+
+  }
 
   function R_DrawColumn (player)
   {
-    
+
   }
 
   function R_RenderPlayerView ()

@@ -12,13 +12,21 @@
     return x >= 0 && x < N_COLS && y >= 0 && y < N_ROWS;
   }
 
+  function G_ReadCell (x, y)
+  {
+    x |= 0; y |= 0;
+    if (G_IsWithinMap(x, y)) return CELLS[N_COLS * y + x];
+  }
+
   function G_ReadCellData (x, y, data)
   {
+    x |= 0; y |= 0;
     if (G_IsWithinMap(x, y)) return CELLS[N_COLS * y + x][data];
   }
 
   function G_WriteCellData (x, y, data, value)
   {
+    x |= 0; y |= 0;
     if (G_IsWithinMap(x, y)) CELLS[N_COLS * y + x][data] = value;
   }
 
@@ -30,6 +38,7 @@
       G_CellLegend: CELL_LEGEND,
       G_TypeTile: TYPE_TILE,
       G_Cells: CELLS,
+      G_ReadCell: G_ReadCell,
       G_ReadCellData: G_ReadCellData,
       G_WriteCellData: G_WriteCellData,
     };
