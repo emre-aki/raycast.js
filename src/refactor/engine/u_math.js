@@ -1,6 +1,7 @@
 (function ()
 {
 
+  const V_CLOCKWISE = [0, 1, 3, 2];
   const RAD_360 = 2 * Math.PI;
   const RAD_TO_DEG = 180 / Math.PI;
 
@@ -33,6 +34,11 @@
     return pseudo ? pseudoDist : Math.sqrt(pseudoDist);
   }
 
+  function U_Clamp (x, lower, upper)
+  {
+    return Math.min(Math.max(x, lower), upper);
+  }
+
   window.__import__U_Math = function ()
   {
     return {
@@ -40,7 +46,9 @@
       U_NormalizeAngle: U_NormalizeAngle,
       U_ToDegrees: U_ToDegrees,
       U_Vec2dCross: U_Vec2dCross,
+      U_V_Clockwise: V_CLOCKWISE,
       U_EucDist: U_EucDist,
+      U_Clamp: U_Clamp,
     };
   };
 

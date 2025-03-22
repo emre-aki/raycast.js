@@ -1,6 +1,10 @@
 (function ()
 {
 
+  const C_Collision = __import__C_Collision();
+  const C_RectVsMapHeight = C_Collision.C_RectVsMapHeight;
+  const C_VectorVsMap = C_Collision.C_VectorVsMap;
+
   const I_Input = __import__I_Input();
   const I_GetKeyState = I_Input.I_GetKeyState;
   const I_GetMouseState = I_Input.I_GetMouseState;
@@ -11,6 +15,7 @@
   const PLAYER_H = PLAYER.PLAYER_HEIGHT;
 
   const G_Const = __import__G_Const();
+  const KNEE_HEIGHT = G_Const.KNEE_HEIGHT;
   const FOV = G_Const.FOV;
   const WALKING_APEX = G_Const.WALKING_APEX;
   const BOB_APEX = G_Const.BOB_APEX;
@@ -24,6 +29,11 @@
 
   const G_AssetAnimation = __import__G_Asset().G_AssetAnimation;
 
+  const U_Math = __import__U_Math();
+  const U_EucDist = U_Math.U_EucDist;
+  const U_ToFixed = U_Math.U_ToFixed;
+  const CLOCKWISE = U_Math.U_V_Clockwise;
+
   const U_StartAnimation = __import__U_Animate().U_StartAnimation;
 
   const U_GetSprite = __import__U_AssetManager().U_GetSprite;
@@ -32,13 +42,12 @@
   const M_GetDoor = M_Door.M_GetDoor;
   const M_AnimateDoor = M_Door.M_AnimateDoor;
 
-  const C_PlayerAABBVsMap = __import__C_Collision().C_PlayerAABBVsMap;
-
   let playerX = PLAYER.PLAYER_START_X, playerY = PLAYER.PLAYER_START_Y;
   let playerRotation = PLAYER.PLAYER_START_ANGLE;
   let playerPitch = 0;
   let viewportElev = PLAYER.PLAYER_START_ELEV;
-  let playerElev = viewportElev + PLAYER_H;
+  let playerFeetElev = viewportElev;
+  let playerHeadElev = viewportElev + PLAYER_H;
 
   let weaponDrawn = PLAYER.PLAYER_START_WEAPON;
   let shooting = 0, weaponSpriteIdx = -1;
@@ -52,10 +61,10 @@
 
   function A_GetWalkingPlayerElev ()
   {
-    walkIndex += (walkReverse ? 1 : -1);
+    walkIndex += (walkReverse ? 5 : -5);
     if (walkIndex + WALKING_APEX <= 0) walkReverse = 1;
     else if (walkIndex >= 0) walkReverse = 0;
-    return viewportElev + PLAYER_H + walkIndex;
+    return playerFeetElev + PLAYER_H + walkIndex;
   }
 
   function A_GetWalkingPlayerBob ()
@@ -105,7 +114,7 @@
     const defaultLocOnScreen = defaultWeaponFrame.defaultLocOnScreen;
     if (playerX !== oldX || playerY !== oldY)
     {
-      playerElev = A_GetWalkingPlayerElev(); // animate head pitch
+      playerHeadElev = A_GetWalkingPlayerElev(); // animate head pitch
       if (weaponSpriteIdx < 0) // if currently not shooting
       {
         // animate weapon bob
@@ -116,7 +125,7 @@
     }
     else
     {
-      playerElev = viewportElev + PLAYER_H;
+      playerHeadElev = viewportElev + PLAYER_H;
       walkIndex = 0; walkReverse = 0;
       bobIndex = 0; bobReverse = 0;
       defaultWeaponFrame.locOnScreen.x = defaultLocOnScreen.x;
@@ -141,7 +150,7 @@
     else if (playerHeadElev < hPlayerCrouch)
       viewportElev = hPlayerCrouch - PLAYER_H;
     // update player elevation based on viewport elevation
-    playerElev = viewportElev + PLAYER_H;
+    playerHeadElev = viewportElev + PLAYER_H;
   }
 
   function A_UpdatePlayer (mult)
@@ -195,32 +204,82 @@
       const deltaY = I_GetMouseState(I_Mouse.DELTA_WHEEL);
       A_UpdateViewportElev(0 - deltaY / 5);
     }
-    // calculate the update to the player position vector
-    const paceX = displacementX * STEP_SIZE * mult;
-    const paceY = displacementY * STEP_SIZE * mult;
-    const collnX = C_PlayerAABBVsMap(playerX, playerY, paceX, 1);
-    // update player position unless a collision has occurred
-    if (isNaN(collnX)) playerX += paceX;
-    // if collided with a solid geometry, resolve it accordingly
-    else
+    /* calculate the goal position and resolve collisions if any */
+    const goalX = playerX + displacementX * STEP_SIZE * mult;
+    const goalY = playerY + displacementY * STEP_SIZE * mult;
+    if (displacementX || displacementY)
     {
-      const resolve = MARGIN_TO_WALL * (0 - Math.sign(paceX));
-      playerX = collnX + (resolve > 0 ? 1 : 0) + resolve;
-    }
-    const collnY = C_PlayerAABBVsMap(playerX, playerY, paceY);
-    // update player position unless a collision has occurred
-    if (isNaN(collnY)) playerY += paceY;
-    // if collided with a solid geometry, resolve it accordingly
-    else
-    {
-      const resolve = MARGIN_TO_WALL * (0 - Math.sign(paceY));
-      playerY = collnY + (resolve > 0 ? 1 : 0) + resolve;
+      const resolvedPos = A_PlayerResolveCollision(playerX, playerY,
+                                                   goalX, goalY);
+      playerX = U_ToFixed(resolvedPos[0], 5);
+      playerY = U_ToFixed(resolvedPos[1], 5);
+      playerFeetElev = resolvedPos[2];
+      console.log(`(${playerX}, ${playerY}, ${playerFeetElev})`);
     }
     // walking animation
     A_AnimateWalk(memoPosX, memoPosY);
   }
 
-  // FIXME: fix with regard to the new DDA
+  function A_PlayerResolveCollision (px, py, gx, gy)
+  {
+    /* check all 4 vertices of the player AABB against collisions along
+     * the movement vector
+     */
+    const vx = gx - px, vy = gy - py;
+    /* use the first vertex of the player AABB that collides with a
+     * blocking geometry to resolve the collision
+     */
+    let goalX, goalY, closestCollision, distTrespassEarlistHit;
+    for (let i = 0; i < 4; ++i)
+    {
+      const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
+      const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
+      const sx = px + offsetX, sy = py + offsetY;
+      let dx = sx + vx, dy = sy + vy;
+      const collision = C_VectorVsMap(px, py, sx, sy, dx, dy, playerFeetElev);
+      if (collision)
+      {
+        const hitX = collision[2], hitY = collision[3];
+        /* if the 4th and 5th elements in the collision data are occupied,
+         * that means the actual collision had occurred at some other
+         * vertex of player AABB than the current (ith) vertex
+         */
+        if (Number.isFinite(collision[4]) &&
+            Number.isFinite(collision[5]))
+        {
+          dx = collision[4];
+          dy = collision[5];
+        }
+        const distTrespass = U_EucDist(hitX, hitY, dx, dy, 1);
+        if ((distTrespassEarlistHit || 0) < distTrespass)
+        {
+          distTrespassEarlistHit = distTrespass;
+          closestCollision = collision;
+          goalX = dx; goalY = dy;
+        }
+      }
+    }
+    /* return the goal position, i.e., the position to travel to had there
+     * been no collisions whatsoever
+     */
+    if (!closestCollision)
+      return [gx, gy, C_RectVsMapHeight(gx - MARGIN_TO_WALL,
+                                        gy - MARGIN_TO_WALL,
+                                        MARGIN_TO_WALL * 2,
+                                        MARGIN_TO_WALL * 2)];
+    /* resolve the collision with the sliding-against-the-wall response */
+    const normalX = closestCollision[0], normalY = closestCollision[1];
+    const hitX = closestCollision[2], hitY = closestCollision[3];
+    const lenRes = (hitX - goalX) * normalX + (hitY - goalY) * normalY;
+    const resolveX = normalX * lenRes, resolveY = normalY * lenRes;
+    const newX = gx + resolveX, newY = gy + resolveY;
+    // FIXME: consider converting this routine into a loop, instead of
+    // using recursion
+    // repeat the process recursively until all collisions are resolved
+    return A_PlayerResolveCollision(px, py, newX, newY);
+  }
+
+  /* FIXME: fix by using DDA */
   function A_PlayerInteractDoor ()
   {
     if (I_GetKeyState(I_Keys.RTN))
@@ -252,7 +311,8 @@
     return {
       x: playerX,
       y: playerY,
-      elev: playerElev,
+      feet: playerFeetElev,
+      head: playerHeadElev,
       viewportElev: viewportElev,
       pitch: playerPitch,
       rotation: playerRotation,
