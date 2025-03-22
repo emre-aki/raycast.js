@@ -54,16 +54,13 @@
   const minimapCanvas = document.createElement("canvas");
   const minimapCanvasCtx = minimapCanvas.getContext("2d");
 
-  // level data
-  const level = JSON.parse(document.getElementById("level").textContent);
-  const textures = {};
-
   const fs = {
-    "__sprites__": "sprites/",
-    "__textures__": "textures/",
-    "__audio__": "audio/"
+    "__dirname__": "/engine/",
+    "__file__": "/engine/raycast.js",
+    "__sprites__": "/sprites/",
+    "__textures__": "/textures/",
+    "__audio__": "/audio/"
   };
-
   const game = {
     "res": [640, 480],
     "FPS": 30,
@@ -93,12 +90,12 @@
       "BRWS_BWD": 0,
       "BRWS_FWD": 0,
     },
-    "map": level.map,
+    "map": window.__map__.MAP,
     "mapLegend": window.__map__.LEGEND,
     "mRows": 240,
     "mCols": 320,
-    "nRows": level.rows,
-    "nCols": level.cols,
+    "nRows": window.__map__.N_ROWS,
+    "nCols": window.__map__.N_COLS,
     "doors": {},
     "player": {
       "rotation": window.__player__.ROTATION,
@@ -1059,7 +1056,8 @@
                   fftHit = verticalHit;
                   isVerticalFFTHit = 1;
                 }
-                else if (horizontalHit) fftHit = horizontalHit;
+                else if (horizontalHit)
+                  fftHit = horizontalHit;
                 /* */
                 if (fftHit) {
                   // const adjX = vX + rayDirX * MARGIN_TO_WALL;
