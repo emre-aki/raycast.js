@@ -12,7 +12,6 @@ const express = require("express");
 const path = require("path");
 
 const packageJson = require("../package.json");
-const { ReadFile } = require("./file");
 const { LogInfo } = require("./log");
 
 const ENV = process.env;
@@ -20,7 +19,6 @@ const PORT = ENV.PORT || 3000;
 const ROOT = path.join(__dirname, "..", "dist");
 const LOG_OPTIONS = { context: "server" };
 
-const level = ReadFile(path.join(ROOT, "..", "data", "level.json"));
 const clientEnv = { debugMode: ENV.DEBUG, version: packageJson.version };
 
 function serve ()
@@ -38,11 +36,11 @@ function main ()
         .use("/_engine", express.static(path.join(ROOT, "refactor", "engine")))
         .use("/_game", express.static(path.join(ROOT, "refactor", "game")))
         .use("/_data", express.static(path.join(ROOT, "refactor", "data")))
-        .get("/refactor", (_, res) => res.render("_index"))
+        .get("/refactor", (_, res) => res.render("_index", { env: clientEnv }))
         // refactor: END
         .set("view engine", "ejs")
         .set("views", path.join(ROOT, "..", "src", "view"))
-        .get("/", (_, res) => res.render("index", { env: clientEnv, level }))
+        .get("/", (_, res) => res.render("index", { env: clientEnv }))
         .get("/editor", (_, res) => res.render("editor"))
         .listen(PORT, serve);
 }

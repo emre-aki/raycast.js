@@ -19,9 +19,7 @@
   // state: 0=open, 10=closed
   function M_Door (x, y, state, animating, timeout)
   {
-    this.x = x; this.y = y;
-    this.state = state; this.animating = animating;
-    this.timeout = timeout;
+    return { animating, state, timeout, x, y };
   }
 
   const DOORS = {};
@@ -39,7 +37,7 @@
       {
         const typeTile = G_ReadCellData(x, y, IDX_TYPE_TILE);
         if (typeTile === TYPE_TILE.V_DOOR || typeTile === TYPE_TILE.H_DOOR)
-          DOORS[M_CoordToDoorKey(x, y)] = new M_Door(x, y, 10, 0);
+          DOORS[M_CoordToDoorKey(x, y)] = M_Door(x, y, 10, 0);
       }
     }
   }

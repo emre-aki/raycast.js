@@ -42,9 +42,8 @@ function BuildView (debug)
     // the environment variables to pass onto `ejs` for the rendering of the
     // template
     const clientEnv = { debugMode: !!debug, version: packageJson.version };
-        const level = ReadFile(path.join(ROOT, "data", "level.json"));
     // render and return the `index.html`
-    return ejs.render(template, { env: clientEnv, level: level.toString() });
+    return ejs.render(template, { env: clientEnv });
 }
 
 function CopyStatic (sourceDir, outputDir, onFile)
