@@ -3,6 +3,7 @@
 
   const C_Collision = __import__C_Collision();
   const C_RectVsMapHeight = C_Collision.C_RectVsMapHeight;
+  const C_RectVsRect = C_Collision.C_RectVsRect;
   const C_VectorVsMap = C_Collision.C_VectorVsMap;
 
   const I_Input = __import__I_Input();
@@ -15,7 +16,6 @@
   const PLAYER_H = PLAYER.PLAYER_HEIGHT;
 
   const G_Const = __import__G_Const();
-  const KNEE_HEIGHT = G_Const.KNEE_HEIGHT;
   const FOV = G_Const.FOV;
   const WALKING_APEX = G_Const.WALKING_APEX;
   const BOB_APEX = G_Const.BOB_APEX;
@@ -29,6 +29,11 @@
 
   const G_AssetAnimation = __import__G_Asset().G_AssetAnimation;
 
+  const G_Map = __import__G_Map();
+  const G_CellLegend = G_Map.G_CellLegend;
+  const G_ReadCellData = G_Map.G_ReadCellData;
+  const G_TypeTile = G_Map.G_TypeTile;
+
   const U_Math = __import__U_Math();
   const U_EucDist = U_Math.U_EucDist;
   const U_ToFixed = U_Math.U_ToFixed;
@@ -41,6 +46,8 @@
   const M_Door = __import__M_Door();
   const M_GetDoor = M_Door.M_GetDoor;
   const M_AnimateDoor = M_Door.M_AnimateDoor;
+
+  const PLAYER_BB_LEN = MARGIN_TO_WALL * 2;
 
   let playerX = PLAYER.PLAYER_START_X, playerY = PLAYER.PLAYER_START_Y;
   let playerRotation = PLAYER.PLAYER_START_ANGLE;
@@ -279,30 +286,36 @@
     return A_PlayerResolveCollision(px, py, newX, newY);
   }
 
-  /* FIXME: fix by using DDA */
   function A_PlayerInteractDoor ()
   {
     if (I_GetKeyState(I_Keys.RTN))
     {
-      const dirX = Math.cos(playerRotation), dirY = Math.sin(playerRotation);
-      const lookingUp = dirY < 0, lookingRight = dirX > 0;
-      const slope = dirY / dirX;
-      let traceVX, traceVY, mapVX, mapVY, traceHX, traceHY, mapHX, mapHY;
-      // look for a door in vertical grid lines
-      traceVX = lookingRight ? Math.ceil(playerX) : Math.floor(playerX);
-      traceVY = playerY + (traceVX - playerX) * slope;
-      mapVX = Math.floor(traceVX - (lookingRight ? 0 : 1));
-      mapVY = Math.floor(traceVY);
-      const doorV = M_GetDoor(mapVX, mapVY);
-      // look for a door in horizontal grid lines
-      traceHY = lookingUp ? Math.floor(playerY) : Math.ceil(playerY);
-      traceHX = playerX + (traceHY - playerY) / slope;
-      mapHX = Math.floor(traceHX);
-      mapHY = Math.floor(traceHY - (lookingUp ? 1 : 0));
-      const doorH = M_GetDoor(mapHX, mapHY);
-      // interact with the door, if encountered any
-      if (doorV) M_AnimateDoor(A_GetPlayerState(), doorV);
-      else if (doorH) M_AnimateDoor(A_GetPlayerState(), doorH);
+      /* lookup the tiles exactly one unit ahead of the player in both axes
+       * to see whether they are doors or not
+       */
+      const pX = Math.floor(playerX), pY = Math.floor(playerY);
+      const lookupX = pX + Math.sign(Math.cos(playerRotation));
+      const lookupY = pY + Math.sign(Math.sin(playerRotation));
+      const tileV = G_ReadCellData(lookupX, pY, G_CellLegend.TYPE_TILE);
+      const doorV = M_GetDoor(lookupX, pY);
+      const tileH = G_ReadCellData(pX, lookupY, G_CellLegend.TYPE_TILE);
+      const doorH = M_GetDoor(pX, lookupY);
+      /* interact with the vertical door that is ahead of the player unless
+       * they are colliding with it
+       */
+      if (tileV === G_TypeTile.V_DOOR &&
+          !C_RectVsRect(playerX - MARGIN_TO_WALL, playerY - MARGIN_TO_WALL,
+                        PLAYER_BB_LEN, PLAYER_BB_LEN, lookupX, pY, 1, 1))
+        M_AnimateDoor(A_GetPlayerState(), doorV);
+      /* interact with the horizontal door that is ahead of the player
+       * unless they are colliding with it
+       */
+      else if (tileH === G_TypeTile.H_DOOR &&
+               !C_RectVsRect(playerX - MARGIN_TO_WALL,
+                             playerY - MARGIN_TO_WALL,
+                             PLAYER_BB_LEN, PLAYER_BB_LEN,
+                             pX, lookupY, 1, 1))
+        M_AnimateDoor(A_GetPlayerState(), doorH);
     }
   }
 

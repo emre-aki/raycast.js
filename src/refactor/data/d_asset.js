@@ -32,6 +32,7 @@
       W_SLIME: "W_SLIME",
       // global sprites
       GSP_MENU_SKULL: "GSP_MENU_SKULL",
+      GSP_HUD: "GSP_HUD",
       [WEAPON.SHOTGUN]: WEAPON.SHOTGUN,
       // thing sprites
       SP_DUDE0: "SP_DUDE0",
@@ -101,6 +102,7 @@
     return {
       [WEAPON.SHOTGUN]: "shotgun.png",
       [ASSET_ID.GSP_MENU_SKULL]: "menu_skull.png",
+      [ASSET_ID.GSP_HUD]: "hud.png",
       [ASSET_ID.SP_DUDE0]: "SP_DUDE0.png",
       [ASSET_ID.SP_DUDE1]: "SP_DUDE1.png",
     };

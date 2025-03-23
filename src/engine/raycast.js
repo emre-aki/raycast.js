@@ -135,6 +135,14 @@
                 "height": 34
               }
             ]
+          },
+          "hud": {
+            "img": new Image(),
+            "name": "hud.png",
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            // `locOnScreen` initialized at setup
           }
         },
         "playerWeapons": {
@@ -693,14 +701,14 @@
         [[1, 1], [0, 0]]  // #\
       ],
       "MINIMAP_COLORS": [
-        "#55555599", // 0: FREE
-        "#101010",   // 1: WALL
-        "#FFFFFF",   // 2: WALL_DIAG
-        "#264E73",   // 3: V_DOOR
-        "#264E73",   // 4: H_DOOR
-        "#EB4034",   // 5: TELEPORTER
-        "#55555599", // 6: THING
-        "#55555599"  // 7: FREEFORM
+        "#001027", // 0: FREE
+        "#003753", // 1: WALL
+        "#FFFFFF", // 2: WALL_DIAG
+        "#264E73", // 3: V_DOOR
+        "#264E73", // 4: H_DOOR
+        "#EB4034", // 5: TELEPORTER
+        "#7d9aa9", // 6: THING
+        "#002138"  // 7: FREEFORM
       ],
       "LEGEND_TEXTURES": {
         "WALL": [
@@ -1787,7 +1795,7 @@
                 const sample = self.map[self.nCols * sampleMap.y + sampleMap.x][self.mapLegend.TYPE_TILE];
                 minimapCanvasCtx.fillStyle = self.const.MINIMAP_COLORS[sample];
               } else { // render map out-of-bounds
-                minimapCanvasCtx.fillStyle = self.const.MINIMAP_COLORS[1];
+                minimapCanvasCtx.fillStyle = "#101010";
               }
               minimapCanvasCtx.fillRect(translateMap.x, translateMap.y, tileSize, tileSize);
             }
@@ -1801,7 +1809,7 @@
             {"border": {"color": "#000000", "thickness": 2}}
           );
 
-          ctx.fillStyle = "#101010";
+          ctx.fillStyle = self.const.MINIMAP_COLORS[1];
           ctx.beginPath();
           ctx.arc(offsetX, offsetY, (R + 1) * tileSize, 0, 2 * Math.PI);
           ctx.fill();
@@ -2226,6 +2234,9 @@
             ? texture.frames[texture.activeFrame].height
             : texture.height;
           const scaleH = DH / (SH * repeat); // texture-mapping scaling
+          //
+          // const dPerp = shade * self.DRAW_DIST;
+          //
           /* determine how bright & translucent the wall texture is going to be
            * drawn
            */
@@ -2255,9 +2266,18 @@
               const newR = lightLevel * rBlend * texR + rBlend_ * buffR;
               const newG = lightLevel * rBlend * texG + rBlend_ * buffG;
               const newB = lightLevel * rBlend * texB + rBlend_ * buffB;
-              offscreenBufferData.data[iBuffPx] = newR;
-              offscreenBufferData.data[iBuffPx + 1] = newG;
-              offscreenBufferData.data[iBuffPx + 2] = newB;
+              //
+              let newNewR = newR, newNewG = newG, newNewB = newB;
+              // if (dPerp < 1440 && texA)
+              // {
+              //   newNewR = newR * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+              //   newNewG = newG * dPerp / 1440;
+              //   newNewB = newB * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+              // }
+              //
+              offscreenBufferData.data[iBuffPx] = newNewR;
+              offscreenBufferData.data[iBuffPx + 1] = newNewG;
+              offscreenBufferData.data[iBuffPx + 2] = newNewB;
               offscreenBufferData.data[iBuffPx + 3] = 255;
             }
           }
@@ -2321,6 +2341,9 @@
                                        dist_F, hWall_F, dist_R, hWall_R)[0]
               : VIEW_DIST * (yHead - hWall_F) / (dStart + 1 + iR - yPlayer)
               ) / Math.cos(relAngle);
+            //
+            // const dPerp = dFloorTile * Math.cos(relAngle);
+            //
             // get the distance vector to the floor
             const pFloorTile = {
               "x": dFloorTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -2372,9 +2395,18 @@
                 const newRed = tRed * lightLevel * rBlend + bRed * _rBlend;
                 const newGreen = tGreen * lightLevel * rBlend + bGreen * _rBlend;
                 const newBlue = tBlue * lightLevel * rBlend + bBlue * _rBlend;
-                offscreenBufferData.data[offBuffer] = newRed;
-                offscreenBufferData.data[offBuffer + 1] = newGreen;
-                offscreenBufferData.data[offBuffer + 2] = newBlue;
+                //
+                let newNewRed = newRed, newNewGreen = newGreen, newNewBlue = newBlue;
+                // if (dPerp < 1440)
+                // {
+                //   newNewRed = newRed * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+                //   newNewGreen = newGreen * dPerp / 1440;
+                //   newNewBlue = newBlue * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+                // }
+                //
+                offscreenBufferData.data[offBuffer] = newNewRed;
+                offscreenBufferData.data[offBuffer + 1] = newNewGreen;
+                offscreenBufferData.data[offBuffer + 2] = newNewBlue;
                 offscreenBufferData.data[offBuffer + 3] = 255;
               }
             }
@@ -2445,6 +2477,9 @@
               : VIEW_DIST * (yHead + hWall_F - H_MAX_WORLD) /
                 (dStart + iR - yPlayer))
               / Math.cos(relAngle);
+            //
+            // const dPerp = dCeilTile * Math.cos(relAngle);
+            //
             // get the distance vector to the ceiling
             const pCeilTile = {
               "x": dCeilTile * Math.cos(rayAngle) / MAP_TILE_SIZE + self.player.x,
@@ -2502,9 +2537,18 @@
                 const newRed = tRed * lightLevel * rBlend + bRed * _rBlend;
                 const newGreen = tGreen * lightLevel * rBlend + bGreen * _rBlend;
                 const newBlue = tBlue * lightLevel * rBlend + bBlue * _rBlend;
-                offscreenBufferData.data[offBuffer] = newRed;
-                offscreenBufferData.data[offBuffer + 1] = newGreen;
-                offscreenBufferData.data[offBuffer + 2] = newBlue;
+                //
+                let newNewRed = newRed, newNewGreen = newGreen, newNewBlue = newBlue;
+                // if (dPerp < 1440)
+                // {
+                //   newNewRed = newRed * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+                //   newNewGreen = newGreen * dPerp / 1440;
+                //   newNewBlue = newBlue * dPerp / 1440 + 255 * (1 - dPerp / 1440);
+                // }
+                //
+                offscreenBufferData.data[offBuffer] = newNewRed;
+                offscreenBufferData.data[offBuffer + 1] = newNewGreen;
+                offscreenBufferData.data[offBuffer + 2] = newNewBlue;
                 offscreenBufferData.data[offBuffer + 3] = 255;
               }
             }
@@ -2724,6 +2768,7 @@
           self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull",
+            "menu.hud",
             "thing.spDude0",
             "thing.spDude1",
             "thing.spPaluk"
@@ -2919,7 +2964,7 @@
                                   document.mozExitFullscreen ||
                                   document.webkitExitFullscreen;
         addEventListener("keypress", function(e) {
-          if (e.which === 102 || e.keyCode === 102) {
+          if (e.keyCode === 102) {
             if (document.fullscreenElement ||
                 document.mozFullscreenElement ||
                 document.webkitFullscreenElement)
@@ -3145,13 +3190,19 @@
           self,
           self.assets.sprites.playerWeapons[self.player.weaponDrawn]
         );
+        self.util.drawImage(self.assets.sprites.menu.hud,
+                            0, 0,
+                            self.assets.sprites.menu.hud.width,
+                            self.assets.sprites.menu.hud.height,
+                            0, 0,
+                            640, 480);
         // flush the frame buffer onto the game canvas
         ctx.putImageData(offscreenBufferData, 0, 0);
         // render mini-map directly onto the game canvas
         self.util.render.minimap(
           self,
-          self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
-          self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
+          self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 33,
+          self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 23
         );
         // render stats directly onto the game canvas
         self.util.render.stats(self, deltaT);

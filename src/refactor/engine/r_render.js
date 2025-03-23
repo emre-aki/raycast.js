@@ -4,6 +4,8 @@
   const G_Const = __import__G_Const();
   const WORLD_H = G_Const.WORLD_H;
   const MAP_TILE_SIZE = G_Const.MAP_TILE_SIZE;
+  const SCREEN_W = G_Const.SCREEN_W;
+  const SCREEN_H = G_Const.SCREEN_H;
 
   const G_Map = __import__G_Map();
   const G_CellLegend = G_Map.G_CellLegend;
@@ -21,18 +23,24 @@
   const G_ReadCellData = G_Map.G_ReadCellData;
 
   const G_Asset = __import__G_Asset();
+  const ASSET_ID = G_Asset.G_AssetId;
   const WALL_TEX_LOOKUP = G_Asset.G_WallTexLookup;
   const CEIL_TEX_LOOKUP = G_Asset.G_CeilTexLookup;
   const FLOOR_TEX_LOOKUP = G_Asset.G_FloorTexLookup;
 
   const U_AssetManager = __import__U_AssetManager();
   const U_GetTexture = U_AssetManager.U_GetTexture;
+  const U_GetSprite = U_AssetManager.U_GetSprite;
 
   const C_Collision = __import__C_Collision();
   const C_PointVsRect = C_Collision.C_PointVsRect;
 
   const U_Math = __import__U_Math();
   const U_EucDist = U_Math.U_EucDist;
+
+  const R_Draw = __import__R_Draw();
+  const R_DrawImage = R_Draw.R_DrawImage;
+  const R_DrawGlobalSprite = R_Draw.R_DrawGlobalSprite;
 
   const HIT_HORIZ = 1, HIT_VERT = 0, HIT_NONE = undefined;
 
@@ -192,8 +200,17 @@
 
   }
 
-  function R_RenderPlayerView ()
-  {}
+  function R_RenderPlayerView (deltaT, player)
+  {
+    // draw player weapon sprite
+    R_DrawGlobalSprite(U_GetSprite(player.weaponDrawn));
+
+    // TODO: render player view (walls, floor, ceiling, things)
+
+    /* draw HUD */
+    const hud = U_GetSprite(ASSET_ID.GSP_HUD);
+    R_DrawImage(hud, 0, 0, hud.width, hud.height, 0, 0, SCREEN_W, SCREEN_H);
+  }
 
   window.__import__R_Render = function ()
   {
@@ -201,6 +218,7 @@
       R_Ray: R_Ray,
       R_CastRay: R_CastRay,
       R_GetFFTData: R_GetFFTData,
+      R_RenderPlayerView: R_RenderPlayerView,
     };
   };
 

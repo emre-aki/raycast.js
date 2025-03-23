@@ -33,7 +33,6 @@
   function D_CellLegend ()
   {
     return {
-      LENGTH: 12,
       LENGTH: 15,
       TYPE_TILE: 0,
       TEX_WALL_N: 1,

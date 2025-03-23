@@ -6,8 +6,10 @@
 
   const R_Draw = __import__R_Draw();
   const R_FlushBuffer = R_Draw.R_FlushBuffer;
-  const R_DrawGlobalSprite = R_Draw.R_DrawGlobalSprite;
   const R_DebugStats = R_Draw.R_DebugStats;
+
+  const R_Render = __import__R_Render();
+  const R_RenderPlayerView = R_Render.R_RenderPlayerView;
 
   const U_Animate = __import__U_Animate();
   const U_RunAnimation = U_Animate.U_RunAnimation;
@@ -33,9 +35,7 @@
 
   function G_UpdateScreen (deltaT, player)
   {
-    // TODO: maybe clean the buffer before drawing the new frame?
-    // TODO: render player view
-    R_DrawGlobalSprite(U_GetSprite(player.weaponDrawn));
+    R_RenderPlayerView(deltaT, player);
     // flush the changes in the screen buffer to the actual canvas
     R_FlushBuffer();
     // TODO: if debug mode
