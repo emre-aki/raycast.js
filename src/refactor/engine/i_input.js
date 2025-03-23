@@ -165,8 +165,8 @@
 
   function I_PointerLocked (onElement)
   {
-    return document.pointerLockElement === onElement
-      || document.mozPointerLockElement === onElement;
+    return document.pointerLockElement === onElement ||
+           document.mozPointerLockElement === onElement;
   }
 
   function I_RequestPointerLock ()
@@ -174,8 +174,8 @@
     const element = this;
     if (!I_PointerLocked(element))
     {
-      element.requestPointerLock = element.requestPointerLock
-        || element.mozRequestPointerLock;
+      element.requestPointerLock = element.requestPointerLock ||
+                                   element.mozRequestPointerLock;
       element.requestPointerLock();
     }
   }
@@ -215,12 +215,35 @@
     document.onmozpointerlockchange = I_PointerLockChange.bind(onElement);
   }
 
+  function I_InitFullscreen (onElement)
+  {
+    onElement.requestFullscreen = onElement.requestFullscreen ||
+                                  onElement.mozRequestFullscreen ||
+                                  onElement.webkitRequestFullscreen;
+    document.exitFullscreen = document.exitFullscreen ||
+                              document.mozExitFullscreen ||
+                              document.webkitExitFullscreen;
+    addEventListener("keypress", function I_OnFullscreenCallback ({ keyCode })
+    {
+      if (keyCode === 102)
+      {
+        if (document.fullscreenElement ||
+            document.mozFullscreenElement ||
+            document.webkitFullscreenElement)
+          document.exitFullscreen();
+        else
+          onElement.requestFullscreen();
+      }
+    });
+  }
+
   window.__import__I_Input = function ()
   {
     return {
       I_Keys: I_Key(),
       I_Mouse: I_Mouse(),
       I_GetKeyState: I_GetKeyState,
+      I_InitFullscreen: I_InitFullscreen,
       I_InitKeyboard: I_InitKeyboard,
       I_GetMouseState: I_GetMouseState,
       I_InitMouse: I_InitMouse,

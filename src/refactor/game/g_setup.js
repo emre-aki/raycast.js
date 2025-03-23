@@ -42,6 +42,7 @@
   const M_InitDoors = __import__M_Door().M_InitDoors;
 
   const I_Input = __import__I_Input();
+  const I_InitFullscreen = I_Input.I_InitFullscreen;
   const I_InitKeyboard = I_Input.I_InitKeyboard;
   const I_InitMouse = I_Input.I_InitMouse;
 
@@ -53,6 +54,7 @@
     // initialize input devices
     I_InitKeyboard(document);
     I_InitMouse(I_CanvasElement);
+    I_InitFullscreen(I_CanvasElement);
     M_InitDoors(); // initialize doors
     // load assets: wall, ceiling & floor textures
     U_LoadTextures(G_TextureFile, G_VerticalFaceWidth, G_WorldHeight,
