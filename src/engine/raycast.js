@@ -354,59 +354,40 @@
       },
       "textures": {
         "floor": {
-          "hexStone": {
+          "1": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_hexstone.png"
+            "name": "f_1.png"
           },
-          "teleporter": {
+          "2": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_tporter.png"
+            "name": "f_2.png"
           },
-          "manhole": {
+          "3": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_manhole.png"
+            "name": "f_3.png"
           },
-          "hexSteel": {
+          "4": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_hexsteel.png"
+            "name": "f_4.png"
           },
-          "slime": {
+          "5": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_slime.png",
-            "FPS": 5,
-            "activeFrame": 0,
-            "frames": [
-              {
-                "width": 63,
-                "height": 63,
-                "offset": 0
-              },
-              {
-                "width": 63,
-                "height": 63,
-                "offset": 63
-              },
-              {
-                "width": 63,
-                "height": 63,
-                "offset": 126
-              }
-            ]
+            "name": "f_5.png"
           }
         },
         "ceil": {
@@ -417,26 +398,26 @@
             "height": 0,  // initialized at setup
             "name":  "s_mounts.png"
           },
-          "lights": {
+          "1": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_lights.png"
+            "name":  "c_1.png"
           },
-          "exit": {
+          "2": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_exit.png"
+            "name": "c_2.png"
           },
-          "stone": {
+          "3": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "f_stone.png"
+            "name": "c_3.png"
           }
         },
         "wall": {
@@ -445,7 +426,25 @@
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "w_temple.png",
+            "name": "wo_1.png",
+            "vertical": {
+              "width": 31,
+              "height": 62,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 31,
+              "height": 62,
+              "offset": 31
+            },
+            "worldHeight": 10
+          },
+          "wi1": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wi_1.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -458,12 +457,102 @@
             },
             "worldHeight": 10
           },
-          "alt": {
+          "wi2": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "w_wood.png",
+            "name": "wi_2.png",
+            "vertical": {
+              "width": 31,
+              "height": 63,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 32,
+              "height": 63,
+              "offset": 31
+            },
+            "worldHeight": 10
+          },
+          "wi3": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wi_3.png",
+            "vertical": {
+              "width": 31,
+              "height": 62,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 31,
+              "height": 62,
+              "offset": 31
+            },
+            "worldHeight": 10
+          },
+          "wi4": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wi_4.png",
+            "vertical": {
+              "width": 31,
+              "height": 62,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 31,
+              "height": 62,
+              "offset": 31
+            },
+            "worldHeight": 10
+          },
+          "wo2": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wo_2.png",
+            "vertical": {
+              "width": 65,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 63,
+              "height": 128,
+              "offset": 65
+            },
+            "worldHeight": 10
+          },
+          "wo3": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wo_3.png",
+            "vertical": {
+              "width": 65,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 63,
+              "height": 128,
+              "offset": 65
+            },
+            "worldHeight": 10
+          },
+          "wo4": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wo_4.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -476,12 +565,12 @@
             },
             "worldHeight": 10
           },
-          "alt_1": {
+          "wo5": {
             "img": new Image(),
             "bitmap": [], // initialized at setup
             "width": 0,   // initialized at setup
             "height": 0,  // initialized at setup
-            "name": "w_tech.png",
+            "name": "wo_5.png",
             "vertical": {
               "width": 64,
               "height": 128,
@@ -493,6 +582,42 @@
               "offset": 64
             },
             "worldHeight": 10
+          },
+          "wo6": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wo_6.png",
+            "vertical": {
+              "width": 64,
+              "height": 128,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 128,
+              "offset": 64
+            },
+            "worldHeight": 10
+          },
+          "wo7": {
+            "img": new Image(),
+            "bitmap": [], // initialized at setup
+            "width": 0,   // initialized at setup
+            "height": 0,  // initialized at setup
+            "name": "wo_7.png",
+            "vertical": {
+              "width": 64,
+              "height": 10,
+              "offset": 0
+            },
+            "horizontal": {
+              "width": 64,
+              "height": 10,
+              "offset": 0
+            },
+            "worldHeight": 1
           },
           "door": {
             "img": new Image(),
@@ -529,97 +654,10 @@
               "offset": 0
             },
             "worldHeight": 10
-          },
-          "stairs": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_stairs.png",
-            "vertical": {
-              "width": 64,
-              "height": 10,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 10,
-              "offset": 64
-            },
-            "worldHeight": 1
-          },
-          "exit": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_exit.png",
-            "vertical": {
-              "width": 32,
-              "height": 16,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 8,
-              "height": 16,
-              "offset": 32
-            },
-            "worldHeight": 1
-          },
-          "beamSteel": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_beamsteel.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "slime": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_slime.png",
-            "vertical": {
-              "width": 128,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 128,
-              "height": 128,
-              "offset": 0
-            },
-            "worldHeight": 4,
-            "FPS": 5,
-            "activeFrame": 0,
-            "frames": [
-              {
-                "height": 128,
-                "offset": 0
-              },
-              {
-                "height": 128,
-                "offset": 128
-              },
-              {
-                "height": 128,
-                "offset": 256
-              }
-            ]
           }
         },
-        "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
+        // "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
+        "animations": {},
         "setup": function(self, keys) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
             if (i === keys.length) return resolve(self.assets.textures);
@@ -715,15 +753,19 @@
           "default",
           "door",
           "doorDock",
-          "alt",
-          "alt_1",
-          "exit",
-          "stairs",
-          "beamSteel",
-          "slime"
+          "wi1",
+          "wi2",
+          "wi3",
+          "wi4",
+          "wo2",
+          "wo3",
+          "wo4",
+          "wo5",
+          "wo6",
+          "wo7"
         ],
-        "CEIL": ["skybox", "lights", "exit", "stone"],
-        "FLOOR": ["hexStone", "hexSteel", "teleporter", "manhole", "slime"]
+        "CEIL": ["skybox", "1", "2", "3"],
+        "FLOOR": ["1", "2", "3", "4", "5"]
       },
       "LEGEND_THINGS": ["spDude0", "spDude1", "spPaluk"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
@@ -736,7 +778,7 @@
       "MARGIN_TO_WALL": 0.4,
       "DRAW_DIST": 15,
       "H_SOLID_WALL": 10,
-      "H_MAX_WORLD": 480,
+      "H_MAX_WORLD": 360,
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
     },
@@ -2235,7 +2277,7 @@
             : texture.height;
           const scaleH = DH / (SH * repeat); // texture-mapping scaling
           //
-          // const dPerp = shade * self.DRAW_DIST;
+          const dPerp = shade * self.DRAW_DIST;
           //
           /* determine how bright & translucent the wall texture is going to be
            * drawn
@@ -2342,7 +2384,7 @@
               : VIEW_DIST * (yHead - hWall_F) / (dStart + 1 + iR - yPlayer)
               ) / Math.cos(relAngle);
             //
-            // const dPerp = dFloorTile * Math.cos(relAngle);
+            const dPerp = dFloorTile * Math.cos(relAngle);
             //
             // get the distance vector to the floor
             const pFloorTile = {
@@ -2478,7 +2520,7 @@
                 (dStart + iR - yPlayer))
               / Math.cos(relAngle);
             //
-            // const dPerp = dCeilTile * Math.cos(relAngle);
+            const dPerp = dCeilTile * Math.cos(relAngle);
             //
             // get the distance vector to the ceiling
             const pCeilTile = {
@@ -2799,23 +2841,27 @@
             .then(function() {
               return self.assets.textures.setup(self, [
                 "ceil.skybox",
-                "ceil.lights",
-                "ceil.stone",
-                "floor.hexStone",
-                "floor.teleporter",
-                "floor.manhole",
+                "ceil.1",
+                "ceil.2",
+                "ceil.3",
+                "floor.1",
+                "floor.2",
+                "floor.3",
+                "floor.4",
+                "floor.5",
                 "wall.default",
-                "wall.alt",
-                "wall.alt_1",
+                "wall.wi1",
+                "wall.wi2",
+                "wall.wi3",
+                "wall.wi4",
+                "wall.wo2",
+                "wall.wo3",
+                "wall.wo4",
+                "wall.wo5",
+                "wall.wo6",
+                "wall.wo7",
                 "wall.door",
-                "wall.doorDock",
-                "wall.stairs",
-                "wall.beamSteel",
-                "floor.hexSteel",
-                "wall.exit",
-                "ceil.exit",
-                "wall.slime",
-                "floor.slime"
+                "wall.doorDock"
               ]);
             })
 
