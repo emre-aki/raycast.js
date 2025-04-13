@@ -1,7 +1,7 @@
 (function() {
   window.__player__ = {
-    "X": 1.4,
-    "Y": 2.4,
+    "X": 2.4,
+    "Y": 3.4,
     "Z": 0,
     "ROTATION": 0,
     "KNEE_HEIGHT": 48,
