@@ -59,6 +59,11 @@ function RemovePath (path, recursive)
     catch (error) { throw new Error(`RemovePath: ${error}`); }
 }
 
+function PathExists (path)
+{
+  return fs.existsSync(path);
+}
+
 exports.ReadFile = ReadFile;
 exports.WriteFile = WriteFile;
 exports.CopyFile = CopyFile;
@@ -66,3 +71,4 @@ exports.IsDir = IsDir;
 exports.Mkdir = Mkdir;
 exports.ReadDir = ReadDir;
 exports.RemovePath = RemovePath;
+exports.PathExists = PathExists;

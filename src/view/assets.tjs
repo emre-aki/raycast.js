@@ -1,0 +1,9 @@
+(function() {
+  window.__textures__ = [
+    %t
+  ];
+
+  window.__sprites__ = [
+    %s
+  ];
+})();

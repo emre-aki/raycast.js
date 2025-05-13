@@ -14,8 +14,9 @@ const ENV = process.env;
 
 function main ()
 {
-    Build("dist", ENV.DEBUG, 1);
-    require("./server");
+    Build("dist", ENV.DEBUG, 1, () => {
+        require("./server");
+    });
 }
 
 main();
