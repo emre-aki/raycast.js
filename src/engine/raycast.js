@@ -203,113 +203,11 @@
             ]
           }
         },
-        "thing": {
-          "spDude0": {
-            "img": new Image(),
-            "name": "SP_DUDE0.png",
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "FPS": 7,
-            "activeFrame": 0,
-            "frames": [
-              {
-                "width": 64,
-                "height": 128,
-                "offset": 0
-              },
-              {
-                "width": 64,
-                "height": 128,
-                "offset": 64
-              },
-              {
-                "width": 64,
-                "height": 128,
-                "offset": 128
-              },
-              {
-                "width": 64,
-                "height": 128,
-                "offset": 192
-              },
-              {
-                "width": 64,
-                "height": 128,
-                "offset": 256
-              }
-            ]
-          },
-          "spDude1": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "SP_DUDE1.png"
-          },
-          "spPaluk": {
-            "img": new Image(),
-            "name": "SP_PALUK.png",
-            "bitmap": [],
-            "width": 0,
-            "height": 0,
-            "FPS": 10,
-            "activeFrame": 0,
-            "frames": [
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 0
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 527
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 1054,
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 1581,
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 2108,
-              },
-              {
-
-                "width": 527,
-                "height": 1083,
-                "offset": 2635,
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 3162,
-              },
-              {
-
-                "width": 527,
-                "height": 1083,
-                "offset": 3689,
-              },
-              {
-                "width": 527,
-                "height": 1083,
-                "offset": 4216,
-              }
-            ]
-          }
-        },
+        "images": [],
         "animations": {
           "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
           "menu": {"skull": [0, 1]},
-          "thing": {"spDude0": [0, 1, 2, 3, 4], "spPaluk": [0, 1, 2, 3, 4, 5, 6, 7, 8]},
+          "thing": {}
         },
         "setup": function(self, keys) {
           const loadSprite = function(i, resolve, reject) {
@@ -350,332 +248,85 @@
           return new Promise(function(resolve, reject) {
             loadSprite(0, resolve, reject);
           });
+        },
+        "setupImages": function(self, names) { // never heard of `Promise.all`???
+          const loadSprite = function(i, resolve, reject) {
+            if (i === names.length) return resolve(self.assets.sprites);
+
+            const sprite = {
+              img: new Image(),
+              bitmap: [],
+              width: 0,
+              height: 0,
+              name: "",
+              worldHeight: 10,        // TODO
+              FPS: 0,                 // TODO
+              activeFrame: undefined, // TODO
+              frames: []              // TODO
+            };
+
+            sprite.img.onload = function() {
+              self.assets.sprites.images.push(sprite);
+              sprite.bitmap = self.util.getBitmap(self, sprite.img);
+              sprite.width = sprite.img.width;
+              sprite.height = sprite.img.height;
+              delete sprite.img;
+              loadSprite(i + 1, resolve, reject);
+            };
+
+            sprite.img.onerror = function() {
+              reject(sprite);
+            };
+
+            sprite.name = names[i];
+            sprite.img.src = fs.__sprites__ + names[i];
+          };
+
+          return new Promise(function(resolve, reject) {
+            loadSprite(0, resolve, reject);
+          });
         }
       },
       "textures": {
-        "floor": {
-          "1": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "f_1.png"
-          },
-          "2": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "f_2.png"
-          },
-          "3": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "f_3.png"
-          },
-          "4": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "f_4.png"
-          },
-          "5": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "f_5.png"
-          }
-        },
-        "ceil": {
-          "skybox": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name":  "s_mounts.png"
-          },
-          "1": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name":  "c_1.png"
-          },
-          "2": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "c_2.png"
-          },
-          "3": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "c_3.png"
-          }
-        },
-        "wall": {
-          "default": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_1.png",
-            "vertical": {
-              "width": 31,
-              "height": 62,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 31,
-              "height": 62,
-              "offset": 31
-            },
-            "worldHeight": 10
-          },
-          "wi1": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wi_1.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "wi2": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wi_2.png",
-            "vertical": {
-              "width": 31,
-              "height": 63,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 32,
-              "height": 63,
-              "offset": 31
-            },
-            "worldHeight": 10
-          },
-          "wi3": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wi_3.png",
-            "vertical": {
-              "width": 31,
-              "height": 62,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 31,
-              "height": 62,
-              "offset": 31
-            },
-            "worldHeight": 10
-          },
-          "wi4": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wi_4.png",
-            "vertical": {
-              "width": 31,
-              "height": 62,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 31,
-              "height": 62,
-              "offset": 31
-            },
-            "worldHeight": 10
-          },
-          "wo2": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_2.png",
-            "vertical": {
-              "width": 65,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 63,
-              "height": 128,
-              "offset": 65
-            },
-            "worldHeight": 10
-          },
-          "wo3": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_3.png",
-            "vertical": {
-              "width": 65,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 63,
-              "height": 128,
-              "offset": 65
-            },
-            "worldHeight": 10
-          },
-          "wo4": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_4.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "wo5": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_5.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "wo6": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_6.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "wo7": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "wo_7.png",
-            "vertical": {
-              "width": 64,
-              "height": 10,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 10,
-              "offset": 0
-            },
-            "worldHeight": 1
-          },
-          "door": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_door.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 64
-            },
-            "worldHeight": 10
-          },
-          "doorDock": {
-            "img": new Image(),
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            "name": "w_doordock.png",
-            "vertical": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "horizontal": {
-              "width": 64,
-              "height": 128,
-              "offset": 0
-            },
-            "worldHeight": 10
-          }
-        },
+        "images": [],
+        "sky": {},
         // "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
         "animations": {},
-        "setup": function(self, keys) { // never heard of `Promise.all`???
+        "setup": function(self, names) { // never heard of `Promise.all`???
           const loadTexture = function(i, resolve, reject) {
-            if (i === keys.length) return resolve(self.assets.textures);
-            const texture = keys[i].split(".").reduce(function(acc, curr) {
-              return acc[curr];
-            }, self.assets.textures);
+            if (i === names.length) return resolve(self.assets.textures);
+
+            const texture = {
+              img: new Image(),
+              bitmap: [],
+              width: 0,
+              height: 0,
+              name: "",
+              worldHeight: 10,        // TODO
+              FPS: 0,                 // TODO
+              activeFrame: undefined, // TODO
+              frames: []              // TODO
+            };
+
             texture.img.onload = function() {
+              if (texture.name === "s_sky.png")
+                self.assets.textures.sky = texture;
+              self.assets.textures.images.push(texture);
               texture.bitmap = self.util.getBitmap(self, texture.img);
               texture.width = texture.img.width;
               texture.height = texture.img.height;
               delete texture.img;
               loadTexture(i + 1, resolve, reject);
             };
+
             texture.img.onerror = function() {
               reject(texture);
             };
-            texture.img.src = fs.__textures__ + texture.name;
+
+            texture.name = names[i];
+            texture.img.src = fs.__textures__ + names[i];
           };
+
           return new Promise(function(resolve, reject) {
             loadTexture(0, resolve, reject);
           });
@@ -728,9 +379,8 @@
         "WALL_DIAG": 2,
         "V_DOOR": 3,
         "H_DOOR": 4,
-        "TELEPORTER": 5,
-        "THING": 6,
-        "FREEFORM": 7
+        "THING": 5,
+        "FREEFORM": 6
       },
       "OFFSET_DIAG_WALLS": [
         [[0, 1], [1, 0]], // #/
@@ -744,30 +394,9 @@
         "#FFFFFF", // 2: WALL_DIAG
         "#264E73", // 3: V_DOOR
         "#264E73", // 4: H_DOOR
-        "#EB4034", // 5: TELEPORTER
-        "#7d9aa9", // 6: THING
-        "#002138"  // 7: FREEFORM
+        "#7d9aa9", // 5: THING
+        "#002138"  // 6: FREEFORM
       ],
-      "LEGEND_TEXTURES": {
-        "WALL": [
-          "default",
-          "door",
-          "doorDock",
-          "wi1",
-          "wi2",
-          "wi3",
-          "wi4",
-          "wo2",
-          "wo3",
-          "wo4",
-          "wo5",
-          "wo6",
-          "wo7"
-        ],
-        "CEIL": ["skybox", "1", "2", "3"],
-        "FLOOR": ["1", "2", "3", "4", "5"]
-      },
-      "LEGEND_THINGS": ["spDude0", "spDude1", "spPaluk"],
       "WEAPONS": {"SHOTGUN": "shotgun"},
       "PLAYER_HEIGHT": 0, // initialized in setup
       "MAX_TILT": 80,
@@ -778,7 +407,7 @@
       "MARGIN_TO_WALL": 0.4,
       "DRAW_DIST": 15,
       "H_SOLID_WALL": 10,
-      "H_MAX_WORLD": 360,
+      "H_MAX_WORLD": 480,
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4
     },
@@ -951,8 +580,9 @@
             /* */
             const tx = Math.floor(vx), ty = Math.floor(vy);
             const tile = self.map[self.nCols * ty + tx];
-            //
-            if (tile[MAP_LEGEND.TYPE_TILE] !== TYPE_TILES.FREEFORM) continue;
+            // bounds-check
+            if (!(tile && tile[MAP_LEGEND.TYPE_TILE] === TYPE_TILES.FREEFORM))
+              continue;
             /* */
             const tX = tx + tile[MAP_LEGEND.MARGIN_FFT_X] * 0.1;
             const tY = ty + tile[MAP_LEGEND.MARGIN_FFT_Y] * 0.1;
@@ -1006,7 +636,12 @@
           const distanceToCover = eucDist(sx, sy, dx, dy, 1);
           /* the tile data we are currently inspecting */
           let tile = MAP[N_COLS * tileY + tileX];
-          let typeTile = tile[MAP_LEGEND.TYPE_TILE];
+          let typeTile;
+          // bounds-check
+          if (0 <= tileX && tileX < N_COLS && 0 <= tileY && tileY < N_ROWS)
+            typeTile = tile[MAP_LEGEND.TYPE_TILE];
+          else
+            hitSolid = 1;
           while (!hitSolid && distCovered < distanceToCover &&
                  pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
@@ -1125,7 +760,8 @@
                   const walkApex = self.player.anim.walking.apex;
                   /* */
                   if (yFloor - self.player.feet > KNEE_HEIGHT ||
-                      PLAYER_HEIGHT + walkApex > yCeil - yFloor)
+                      self.player.feet + PLAYER_HEIGHT + walkApex >
+                      yCeil - yFloor)
                     return isVerticalFFTHit
                         ? [-rayDirX, 0, fftHit[0], fftHit[1], gx, gy]
                         : [0, -rayDirY, fftHit[0], fftHit[1], gx, gy];
@@ -1146,6 +782,8 @@
                 ? 0
                 : vDist === hDist ? isVerticalHit : 1;
               distCovered = isVerticalHit ? vDist : hDist;
+              // just break out of the loop if we're past the goal point
+              if (distCovered >= distanceToCover) continue;
               if (isVerticalHit) {
                 hitX = vTraceX; hitY = vTraceY; // hit by vertical tracer
                 vTraceX += vStepX; vTraceY += vStepY; // advance the tracer
@@ -1155,8 +793,16 @@
                 hTraceX += hStepX; hTraceY += hStepY; // advance the tracer
                 tileY += rayDirY; // advance horizontally to the next tile
               }
-              tile = MAP[N_COLS * tileY + tileX];
-              typeTile = tile[MAP_LEGEND.TYPE_TILE];
+              // bounds-check
+              if (0 <= tileX && tileX < N_COLS && 0 <= tileY && tileY < N_ROWS)
+              {
+                tile = MAP[N_COLS * tileY + tileX];
+                typeTile = tile[MAP_LEGEND.TYPE_TILE];
+              }
+              else
+              {
+                hitSolid = 1;
+              }
             }
           }
           if (!hitSolid) return; // early return if there was no collision
@@ -1257,7 +903,10 @@
         }
       },
       "isBlockingMapCell": function(self, x, y) {
+        const N_COLS = self.nCols, N_ROWS = self.nRows;
         const X = Math.floor(x), Y = Math.floor(y);
+        // bounds-check
+        if (X < 0 || X >= N_COLS || Y < 0 || Y >= N_ROWS) return true;
         const typeCell = self.map[self.nCols * Y + X][self.mapLegend.TYPE_TILE];
         return typeCell === self.const.TYPE_TILES.WALL ||
           typeCell === self.const.TYPE_TILES.WALL_DIAG ||
@@ -1269,7 +918,6 @@
       },
       "getThingCollnData": function(self, player, pTile, pHit, vRay) {
         const THING_TYPE = self.const.TYPE_TILES.THING;
-        const LEGEND_THINGS = self.const.LEGEND_THINGS;
         const MAP_LEGEND = self.mapLegend;
         const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
         const H_MAX_WORLD = self.const.H_MAX_WORLD;
@@ -1327,8 +975,7 @@
                                      1, MAP_TILE_SIZE);
         // the world-height of the thing
         const hThing = tile[MAP_LEGEND.WOH] * 0.1 * H_MAX_WORLD;
-        const thingKey = LEGEND_THINGS[tile[MAP_LEGEND.WOTYPE]];
-        const sprite = self.assets.sprites.thing[thingKey];
+        const sprite = self.assets.sprites.images[tile[MAP_LEGEND.WOTYPE]];
         let offsetLeft; // the sampling offset for the thing sprite
         let intsectTile0X, intsectTile0Y, intsectTile1X, intsectTile1Y;
         if (isHorizHit) {
@@ -1436,10 +1083,11 @@
             hitF[0] === pTile.x + tMargX + tLenX
           ? "vertical"
           : "horizontal";
-        const hitType_R = hitR[0] === pTile.x + tMargX ||
-            hitR[0] === pTile.x + tMargX + tLenX
-          ? "vertical"
-          : "horizontal";
+        // unused
+        // const hitType_R = hitR[0] === pTile.x + tMargX ||
+        //     hitR[0] === pTile.x + tMargX + tLenX
+        //   ? "vertical"
+        //   : "horizontal";
 
         // calculate distance(s) to edge(s) hit
         const pseudoDistF = self.util.eucDist(
@@ -1460,33 +1108,33 @@
         );
 
         // calculate the horizontal offset for the sampling of the wall texture
-        const texWall = self.assets.textures.wall[
-          self.const.LEGEND_TEXTURES.WALL[tile[self.mapLegend.TEX_FFT_WALL]]
-        ];
+        const texWall =
+          self.assets.textures.images[tile[self.mapLegend.TEX_FFT_WALL]];
+
         let offsetLeft;
         switch (hitType_F) {
           case "vertical":
-            offsetLeft = texWall[hitType_F].offset + texWall[hitType_F].width /
-              tLenY * (hitF[0] === pTile.x + tMargX
-                ? hitF[1] - pTile.y - tMargY
-                : pTile.y + tMargY + tLenY - hitF[1]);
+            offsetLeft =       // TODO 👇
+              (texWall[hitType_F]?.offset ?? 0) + texWall.width /
+                tLenY * (hitF[0] === pTile.x + tMargX
+                  ? hitF[1] - pTile.y - tMargY
+                  : pTile.y + tMargY + tLenY - hitF[1]);
             break;
 
           case "horizontal":
-            offsetLeft = texWall[hitType_F].offset + texWall[hitType_F].width /
-              tLenX * (hitF[0] - pTile.x - tMargX);
+            offsetLeft =        // TODO 👇
+              (texWall[hitType_F]?.offset ?? 0) + texWall.width /
+                tLenX * (hitF[0] - pTile.x - tMargX);
             break;
 
           default:
             break;
         }
 
-        const texCeil = self.assets.textures.ceil[
-          self.const.LEGEND_TEXTURES.CEIL[tile[self.mapLegend.TEX_FFT_CEIL]]
-        ];
-        const texFloor = self.assets.textures.floor[
-          self.const.LEGEND_TEXTURES.FLOOR[tile[self.mapLegend.TEX_FFT_FLOOR]]
-        ];
+        const texCeil =
+          self.assets.textures.images[tile[self.mapLegend.TEX_FFT_CEIL]];
+        const texFloor =
+          self.assets.textures.images[tile[self.mapLegend.TEX_FFT_FLOOR]];
 
         const tx = pTile.x + tMargX, ty = pTile.y + tMargY;
         const heights_F = pointVsTileHeight(self, hitF[0], hitF[1],
@@ -1662,10 +1310,6 @@
         offscreenBuffer.height = offscreenBufferH;
         offscreenBufferData = offscreenBufferCtx
           .getImageData(0, 0, offscreenBufferW, offscreenBufferH);
-      },
-      "clearRect": function(x, y, w, h) {
-        offscreenBufferCtx.clearRect(x, y, w, h);
-        offscreenBufferData = offscreenBufferCtx.getImageData(0, 0, offscreenBufferW, offscreenBufferH);
       },
       "fillRect": function(x, y, w, h, r, g, b, a) {
         const X = Math.floor(x), Y = Math.floor(y);
@@ -1930,10 +1574,6 @@
           }
         },
         "playerView": function(self) {
-          // reset offscreen buffer
-          self.util.clearRect(0, 0, offscreenBufferW, offscreenBufferH);
-
-          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES;
           const MAP_LEGEND = self.mapLegend;
           const OFFSET_DIAG_WALLS = self.const.OFFSET_DIAG_WALLS;
           const TYPE_TILES = self.const.TYPE_TILES;
@@ -1982,7 +1622,7 @@
             let hitSolid = 0; // whether we hit a solid wall or not
             let isVerticalHit;
             // which texture to draw on the surface of the solid geometry
-            let solidTexture = self.assets.textures.wall.default;
+            let solidTexture;
             let offsetLeft; // sampling offset for the texture
             /* initialize a depth-buffer for the sorting of non-solid geometries
              * encountered along the path of the current ray
@@ -2002,26 +1642,14 @@
               if (tileType === TYPE_TILES.WALL) {
                 /* determine which texture to draw */
                 if (isVerticalHit) {
-                  const isDoorDock = MAP[idxTile - rayDirX]
-                                        [MAP_LEGEND.TYPE_TILE] ===
-                                     TYPE_TILES.H_DOOR;
-                  solidTexture = isDoorDock
-                    ? self.assets.textures.wall.doorDock
-                    : self.assets.textures.wall[LEGEND_TEXTURES.WALL[
-                                                tile[rayDirX < 0
-                                                  ? MAP_LEGEND.TEX_WALL_E
-                                                  : MAP_LEGEND.TEX_WALL_W]]];
+                  const picnum = rayDirX < 0 ? MAP_LEGEND.TEX_WALL_E
+                                             : MAP_LEGEND.TEX_WALL_W;
+                  solidTexture = self.assets.textures.images[tile[picnum]];
                   offsetLeft = hitY - tileY;
                 } else {
-                  const isDoorDock = MAP[idxTile - rayDirY * N_COLS]
-                                        [MAP_LEGEND.TYPE_TILE] ===
-                                     TYPE_TILES.V_DOOR;
-                  solidTexture = isDoorDock
-                    ? self.assets.textures.wall.doorDock
-                    : self.assets.textures.wall[LEGEND_TEXTURES.WALL[
-                                                tile[rayDirY < 0
-                                                  ? MAP_LEGEND.TEX_WALL_S
-                                                  : MAP_LEGEND.TEX_WALL_N]]];
+                  const picnum = rayDirY < 0 ? MAP_LEGEND.TEX_WALL_S
+                                             : MAP_LEGEND.TEX_WALL_N
+                  solidTexture = self.assets.textures.images[tile[picnum]];
                   offsetLeft = hitX - tileX;
                 }
                 hitSolid = 1;
@@ -2036,7 +1664,8 @@
                 const doorState = self.doors[hitKey].state * 0.1;
                 if (hitY >= tileY && hitY < tileY + doorState) {
                   /* determine which texture to draw */
-                  solidTexture = self.assets.textures.wall.door;
+                  solidTexture =
+                    self.assets.textures.images[tile[MAP_LEGEND.TEX_WALL_N]];
                   offsetLeft = hitY - tileY + 1 - doorState;
                   hitSolid = 1;
                 }
@@ -2051,7 +1680,8 @@
                 const doorState = self.doors[hitKey].state * 0.1;
                 if (hitX >= tileX + 1 - doorState && hitX < tileX + 1) {
                   /* determine which texture to draw */
-                  solidTexture = self.assets.textures.wall.door;
+                  solidTexture =
+                    self.assets.textures.images[tile[MAP_LEGEND.TEX_WALL_N]];
                   offsetLeft = hitX - tileX - (1 - doorState);
                   hitSolid = 1;
                 }
@@ -2086,8 +1716,8 @@
                       pointVsRect(Math.min(x0, x1), Math.min(y0, y1),
                                   Math.abs(x0 - x1), Math.abs(y0 - y1),
                                   hitX, hitY)) {
-                    // TODO: dynamically set textures for diagonal walls
-                    solidTexture = self.assets.textures.wall.doorDock;
+                    solidTexture =
+                      self.assets.textures.images[tile[MAP_LEGEND.TEX_WALL_N]];
                     offsetLeft = (hitX - x0) / (x1 - x0);
                     hitSolid = 1;
                   }
@@ -2192,25 +1822,22 @@
                   : 1
               );
             }
-            /* draw texture-mapped wall unless max draw distance is exceeded,
-             * otherwise draw a column of all-black pixels
-             */
+            /* draw texture-mapped wall if we hit something */
             if (offsetLeft >= 0) {
-              const dataTex = solidTexture[isVerticalHit
-                                            ? "vertical"
-                                            : "horizontal"];
               self.util.render.col_wall(
                 self,
                 {}, // FIXME: occlusion for the current column
                 solidTexture,
                 self.const.H_SOLID_WALL / solidTexture.worldHeight,
-                offsetLeft * dataTex.width + dataTex.offset,
+                offsetLeft * solidTexture.width,
                 iCol,
                 hCeil,
                 hWall,
-                realDist / MAX_DRAW_DIST
+                Math.max(realDist / MAX_DRAW_DIST + (isVerticalHit ? 0 : 0.05),
+                         0)
               );
-            } else {
+            }
+            else if (realDist >= MAX_DRAW_DIST) {
               self.util.fillRect(iCol * self.DRAW_TILE_SIZE.x,
                                  hCeil * self.DRAW_TILE_SIZE.y,
                                  self.DRAW_TILE_SIZE.x,
@@ -2231,8 +1858,7 @@
               const distToObj = Math.sqrt(data.pseudoDistToPlayer) *
                                 Math.cos(rayAngle - playerRot);
               /* draw thing (masked 2-D sprite) */
-              if (distToObj < distSolid
-                  && data.type === TYPE_TILES.THING) {
+              if (distToObj < distSolid && data.type === TYPE_TILES.THING) {
                 const hObj = data.height, hProj = VIEW_DIST * hObj / distToObj;
                 const hCeilObj = (playerHeadElev - H_MAX_WORLD) *
                                  VIEW_DIST / distToObj + yPlayer;
@@ -2345,9 +1971,8 @@
           const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
           const M_ROWS = self.mRows;
           const MAP = self.map, N_COLS = self.nCols;
-          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.FLOOR;
           const KEY_TEX_G_FLOOR = self.mapLegend.TEX_G_FLOOR;
-          const FLOOR_TEXTURES = self.assets.textures.floor;
+          const FLOOR_TEXTURES = self.assets.textures.images;
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
 
@@ -2403,8 +2028,8 @@
              */
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
-              const typeFloor = tile[KEY_TEX_G_FLOOR];
-              texFloor = FLOOR_TEXTURES[LEGEND_TEXTURES[typeFloor]];
+              if (!tile) continue; // bounds-check
+              texFloor = FLOOR_TEXTURES[tile[KEY_TEX_G_FLOOR]];
             } else texFloor = texture;
             tw = texFloor.width; th = texFloor.height;
             /* determine which texel to draw */
@@ -2475,9 +2100,9 @@
           const MAP_TILE_SIZE = self.MAP_TILE_SIZE;
           const M_ROWS = self.mRows;
           const MAP = self.map, N_COLS = self.nCols;
-          const LEGEND_TEXTURES = self.const.LEGEND_TEXTURES.CEIL;
           const KEY_TEX_G_CEIL = self.mapLegend.TEX_G_CEIL;
-          const CEIL_TEXTURES = self.assets.textures.ceil;
+          const KEY_INDOORS = self.mapLegend.INDOORS;
+          const CEIL_TEXTURES = self.assets.textures.images;
           const MAX_TILT = self.const.MAX_TILT;
           const VIEW_DIST = self.VIEW_DIST;
           const DRAW_DIST = self.DRAW_DIST;
@@ -2539,8 +2164,9 @@
              */
             if (!texture) {
               const tile = MAP[N_COLS * pMapTile.y + pMapTile.x];
-              const typeCeil = tile[KEY_TEX_G_CEIL]; isSky = typeCeil === 0;
-              texCeil = CEIL_TEXTURES[LEGEND_TEXTURES[typeCeil]];
+              if (!tile) continue; // bounds-check
+              isSky = !tile[KEY_INDOORS];
+              texCeil = CEIL_TEXTURES[tile[KEY_TEX_G_CEIL]];
             } else texCeil = texture;
             tw = texCeil.width, th = texCeil.height;
             /* determine which texel to draw */
@@ -2810,10 +2436,7 @@
           self.assets.sprites.setup(self, [
             "playerWeapons." + self.player.weaponDrawn,
             "menu.skull",
-            "menu.hud",
-            "thing.spDude0",
-            "thing.spDude1",
-            "thing.spPaluk"
+            "menu.hud"
           ])
             .then(function(sprites) {
               sprites.menu.skull.frames = sprites.menu.skull.frames
@@ -2837,38 +2460,20 @@
                 });
             })
 
-            // setup textures // TODO: why strings? - why not objects themselves?
+            // setup thing sprites
+            .then(function () {
+              return self.assets.sprites.setupImages(self, window.__sprites__);
+            })
+
+            // setup textures
             .then(function() {
-              return self.assets.textures.setup(self, [
-                "ceil.skybox",
-                "ceil.1",
-                "ceil.2",
-                "ceil.3",
-                "floor.1",
-                "floor.2",
-                "floor.3",
-                "floor.4",
-                "floor.5",
-                "wall.default",
-                "wall.wi1",
-                "wall.wi2",
-                "wall.wi3",
-                "wall.wi4",
-                "wall.wo2",
-                "wall.wo3",
-                "wall.wo4",
-                "wall.wo5",
-                "wall.wo6",
-                "wall.wo7",
-                "wall.door",
-                "wall.doorDock"
-              ]);
+              return self.assets.textures.setup(self, window.__textures__);
             })
 
             // adapt skybox texture to current game resolution
             // I know this seems a bit hacky, so don't judge me.
             .then(function(textures) {
-              const texSky = textures.ceil.skybox;
+              const texSky = textures.sky;
               const projectSkyH = Math.floor(
                 self.res[1] + self.const.MAX_TILT * self.DRAW_TILE_SIZE.y
               );
@@ -2902,9 +2507,10 @@
             .then(function() {
               const woAnimationsFrames = self.assets.sprites.animations.thing;
               resolution.animations =
-                Object.keys(woAnimationsFrames).map(function(objKey) {
-                  const animationFrames = woAnimationsFrames[objKey];
-                  const sprite = self.assets.sprites.thing[objKey];
+                Object.keys(woAnimationsFrames).map(function(sKey) {
+                  const animationFrames = woAnimationsFrames[sKey];
+                  const sprite = self.assets.sprites.images[sKey];
+
                   return self.api.animation(
                     self,
                     function(i) { // onFrame
@@ -2920,12 +2526,8 @@
               resolution.animations = resolution.animations.concat(
                 Object.keys(tAnimationsFrames).map(function(tKey) {
                   const animationFrames = tAnimationsFrames[tKey];
-                  const textureLookup = tKey[0] === "w"
-                    ? self.assets.textures.wall
-                    : tKey[0] === "f"
-                      ? self.assets.textures.floor
-                      : self.assets.textures.ceil;
-                  const texture = textureLookup[tKey.slice(2)];
+                  const texture = self.assets.textures.images[tKey];
+
                   return self.api.animation(
                     self,
                     function(i) { // onFrame
@@ -3083,7 +2685,8 @@
         animateWalking(self, [self.player.x, self.player.y], [pX, pY]);
       },
       "animateWalking": function(self, newPos, prevPos) {
-        const defaultWeaponFrame = self.assets.sprites.playerWeapons[self.player.weaponDrawn].frames[0];
+        const defaultWeaponFrame =
+          self.assets.sprites.playerWeapons[self.player.weaponDrawn].frames[0];
         const defaultLocOnScreen = defaultWeaponFrame.defaultLocOnScreen;
         if (prevPos[0] !== newPos[0] || prevPos[1] !== newPos[1]) {
           // animate head tilt

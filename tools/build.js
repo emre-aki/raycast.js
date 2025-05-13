@@ -12,6 +12,7 @@
 const cli = require("commander");
 const path = require("path");
 const ejs = require("ejs");
+const { exec, spawn } = require("child_process");
 
 const packageJson = require("../package.json");
 const {
@@ -21,11 +22,13 @@ const {
     IsDir,
     Mkdir,
     ReadDir,
-    RemovePath
+    RemovePath,
+    PathExists
 } = require("./file");
-const { LogInfo } = require("./log");
+const { LogInfo, LogError } = require("./log");
 
 const ROOT = path.dirname(__dirname); // the project root
+const TOOLS_DIR = path.join(ROOT, "tools");
 const SRC = path.join(ROOT, "src"); // the source directory
 const ASSETS = path.join(ROOT, "assets"); // the assets directory
 // path to the view template
@@ -34,6 +37,101 @@ const TEMPLATE_PATH = path.join(SRC, "view", "index.ejs");
 const TEMPLATE_DIR = path.dirname(TEMPLATE_PATH);
 const FAVICON_PATH = path.join(ASSETS, "favicon.ico"); // path to the favicon
 const LOG_OPTIONS = { context: "build" };
+
+function BuildAssetBuilder (outpath, callback)
+{
+    const process = spawn("gcc", [
+        path.join(TOOLS_DIR, "readdir.c"),
+        "-o",
+        outpath
+    ]);
+
+    process.on("exit", code => {
+        if (!code) callback();
+    });
+}
+
+function BuildAssetPaths (debug, program, callback)
+{
+    const pathToTextures = path.join(ASSETS, "textures");
+    const pathToSprites = path.join(ASSETS, "sprites");
+    // const texturesProcess = spawn(program, [pathToTextures]);
+    const template = ReadFile(path.join(TEMPLATE_DIR, "assets.tjs"), {
+        encoding: "utf8"
+    });
+    const textures = [], sprites = [];
+    let otherFinished = false;
+
+    exec(`${program} ${pathToTextures}`, (error, stdout, stderr) => {
+        if (error || stderr) {
+            LogError(stderr.toString(), LOG_OPTIONS);
+
+            return;
+        }
+
+        textures.push(...stdout.toString()
+                               .split("\n")
+                               .filter(texture => texture)
+                               .map((texture, i) =>
+                                    `${i ? "    " : ""}"${texture}"`));
+        LogInfo("Built textures", LOG_OPTIONS);
+
+        if (otherFinished)
+        {
+            WriteFile(path.join(SRC, "engine", "assets.tjs"),
+                    template.toString().replace("%t", textures.join(",\n"))
+                                       .replace("%s", sprites.join(",\n")));
+
+            callback?.();
+        }
+        else
+        {
+            otherFinished = true;
+        }
+    });
+
+    exec(`${program} ${pathToSprites}`, (error, stdout, stderr) => {
+        if (error || stderr) {
+            LogError(stderr.toString(), LOG_OPTIONS);
+
+            return;
+        }
+
+        sprites.push(...stdout.toString()
+                                .split("\n")
+                                .filter(sprite => sprite)
+                                .map((sprite, i) =>
+                                    `${i ? "    " : ""}"${sprite}"`));
+        LogInfo("Built sprites", LOG_OPTIONS);
+
+        if (otherFinished)
+        {
+            WriteFile(path.join(SRC, "engine", "assets.tjs"),
+                    template.toString().replace("%t", textures.join(",\n"))
+                                       .replace("%s", sprites.join(",\n")));
+
+            callback?.();
+        }
+        else
+        {
+            otherFinished = true;
+        }
+    });
+}
+
+function BuildAssets (debug, callback)
+{
+    const program = path.join(TOOLS_DIR, "readdir");
+    /* build the asset builder if it hasn't been already */
+    if (!PathExists(program))
+        BuildAssetBuilder(program, BuildAssetPaths.bind(undefined,
+                                                        debug,
+                                                        program,
+                                                        callback));
+    else
+        BuildAssetPaths(debug, program, callback);
+
+}
 
 function BuildView (debug)
 {
@@ -99,7 +197,21 @@ function CopyStatic (sourceDir, outputDir, onFile)
     }
 }
 
-function Build (outputPath, debug, verbose)
+function CopyStaticFiles (outputDir, callback)
+{
+    LogInfo(`Copying ${SRC}...`, LOG_OPTIONS);
+    /* copy the static files, i.e, scripts, assets, and anything that is static,
+     * over to the output directory
+     */
+    CopyStatic(SRC, outputDir);
+    LogInfo(`Copied contents of ${SRC} to ${outputDir}.`, LOG_OPTIONS);
+    LogInfo(`Copying ${ASSETS}...`, LOG_OPTIONS);
+    CopyStatic(ASSETS, outputDir);
+    LogInfo(`Copied contents of ${ASSETS} to ${outputDir}.`, LOG_OPTIONS);
+    callback?.();
+}
+
+function Build (outputPath, debug, verbose, callback)
 {
     LOG_OPTIONS.verbose = verbose;
     const outputDir = path.join(ROOT, outputPath);
@@ -116,15 +228,8 @@ function Build (outputPath, debug, verbose)
     // compile the `index.html`
     WriteFile(pathToView, BuildView(debug), { encoding: "utf8" });
     LogInfo(`Saved view at ${pathToView}.`, LOG_OPTIONS);
-    LogInfo(`Copying ${SRC}...`, LOG_OPTIONS);
-    /* copy the static files, i.e, scripts, assets, and anything that is static,
-     * over to the output directory
-     */
-    CopyStatic(SRC, outputDir);
-    LogInfo(`Copied contents of ${SRC} to ${outputDir}.`, LOG_OPTIONS);
-    LogInfo(`Copying ${ASSETS}...`, LOG_OPTIONS);
-    CopyStatic(ASSETS, outputDir);
-    LogInfo(`Copied contents of ${ASSETS} to ${outputDir}.`, LOG_OPTIONS);
+    LogInfo("Building assets...", LOG_OPTIONS);
+    BuildAssets(debug, CopyStaticFiles.bind(undefined, outputPath, callback));
 }
 
 function HandleCommand (args)
@@ -149,6 +254,6 @@ function main ()
     cli.parse(process.argv);
 }
 
-main();
+if (require.main === module) main();
 
 exports.Build = Build;
