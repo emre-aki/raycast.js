@@ -637,11 +637,8 @@
           /* the tile data we are currently inspecting */
           let tile = MAP[N_COLS * tileY + tileX];
           let typeTile;
-          // bounds-check
-          if (0 <= tileX && tileX < N_COLS && 0 <= tileY && tileY < N_ROWS)
-            typeTile = tile[MAP_LEGEND.TYPE_TILE];
-          else
-            hitSolid = 1;
+          if (tile) typeTile = tile[MAP_LEGEND.TYPE_TILE]; // bounds-check
+          else hitSolid = 1;                               //
           while (!hitSolid && distCovered < distanceToCover &&
                  pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
