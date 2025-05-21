@@ -97,6 +97,8 @@
     "nRows": window.__map__.N_ROWS,
     "nCols": window.__map__.N_COLS,
     "doors": {},
+    "pickables": {},
+    "inventory": [],
     "player": {
       "rotation": window.__player__.ROTATION,
       "anim": {
@@ -110,7 +112,9 @@
       "feet": window.__player__.Z,
       "head": 0, // re-initialized at setup
       "x": window.__player__.X,
-      "y": window.__player__.Y
+      "y": window.__player__.Y,
+      "invhead": 0,
+      "invselected": 0,
     },
     "assets": {
       "sprites": {
@@ -409,7 +413,8 @@
       "H_SOLID_WALL": 10,
       "H_MAX_WORLD": 480,
       "R_MINIMAP": 12,
-      "TILE_SIZE_MINIMAP": 4
+      "TILE_SIZE_MINIMAP": 4,
+      "MAX_INVENTORY_SIZE": 3
     },
     "api": {
       "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
@@ -899,7 +904,7 @@
           return collisionResponse(self, px, py, newX, newY);
         }
       },
-      "isBlockingMapCell": function(self, x, y) {
+      "isBlockingMapCell": function(self, x, y, pickable = 0) {
         const N_COLS = self.nCols, N_ROWS = self.nRows;
         const X = Math.floor(x), Y = Math.floor(y);
         // bounds-check
@@ -907,11 +912,11 @@
         const typeCell = self.map[self.nCols * Y + X][self.mapLegend.TYPE_TILE];
         return typeCell === self.const.TYPE_TILES.WALL ||
           typeCell === self.const.TYPE_TILES.WALL_DIAG ||
-          typeCell === self.const.TYPE_TILES.FREEFORM ||
+          (!pickable && typeCell === self.const.TYPE_TILES.FREEFORM) ||
           typeCell === self.const.TYPE_TILES.THING ||
           (typeCell === self.const.TYPE_TILES.V_DOOR ||
             typeCell === self.const.TYPE_TILES.H_DOOR) &&
-            self.doors[self.util.coords2Key(X, Y)].state;
+            (self.doors[self.util.coords2Key(X, Y)].state || pickable);
       },
       "getThingCollnData": function(self, player, pTile, pHit, vRay) {
         const THING_TYPE = self.const.TYPE_TILES.THING;
@@ -1228,6 +1233,9 @@
         if (type !== "keydown" && type !== "keyup") return;
         const pressing = type === "keydown";
         switch (key) {
+          case 49: self.keyState["1"] = pressing ? 1 : 0; break;
+          case 50: self.keyState["2"] = pressing ? 1 : 0; break;
+          case 51: self.keyState["3"] = pressing ? 1 : 0; break;
           case 87: self.keyState.W = pressing ? 1 : 0; break;
           case 65: self.keyState.A = pressing ? 1 : 0; break;
           case 83: self.keyState.S = pressing ? 1 : 0; break;
@@ -1255,25 +1263,50 @@
           default: break;
         }
       },
-      "getDoors": function(self) {
-        const doors = {};
-        for (let y = 0; y < self.nRows; y += 1) {
-          for (let x = 0; x < self.nCols; x += 1) {
-            const sample = self.map[self.nCols * y + x][self.mapLegend.TYPE_TILE];
-            if (
-              sample === self.const.TYPE_TILES.V_DOOR ||
-              sample === self.const.TYPE_TILES.H_DOOR
-            ) {
-              doors[self.util.coords2Key(x, y)] = {
-                "loc": {"x": x, "y": y},
-                "state": 10, // 0: open, 10: closed
-                "animating": 0,
-                "timeout": undefined
-              };
-            }
+      "populateDoors": function(self) {
+        const N_COLS = self.nCols, N_ROWS = self.nRows;
+        const TYPE_TILE = self.mapLegend.TYPE_TILE;
+        const TYPE_TILES = self.const.TYPE_TILES;
+        const MAP = self.map;
+        const coords2Key = self.util.coords2Key;
+
+        let offset = 0;
+
+        for (let y = 0; y < N_ROWS; ++y) {
+          for (let x = 0; x < N_COLS; ++x) {
+            const tileType = MAP[offset++][TYPE_TILE];
+
+            if (tileType === TYPE_TILES.V_DOOR ||
+                tileType === TYPE_TILES.H_DOOR)
+              self.doors[coords2Key(x, y)] = { x, y,
+                                               state: 10, // 0: open, 10: closed
+                                               animating: 0,
+                                               timeout: undefined };
           }
         }
-        return doors;
+      },
+      "populatePickables": function(self) {
+        const N_COLS = self.nCols, N_ROWS = self.nRows;
+        const MAP_LEGEND = self.mapLegend;
+        const TYPE_TILE = self.mapLegend.TYPE_TILE;
+        const TYPE_TILES = self.const.TYPE_TILES;
+        const MAP = self.map;
+        const coords2Key = self.util.coords2Key;
+
+        let offset = 0;
+
+        for (let y = 0; y < N_ROWS; ++y) {
+          for (let x = 0; x < N_COLS; ++x) {
+            const tile = MAP[offset++];
+            const tileType = tile[TYPE_TILE];
+            const pickable = tile[MAP_LEGEND.PICKABLE];
+
+            if (pickable && (tileType === TYPE_TILES.THING ||
+                             tileType === TYPE_TILES.FREEFORM))
+              self.pickables[coords2Key(x, y)] =
+                { x, y, carrying: 0, tile, type: tileType };
+          }
+        }
       },
       "drawCaret": function(ctx, a, b, c, options) {
         options = options || {};
@@ -2383,6 +2416,29 @@
               );
             }
           }
+        },
+        "inventory": function(self) {
+          const fillRect = self.util.fillRect;
+          const invhead = self.player.invhead;
+          const invselected = self.player.invselected;
+
+          const ox = 288, oy = 448;
+          const gap = 8, size = 16, stride = gap + size;
+          let x = ox;
+
+          for (let i = 0; i < invhead; ++i) {
+            if (i === invselected) {
+              fillRect(x, oy, size, 2, 255, 255, 255, 255);
+              fillRect(x + size - 2, oy, 2, size, 255, 255, 255, 255);
+              fillRect(x, oy + size - 2, size, 2, 255, 255, 255, 255);
+              fillRect(x, oy, 2, size, 255, 255, 255, 255);
+              fillRect(x + 4, oy + 4, 8, 8, 255, 255, 255, 255);
+            } else {
+              fillRect(x, oy, size, size, 255, 255, 255, 255);
+            }
+
+            x += stride;
+          }
         }
       }
     },
@@ -2413,7 +2469,10 @@
         minimapCanvas.height = minimapCanvas.width;
 
         // setup doors
-        self.doors = self.util.getDoors(self);
+        self.util.populateDoors(self);
+
+        // setup pickable items (things | freewalls)
+        self.util.populatePickables(self);
 
         // setup event listeners
         document.onkeydown = function(e) {
@@ -2666,8 +2725,8 @@
         if (self.keyState.ARW_UP & 1) updatePlayerTilt(self, magTilt);
         if (self.keyState.ARW_DOWN & 1) updatePlayerTilt(self, 0 - magTilt);
         /* update player elevation */
-        if (self.keyState.E & 1) updatePlayerZ(self, magTilt);
-        if (self.keyState.Q & 1) updatePlayerZ(self, 0 - magTilt);
+        // if (self.keyState.E & 1) updatePlayerZ(self, magTilt);
+        // if (self.keyState.Q & 1) updatePlayerZ(self, 0 - magTilt);
         /* calculate the goal position and resolve collisions if any */
         const goalX = pX + moveX * self.STEP_SIZE * mult;
         const goalY = pY + moveY * self.STEP_SIZE * mult;
@@ -2738,45 +2797,148 @@
         }
       },
       "interactWDoor": function(self) {
-        if (self.keyState.RTN & 1) {
+        if (self.keyState.E & 1) {
           const MAP = self.map, N_COLS = self.nCols;
           const TYPE_TILE = self.mapLegend.TYPE_TILE;
-          const TYPE_V_DOOR = self.const.TYPE_TILES.V_DOOR;
-          const TYPE_H_DOOR = self.const.TYPE_TILES.H_DOOR;
+          const TYPE_TILES = self.const.TYPE_TILES;
           const DOORS = self.doors;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
           const PLAYER_BB_LEN = MARGIN_TO_WALL * 2;
           const coords2Key = self.util.coords2Key;
           const rectVsRect = self.util.collision.rectVsRect;
-          /* lookup the tiles exactly one unit ahead of the player in both axes
-           * to see whether they are doors or not
+          /* lookup the tile exactly one unit ahead of the player along its line
+           * of sight
            */
           const playerRot = self.player.rotation;
           const playerX = self.player.x, playerY = self.player.y;
-          const pX = Math.floor(playerX), pY = Math.floor(playerY);
-          const lookupX = pX + Math.sign(Math.cos(playerRot));
-          const lookupY = pY + Math.sign(Math.sin(playerRot));
-          const tileV = MAP[N_COLS * pY + lookupX][TYPE_TILE];
-          const doorDataV = DOORS[coords2Key(lookupX, pY)];
-          const tileH = MAP[N_COLS * lookupY + pX][TYPE_TILE];
-          const doorDataH = DOORS[coords2Key(pX, lookupY)];
-          /* interact with the vertical door that is ahead of the player unless
-           * they are colliding with it
-           */
-          if (tileV === TYPE_V_DOOR &&
-              !rectVsRect(playerX - MARGIN_TO_WALL, playerY - MARGIN_TO_WALL,
-                          PLAYER_BB_LEN, PLAYER_BB_LEN, lookupX, pY, 1, 1))
-            self.exec.animateDoor(self, doorDataV);
-          /* interact with the horizontal door that is ahead of the player
-           * unless they are colliding with it
-           */
-          else if (tileH === TYPE_H_DOOR &&
-                   !rectVsRect(playerX - MARGIN_TO_WALL,
-                               playerY - MARGIN_TO_WALL,
-                               PLAYER_BB_LEN, PLAYER_BB_LEN,
-                               pX, lookupY, 1, 1))
-            self.exec.animateDoor(self, doorDataH);
+          const lookupX = (playerX + Math.cos(playerRot)) << 0;
+          const lookupY = (playerY + Math.sin(playerRot)) << 0;
+          const tile = MAP[N_COLS * lookupY + lookupX];
+          if (!tile) return;
+          const tileType = tile[TYPE_TILE];
+          if (tileType === TYPE_TILES.V_DOOR ||
+              tileType === TYPE_TILES.H_DOOR) {
+            const door = DOORS[coords2Key(lookupX, lookupY)];
+            /* interact with the door that is ahead of the player unless they
+             * are colliding with it
+             */
+            if (door &&
+                !rectVsRect(playerX - MARGIN_TO_WALL, playerY - MARGIN_TO_WALL,
+                            PLAYER_BB_LEN, PLAYER_BB_LEN,
+                            lookupX, lookupY,
+                            1, 1))
+              self.exec.animateDoor(self, door);
+          }
         }
+      },
+      "pickUpPickable": function(self) {
+        if ((self.keyState.E & 1) &&
+            self.player.invhead < self.const.MAX_INVENTORY_SIZE) {
+          const MAP = self.map, N_COLS = self.nCols;
+          const TYPE_TILE = self.mapLegend.TYPE_TILE;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const PICKABLES = self.pickables;
+          const coords2Key = self.util.coords2Key;
+          /* lookup the tile exactly one unit ahead of the player along its line
+           * of sight
+           */
+          const playerRot = self.player.rotation;
+          const playerX = self.player.x, playerY = self.player.y;
+          const lookupX = (playerX + Math.cos(playerRot)) << 0;
+          const lookupY = (playerY + Math.sin(playerRot)) << 0;
+          const tile = MAP[N_COLS * lookupY + lookupX];
+          if (!tile) return;
+          const tileType = tile[TYPE_TILE];
+          if (tileType === TYPE_TILES.THING ||
+              tileType === TYPE_TILES.FREEFORM) {
+            const pkey = coords2Key(lookupX, lookupY);
+            const pickable = PICKABLES[pkey];
+            /* pick the object up */
+            if (pickable && !pickable.carrying) {
+              pickable.carrying = 1;
+              self.inventory.push(pickable);
+              ++self.player.invhead;
+              tile[TYPE_TILE] = 0; // clear the tile because they picked it up
+              // reset the key state to prevent immediately dropping off
+              self.keyState.E = 0;
+            }
+          }
+        }
+      },
+      "dropPickable": function(self) {
+        if ((self.keyState.E & 1) && self.player.invhead) {
+          const MAP = self.map, N_COLS = self.nCols;
+          const MAP_LEGEND = self.mapLegend;
+          const TYPE_TILE = self.mapLegend.TYPE_TILE;
+          const TYPE_TILES = self.const.TYPE_TILES;
+          const PICKABLES = self.pickables;
+          const isBlockingMapCell = self.util.isBlockingMapCell;
+          const coords2Key = self.util.coords2Key;
+          /* drop the pickable exactly one unit ahead of the player along its
+           * line of sight
+           */
+          const playerRot = self.player.rotation;
+          const playerX = self.player.x, playerY = self.player.y;
+          const lookupX = (playerX + Math.cos(playerRot)) << 0;
+          const lookupY = (playerY + Math.sin(playerRot)) << 0;
+          /* drop it unless something's blocking */
+          if (!isBlockingMapCell(self, lookupX, lookupY, 1)) {
+            const invId = self.player.invselected, item = self.inventory[invId];
+            const tileHeld = item.tile;
+            const tile = MAP[N_COLS * lookupY + lookupX];
+            const oldKey = coords2Key(item.x, item.y);
+            const newKey = coords2Key(lookupX, lookupY);
+            /* put the item down */
+            tile[TYPE_TILE] = item.type;
+            // TODO: merge freewalls once dropped
+            if (item.type === TYPE_TILES.THING) {
+              tile[MAP_LEGEND.WOTYPE] = tileHeld[MAP_LEGEND.WOTYPE];
+              tile[MAP_LEGEND.WOH] = tileHeld[MAP_LEGEND.WOH];
+            } else if (item.type === TYPE_TILES.FREEFORM) {
+              tile[MAP_LEGEND.MARGIN_FFT_X] =
+                tileHeld[MAP_LEGEND.MARGIN_FFT_X];
+              tile[MAP_LEGEND.MARGIN_FFT_Y] =
+                tileHeld[MAP_LEGEND.MARGIN_FFT_Y];
+              tile[MAP_LEGEND.LEN_FFT_X] = tileHeld[MAP_LEGEND.LEN_FFT_X];
+              tile[MAP_LEGEND.LEN_FFT_Y] = tileHeld[MAP_LEGEND.LEN_FFT_Y];
+              tile[MAP_LEGEND.TEX_FFT_WALL] =
+                tileHeld[MAP_LEGEND.TEX_FFT_WALL];
+              tile[MAP_LEGEND.TEX_FFT_FLOOR] =
+                tileHeld[MAP_LEGEND.TEX_FFT_FLOOR];
+              tile[MAP_LEGEND.TEX_FFT_CEIL] =
+                tileHeld[MAP_LEGEND.TEX_FFT_CEIL];
+              tile[MAP_LEGEND.H_FFT_UPPER_SLOPE_START] =
+                tileHeld[MAP_LEGEND.H_FFT_UPPER_SLOPE_START];
+              tile[MAP_LEGEND.H_FFT_UPPER_SLOPE_END] =
+                tileHeld[MAP_LEGEND.H_FFT_UPPER_SLOPE_END];
+              tile[MAP_LEGEND.H_FFT_LOWER_SLOPE_START] =
+                tileHeld[MAP_LEGEND.H_FFT_LOWER_SLOPE_START];
+              tile[MAP_LEGEND.H_FFT_LOWER_SLOPE_END] =
+                tileHeld[MAP_LEGEND.H_FFT_LOWER_SLOPE_END];
+              tile[MAP_LEGEND.FFT_SLOPE_DIR] =
+                tileHeld[MAP_LEGEND.FFT_SLOPE_DIR];
+            }
+            tile[MAP_LEGEND.PICKABLE] = tileHeld[MAP_LEGEND.PICKABLE];
+            item.x = lookupX; item.y = lookupY;
+            item.carrying = 0;
+            delete PICKABLES[oldKey]; // update the item in the global
+            PICKABLES[newKey] = item; // `pickables` LUT
+            self.inventory.splice(invId, 1);                  // remove the item
+            self.player.invselected = Math.max(invId - 1, 0); // from inventory
+            --self.player.invhead;
+            // reset the key state to prevent immediately picking up again
+            self.keyState.E = 0;
+          }
+        }
+      },
+      "switchFocusedItem": function(self) {
+        const last = Math.max(self.player.invhead - 1, 0);
+        if (self.keyState["1"] & 1)
+          self.player.invselected = Math.min(0, last);
+        else if (self.keyState["2"] & 1)
+          self.player.invselected = Math.min(1, last);
+        else if (self.keyState["3"] & 1)
+          self.player.invselected = Math.min(2, last);
       },
       "tryAndCloseDoor": function(self, door) {
         const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
@@ -2786,7 +2948,7 @@
          * ahead and closing it
          */
         const pX = self.player.x, pY = self.player.y;
-        const doorX = door.loc.x, doorY = door.loc.y;
+        const doorX = door.x, doorY = door.y;
         const isInDoorway = rectVsRect(pX - MARGIN_TO_WALL, pY - MARGIN_TO_WALL,
                                        PLAYER_BB_LEN, PLAYER_BB_LEN,
                                        doorX, doorY, 1, 1);
@@ -2842,6 +3004,7 @@
                             self.assets.sprites.menu.hud.height,
                             0, 0,
                             640, 480);
+        self.util.render.inventory(self);
         // flush the frame buffer onto the game canvas
         ctx.putImageData(offscreenBufferData, 0, 0);
         // render mini-map directly onto the game canvas
@@ -2856,6 +3019,9 @@
       "playerLoop": function(self, mult) {
         self.exec.movePlayer(self, mult);
         self.exec.interactWDoor(self);
+        self.exec.pickUpPickable(self);
+        self.exec.dropPickable(self);
+        self.exec.switchFocusedItem(self);
         self.exec.animateShooting(self);
       },
       "tick": function(self, deltaT) {
