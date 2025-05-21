@@ -10,3 +10,9 @@ dist
 
 # misc.
 *.zip
+*.ini
+
+# build artefacts
+rce
+src/engine/assets.tjs
+tools/readdir
