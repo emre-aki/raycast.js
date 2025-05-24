@@ -59,6 +59,7 @@
     "__file__": "/engine/raycast.js",
     "__sprites__": "/sprites/",
     "__textures__": "/textures/",
+    "__splash__": "/splash.png",
     "__audio__": "/audio/"
   };
   const game = {
@@ -253,8 +254,9 @@
             loadSprite(0, resolve, reject);
           });
         },
-        "setupImages": function(self, names) { // never heard of `Promise.all`???
+        "setupImages": function(self, names, path = "") {
           const loadSprite = function(i, resolve, reject) {
+            // never heard of `Promise.all`???
             if (i === names.length) return resolve(self.assets.sprites);
 
             const sprite = {
@@ -283,7 +285,7 @@
             };
 
             sprite.name = names[i];
-            sprite.img.src = fs.__sprites__ + names[i];
+            sprite.img.src = path + names[i];
           };
 
           return new Promise(function(resolve, reject) {
@@ -1458,20 +1460,26 @@
           );
         },
         "titleScreen": function(self, onEnd) {
-          const sprite = self.assets.sprites.menu.skull;
-          const animationFrames = self.assets.sprites.animations.menu.skull;
+          // const sprite = self.assets.sprites.menu.skull;
+          // const animationFrames = self.assets.sprites.animations.menu.skull;
+          const numSprites = self.assets.sprites.images.length;
+          const sprite = self.assets.sprites.images[numSprites - 1];
           const render = function(iFrame) {
-            const i = iFrame % animationFrames.length;
-            self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
-            self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH, 0, 0, 0, 1);
-            self.util.render.globalSprite(self, sprite);
+            const i = iFrame & 1;
+            // const i = iFrame % animationFrames.length;
+            // self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
+            // self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH, 0, 0, 0, 1);
+            self.util.drawImage(sprite,
+                                0, 0, offscreenBufferW, offscreenBufferH,
+                                0, 0, offscreenBufferW, offscreenBufferH);
+            // self.util.render.globalSprite(self, sprite);
             ctx.putImageData(offscreenBufferData, 0, 0);
             if (i === 1) {
               self.util.print(
-                "Press any key to start",
+                "press any key to start",
                 (self.res[0] - 212) * 0.5,
                 (self.res[1] - 16) * 0.5,
-                {"size": 16, "color": "#FFFFFF"}
+                { "size": 16, "color": "#FFFFFF" }
               );
             }
           };
@@ -2518,7 +2526,14 @@
 
             // setup thing sprites
             .then(function () {
-              return self.assets.sprites.setupImages(self, window.__sprites__);
+              return self.assets.sprites.setupImages(self,
+                                                     window.__sprites__,
+                                                     fs.__sprites__);
+            })
+
+            // setup slash screen image
+            .then(function () {
+              return self.assets.sprites.setupImages(self, [fs.__splash__]);
             })
 
             // setup textures
