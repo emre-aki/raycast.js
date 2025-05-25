@@ -762,8 +762,7 @@
                   const walkApex = self.player.anim.walking.apex;
                   /* */
                   if (yFloor - self.player.feet > KNEE_HEIGHT ||
-                      self.player.feet + PLAYER_HEIGHT + walkApex >
-                      yCeil - yFloor)
+                      yFloor + PLAYER_HEIGHT + walkApex > yCeil)
                     return isVerticalFFTHit
                         ? [-rayDirX, 0, fftHit[0], fftHit[1], gx, gy]
                         : [0, -rayDirY, fftHit[0], fftHit[1], gx, gy];
