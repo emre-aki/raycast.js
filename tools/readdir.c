@@ -9,7 +9,10 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <dirent.h>
+
+#define MAX_DIRENTS 128
 
 typedef unsigned char byte;
 
@@ -25,7 +28,12 @@ int StrCmp (const char* str0, const char* str1)
         ++p1;
     }
 
-    return (*p0 > *p1) - (*p1 > *p0);
+    return (*p1 < *p0) - (*p0 < *p1);
+}
+
+int StrCmpSort (const void* s0, const void* s1)
+{
+    return StrCmp(*((const char**) s0), *((const char**) s1));
 }
 
 int ReadDir (const char* path)
@@ -41,13 +49,20 @@ int ReadDir (const char* path)
     }
 
     dirent_t* dirent;
+    size_t count = 0;
+    const char* dirent_names[MAX_DIRENTS];
 
     while ((dirent = readdir(dir)))
         if (dirent->d_type == DT_REG &&
             *(dirent->d_name) != '.' &&
             StrCmp(dirent->d_name, ".") &&
             StrCmp(dirent->d_name, ".."))
-            fprintf(stdout, "%s\n", dirent->d_name);
+            *(dirent_names + count++) = dirent->d_name;
+
+    qsort(dirent_names, count, sizeof(char*), StrCmpSort);
+
+    for (size_t i = 0; i < count; ++i)
+        fprintf(stdout, "%s\n", *(dirent_names + i));
 
     closedir(dir);
 
