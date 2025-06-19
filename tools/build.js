@@ -55,7 +55,6 @@ function BuildAssetPaths (debug, program, callback)
 {
     const pathToTextures = path.join(ASSETS, "textures");
     const pathToSprites = path.join(ASSETS, "sprites");
-    // const texturesProcess = spawn(program, [pathToTextures]);
     const template = ReadFile(path.join(TEMPLATE_DIR, "assets.tjs"), {
         encoding: "utf8"
     });
