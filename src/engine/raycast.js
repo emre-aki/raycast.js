@@ -59,7 +59,6 @@
     "__file__": "/engine/raycast.js",
     "__sprites__": "/sprites/",
     "__textures__": "/textures/",
-    "__splash__": "/splash.png",
     "__audio__": "/audio/"
   };
   const game = {
@@ -140,14 +139,6 @@
                 "height": 34
               }
             ]
-          },
-          "hud": {
-            "img": new Image(),
-            "name": "hud.png",
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            // `locOnScreen` initialized at setup
           }
         },
         "playerWeapons": {
@@ -208,10 +199,9 @@
             ]
           }
         },
-        "images": [],
+        "images": Array(window.__sprites__.length),
         "animations": {
           "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
-          "menu": {"skull": [0, 1]},
           "thing": {}
         },
         "setup": function(self, keys) {
@@ -254,88 +244,79 @@
             loadSprite(0, resolve, reject);
           });
         },
-        "setupImages": function(self, names, path = "") {
-          const loadSprite = function(i, resolve, reject) {
-            // never heard of `Promise.all`???
-            if (i === names.length) return resolve(self.assets.sprites);
+        "setupImages": function(self, names) {
+          return Promise.all(names.map((name, id) =>
+            new Promise(function loadSprite(resolve, reject) {
+              const sprite = {
+                img: new Image(),
+                bitmap: [],
+                width: 0,
+                height: 0,
+                name: "",
+                worldHeight: 10,        // TODO
+                FPS: 0,                 // TODO
+                activeFrame: undefined, // TODO
+                frames: []              // TODO
+              };
 
-            const sprite = {
-              img: new Image(),
-              bitmap: [],
-              width: 0,
-              height: 0,
-              name: "",
-              worldHeight: 10,        // TODO
-              FPS: 0,                 // TODO
-              activeFrame: undefined, // TODO
-              frames: []              // TODO
-            };
+              sprite.img.onload = function() {
+                self.assets.sprites.images[id] = sprite;
+                sprite.bitmap = self.util.getBitmap(self, sprite.img);
+                sprite.width = sprite.img.width;
+                sprite.height = sprite.img.height;
+                delete sprite.img;
+                resolve();
+              };
 
-            sprite.img.onload = function() {
-              self.assets.sprites.images.push(sprite);
-              sprite.bitmap = self.util.getBitmap(self, sprite.img);
-              sprite.width = sprite.img.width;
-              sprite.height = sprite.img.height;
-              delete sprite.img;
-              loadSprite(i + 1, resolve, reject);
-            };
+              sprite.img.onerror = function() {
+                reject(sprite);
+              };
 
-            sprite.img.onerror = function() {
-              reject(sprite);
-            };
-
-            sprite.name = names[i];
-            sprite.img.src = path + names[i];
-          };
-
-          return new Promise(function(resolve, reject) {
-            loadSprite(0, resolve, reject);
-          });
+              sprite.name = name;
+              sprite.img.src = fs.__sprites__ + name;
+            }))
+          ).then(() => self.assets.sprites);
         }
       },
       "textures": {
-        "images": [],
+        "images": Array(window.__textures__.length),
         "sky": {},
         // "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
         "animations": {},
-        "setup": function(self, names) { // never heard of `Promise.all`???
-          const loadTexture = function(i, resolve, reject) {
-            if (i === names.length) return resolve(self.assets.textures);
+        "setup": function(self, names) {
+          return Promise.all(names.map((name, id) =>
+            new Promise(function loadTexture(resolve, reject) {
+              const texture = {
+                img: new Image(),
+                bitmap: [],
+                width: 0,
+                height: 0,
+                name: "",
+                worldHeight: 10,        // TODO
+                FPS: 0,                 // TODO
+                activeFrame: undefined, // TODO
+                frames: []              // TODO
+              };
 
-            const texture = {
-              img: new Image(),
-              bitmap: [],
-              width: 0,
-              height: 0,
-              name: "",
-              worldHeight: 10,        // TODO
-              FPS: 0,                 // TODO
-              activeFrame: undefined, // TODO
-              frames: []              // TODO
-            };
+              texture.img.onload = function() {
+                if (texture.name === "s_sky.png")
+                  self.assets.textures.sky = texture;
+                self.assets.textures.images[id] = texture;
+                texture.bitmap = self.util.getBitmap(self, texture.img);
+                texture.width = texture.img.width;
+                texture.height = texture.img.height;
+                delete texture.img;
+                resolve();
+              };
 
-            texture.img.onload = function() {
-              if (texture.name === "s_sky.png")
-                self.assets.textures.sky = texture;
-              self.assets.textures.images.push(texture);
-              texture.bitmap = self.util.getBitmap(self, texture.img);
-              texture.width = texture.img.width;
-              texture.height = texture.img.height;
-              delete texture.img;
-              loadTexture(i + 1, resolve, reject);
-            };
+              texture.img.onerror = function() {
+                reject(texture);
+              };
 
-            texture.img.onerror = function() {
-              reject(texture);
-            };
-
-            texture.name = names[i];
-            texture.img.src = fs.__textures__ + names[i];
-          };
-
-          return new Promise(function(resolve, reject) {
-            loadTexture(0, resolve, reject);
-          });
+              texture.name = name;
+              texture.img.src = fs.__textures__ + name;
+            }))
+          ).then(() => self.assets.textures);
         }
       },
       "themes": {
@@ -416,7 +397,8 @@
       "H_MAX_WORLD": 480,
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4,
-      "MAX_INVENTORY_SIZE": 3
+      "MAX_INVENTORY_SIZE": 3,
+      "MAX_COLLISION_RESOLUTION_RETRIES": 35
     },
     "api": {
       "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
@@ -660,12 +642,15 @@
               for (let i = 0; i < 4; ++i) {
                 const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
                 const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
-                const iDX = px + deltaX + offsetX, iDY = py + deltaY + offsetY;
+                const iSX = px + offsetX, iSY = py + offsetY;
+                const iDX = iSX + deltaX, iDY = iSY + deltaY;
+                const isSInside = isOnTheLeft(x0, y0, x1, y1, iSX, iSY);
                 const isDInside = isOnTheLeft(x0, y0, x1, y1, iDX, iDY);
-                /* is the player attempting to clip through the diagonal wall? */
-                if (isDInside) {
-                  const iSX = iDX - deltaX, iSY = iDY - deltaY;
-                  const isect = getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
+                /* is the player attempting to clip through the diagonal wall?
+                 */
+                if (isSInside ^ isDInside) {
+                  const isect =
+                    getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
                   /* FIXME: do not skip resolving, maybe, come up with a better
                    * resolution approach??
                    */
@@ -781,9 +766,10 @@
               const vDist = eucDist(sx, sy, vTraceX, vTraceY, 1);
               const hDist = eucDist(sx, sy, hTraceX, hTraceY, 1);
               /* determine whether the hit is on the vertical axis */
-              isVerticalHit = Number.isNaN(vDist) || vDist > hDist
-                ? 0
-                : vDist === hDist ? isVerticalHit : 1;
+              isVerticalHit =
+                Number.isNaN(vDist) || (vDist - hDist).toFixedNum(5) > 0
+                  ? 0
+                  : vDist === hDist ? isVerticalHit : 1;
               distCovered = isVerticalHit ? vDist : hDist;
               // just break out of the loop if we're past the goal point
               if (distCovered >= distanceToCover) continue;
@@ -845,7 +831,10 @@
           if (!(normalX || normalY)) return;
           return [normalX, normalY, testX, testY];
         },
-        "collisionResponse": function(self, px, py, gx, gy) {
+        "collisionResponse": function(self, px, py, gx, gy, retries) {
+          /* quit after retrying enough times */
+          if (retries === self.const.MAX_COLLISION_RESOLUTION_RETRIES)
+            return [px, py, self.player.feet];
           const CLOCKWISE = self.const.math.CLOCKWISE;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
           const eucDist = self.util.eucDist;
@@ -902,7 +891,7 @@
           // FIXME: consider converting this routine into a loop, instead of
           // using recursion
           // repeat the process recursively until all collisions are resolved
-          return collisionResponse(self, px, py, newX, newY);
+          return collisionResponse(self, px, py, newX, newY, retries + 1);
         }
       },
       "isBlockingMapCell": function(self, x, y, pickable = 0) {
@@ -1459,23 +1448,22 @@
           );
         },
         "titleScreen": function(self, onEnd) {
-          // const sprite = self.assets.sprites.menu.skull;
-          // const animationFrames = self.assets.sprites.animations.menu.skull;
-          const numSprites = self.assets.sprites.images.length;
-          const sprite = self.assets.sprites.images[numSprites - 1];
+          const sprite = self.assets.sprites.menu.skull;
+
           const render = function(iFrame) {
             const i = iFrame & 1;
-            // const i = iFrame % animationFrames.length;
-            // self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
-            // self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH, 0, 0, 0, 1);
+            self.assets.sprites.menu.skull.activeFrames = [i];
+            self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH,
+                               0, 0, 0, 1);
             self.util.drawImage(sprite,
                                 0, 0, offscreenBufferW, offscreenBufferH,
                                 0, 0, offscreenBufferW, offscreenBufferH);
-            // self.util.render.globalSprite(self, sprite);
+            self.util.render.globalSprite(self, sprite);
             ctx.putImageData(offscreenBufferData, 0, 0);
+
             if (i === 1) {
               self.util.print(
-                "press any key to start",
+                "Press any key to start",
                 (self.res[0] - 212) * 0.5,
                 (self.res[1] - 16) * 0.5,
                 { "size": 16, "color": "#FFFFFF" }
@@ -1870,8 +1858,7 @@
                 iCol,
                 hCeil,
                 hWall,
-                Math.max(realDist / MAX_DRAW_DIST + (isVerticalHit ? 0 : 0.05),
-                         0)
+                realDist / MAX_DRAW_DIST
               );
             }
             else if (realDist >= MAX_DRAW_DIST) {
@@ -2495,11 +2482,11 @@
 
         // async ops.
         return new Promise(function(resolve, reject) {
-          // setup sprites // TODO: why strings? - why not objects themselves?
+          // setup global sprites
           self.assets.sprites.setup(self, [
+            // TODO: why strings — why not objects themselves?
             "playerWeapons." + self.player.weaponDrawn,
-            "menu.skull",
-            "menu.hud"
+            "menu.skull"
           ])
             .then(function(sprites) {
               sprites.menu.skull.frames = sprites.menu.skull.frames
@@ -2525,14 +2512,7 @@
 
             // setup thing sprites
             .then(function () {
-              return self.assets.sprites.setupImages(self,
-                                                     window.__sprites__,
-                                                     fs.__sprites__);
-            })
-
-            // setup slash screen image
-            .then(function () {
-              return self.assets.sprites.setupImages(self, [fs.__splash__]);
+              return self.assets.sprites.setupImages(self, window.__sprites__);
             })
 
             // setup textures
@@ -2745,7 +2725,7 @@
         const goalX = pX + moveX * self.STEP_SIZE * mult;
         const goalY = pY + moveY * self.STEP_SIZE * mult;
         if (moveX || moveY) {
-          const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY);
+          const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY, 0);
           self.player.x = resolvedPos[0].toFixedNum(5);
           self.player.y = resolvedPos[1].toFixedNum(5);
           self.player.feet = resolvedPos[2];
@@ -3012,12 +2992,6 @@
           self,
           self.assets.sprites.playerWeapons[self.player.weaponDrawn]
         );
-        self.util.drawImage(self.assets.sprites.menu.hud,
-                            0, 0,
-                            self.assets.sprites.menu.hud.width,
-                            self.assets.sprites.menu.hud.height,
-                            0, 0,
-                            640, 480);
         self.util.render.inventory(self);
         // flush the frame buffer onto the game canvas
         ctx.putImageData(offscreenBufferData, 0, 0);
