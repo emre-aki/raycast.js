@@ -397,7 +397,8 @@
       "H_MAX_WORLD": 480,
       "R_MINIMAP": 12,
       "TILE_SIZE_MINIMAP": 4,
-      "MAX_INVENTORY_SIZE": 3
+      "MAX_INVENTORY_SIZE": 3,
+      "MAX_COLLISION_RESOLUTION_RETRIES": 128
     },
     "api": {
       "animation": function(self, onFrame, interval, shouldEnd, onEnd) {
@@ -826,7 +827,11 @@
           if (!(normalX || normalY)) return;
           return [normalX, normalY, testX, testY];
         },
-        "collisionResponse": function(self, px, py, gx, gy) {
+        "collisionResponse": function(self, px, py, gx, gy, retries) {
+          /* quit after retrying enough times */
+          if (retries === self.const.MAX_COLLISION_RESOLUTION_RETRIES)
+            return [px, py, self.player.feet];
+
           const CLOCKWISE = self.const.math.CLOCKWISE;
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
           const eucDist = self.util.eucDist;
@@ -883,7 +888,7 @@
           // FIXME: consider converting this routine into a loop, instead of
           // using recursion
           // repeat the process recursively until all collisions are resolved
-          return collisionResponse(self, px, py, newX, newY);
+          return collisionResponse(self, px, py, newX, newY, retries + 1);
         }
       },
       "isBlockingMapCell": function(self, x, y, pickable = 0) {
@@ -2714,7 +2719,7 @@
         const goalX = pX + moveX * self.STEP_SIZE * mult;
         const goalY = pY + moveY * self.STEP_SIZE * mult;
         if (moveX || moveY) {
-          const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY);
+          const resolvedPos = collisionResponse(self, pX, pY, goalX, goalY, 0);
           self.player.x = resolvedPos[0].toFixedNum(5);
           self.player.y = resolvedPos[1].toFixedNum(5);
           self.player.feet = resolvedPos[2];
