@@ -207,10 +207,9 @@
             ]
           }
         },
-        "images": [],
+        "images": Array(window.__sprites__.length),
         "animations": {
           "playerWeapons": {"shotgun": [1, 2, 0, 3, 4, 5, 4, 3, 0]},
-          "menu": {"skull": [0, 1]},
           "thing": {}
         },
         "setup": function(self, keys) {
@@ -253,87 +252,79 @@
             loadSprite(0, resolve, reject);
           });
         },
-        "setupImages": function(self, names) { // never heard of `Promise.all`???
-          const loadSprite = function(i, resolve, reject) {
-            if (i === names.length) return resolve(self.assets.sprites);
+        "setupImages": function(self, names) {
+          return Promise.all(names.map((name, id) =>
+            new Promise(function loadSprite(resolve, reject) {
+              const sprite = {
+                img: new Image(),
+                bitmap: undefined,
+                width: 0,
+                height: 0,
+                name: "",
+                worldHeight: 10,        // TODO
+                FPS: 0,                 // TODO
+                activeFrame: undefined, // TODO
+                frames: []              // TODO
+              };
 
-            const sprite = {
-              img: new Image(),
-              bitmap: [],
-              width: 0,
-              height: 0,
-              name: "",
-              worldHeight: 10,        // TODO
-              FPS: 0,                 // TODO
-              activeFrame: undefined, // TODO
-              frames: []              // TODO
-            };
+              sprite.img.onload = function() {
+                self.assets.sprites.images[id] = sprite;
+                sprite.bitmap = self.util.getBitmap(self, sprite.img);
+                sprite.width = sprite.img.width;
+                sprite.height = sprite.img.height;
+                delete sprite.img;
+                resolve();
+              };
 
-            sprite.img.onload = function() {
-              self.assets.sprites.images.push(sprite);
-              sprite.bitmap = self.util.getBitmap(self, sprite.img);
-              sprite.width = sprite.img.width;
-              sprite.height = sprite.img.height;
-              delete sprite.img;
-              loadSprite(i + 1, resolve, reject);
-            };
+              sprite.img.onerror = function() {
+                reject(sprite);
+              };
 
-            sprite.img.onerror = function() {
-              reject(sprite);
-            };
-
-            sprite.name = names[i];
-            sprite.img.src = fs.__sprites__ + names[i];
-          };
-
-          return new Promise(function(resolve, reject) {
-            loadSprite(0, resolve, reject);
-          });
+              sprite.name = name;
+              sprite.img.src = fs.__sprites__ + name;
+            }))
+          ).then(() => self.assets.sprites);
         }
       },
       "textures": {
-        "images": [],
-        "sky": {},
+        "images": Array(window.__textures__.length),
+        "sky": undefined,
         // "animations": {"w_slime": [0, 1, 2, 1, 0], "f_slime": [0, 1, 2, 1, 0]},
         "animations": {},
-        "setup": function(self, names) { // never heard of `Promise.all`???
-          const loadTexture = function(i, resolve, reject) {
-            if (i === names.length) return resolve(self.assets.textures);
+        "setup": function(self, names) {
+          return Promise.all(names.map((name, id) =>
+            new Promise(function loadTexture(resolve, reject) {
+              const texture = {
+                img: new Image(),
+                bitmap: undefined,
+                width: 0,
+                height: 0,
+                name: "",
+                worldHeight: 10,        // TODO
+                FPS: 0,                 // TODO
+                activeFrame: undefined, // TODO
+                frames: []              // TODO
+              };
 
-            const texture = {
-              img: new Image(),
-              bitmap: [],
-              width: 0,
-              height: 0,
-              name: "",
-              worldHeight: 10,        // TODO
-              FPS: 0,                 // TODO
-              activeFrame: undefined, // TODO
-              frames: []              // TODO
-            };
+              texture.img.onload = function() {
+                if (texture.name === "s_sky.png")
+                  self.assets.textures.sky = texture;
+                self.assets.textures.images[id] = texture;
+                texture.bitmap = self.util.getBitmap(self, texture.img);
+                texture.width = texture.img.width;
+                texture.height = texture.img.height;
+                delete texture.img;
+                resolve();
+              };
 
-            texture.img.onload = function() {
-              if (texture.name === "s_sky.png")
-                self.assets.textures.sky = texture;
-              self.assets.textures.images.push(texture);
-              texture.bitmap = self.util.getBitmap(self, texture.img);
-              texture.width = texture.img.width;
-              texture.height = texture.img.height;
-              delete texture.img;
-              loadTexture(i + 1, resolve, reject);
-            };
+              texture.img.onerror = function() {
+                reject(texture);
+              };
 
-            texture.img.onerror = function() {
-              reject(texture);
-            };
-
-            texture.name = names[i];
-            texture.img.src = fs.__textures__ + names[i];
-          };
-
-          return new Promise(function(resolve, reject) {
-            loadTexture(0, resolve, reject);
-          });
+              texture.name = name;
+              texture.img.src = fs.__textures__ + name;
+            }))
+          ).then(() => self.assets.textures);
         }
       },
       "themes": {
@@ -1458,22 +1449,24 @@
         },
         "titleScreen": function(self, onEnd) {
           const sprite = self.assets.sprites.menu.skull;
-          const animationFrames = self.assets.sprites.animations.menu.skull;
-          const render = function(iFrame) {
-            const i = iFrame % animationFrames.length;
-            self.assets.sprites.menu.skull.activeFrames = [animationFrames[i]];
-            self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH, 0, 0, 0, 1);
+
+          function render (iFrame) {
+            const i = iFrame & 1;
+            self.assets.sprites.menu.skull.activeFrames = [i];
+            self.util.fillRect(0, 0, offscreenBufferW, offscreenBufferH,
+                               0, 0, 0, 1);
             self.util.render.globalSprite(self, sprite);
             ctx.putImageData(offscreenBufferData, 0, 0);
-            if (i === 1) {
+
+            if (i === 1)
               self.util.print(
                 "Press any key to start",
                 (self.res[0] - 212) * 0.5,
                 (self.res[1] - 16) * 0.5,
                 {"size": 16, "color": "#FFFFFF"}
               );
-            }
-          };
+          }
+
           return self.api.animation(
             self,
             function(iFrame) { render(iFrame); },
