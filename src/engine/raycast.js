@@ -139,14 +139,6 @@
                 "height": 34
               }
             ]
-          },
-          "hud": {
-            "img": new Image(),
-            "name": "hud.png",
-            "bitmap": [], // initialized at setup
-            "width": 0,   // initialized at setup
-            "height": 0,  // initialized at setup
-            // `locOnScreen` initialized at setup
           }
         },
         "playerWeapons": {
@@ -1855,8 +1847,7 @@
                 iCol,
                 hCeil,
                 hWall,
-                Math.max(realDist / MAX_DRAW_DIST + (isVerticalHit ? 0 : 0.05),
-                         0)
+                realDist / MAX_DRAW_DIST
               );
             }
             else if (realDist >= MAX_DRAW_DIST) {
@@ -2480,11 +2471,11 @@
 
         // async ops.
         return new Promise(function(resolve, reject) {
-          // setup sprites // TODO: why strings? - why not objects themselves?
+          // setup global sprites
           self.assets.sprites.setup(self, [
+            // TODO: why strings — why not objects themselves?
             "playerWeapons." + self.player.weaponDrawn,
-            "menu.skull",
-            "menu.hud"
+            "menu.skull"
           ])
             .then(function(sprites) {
               sprites.menu.skull.frames = sprites.menu.skull.frames
@@ -2990,20 +2981,14 @@
           self,
           self.assets.sprites.playerWeapons[self.player.weaponDrawn]
         );
-        self.util.drawImage(self.assets.sprites.menu.hud,
-                            0, 0,
-                            self.assets.sprites.menu.hud.width,
-                            self.assets.sprites.menu.hud.height,
-                            0, 0,
-                            640, 480);
         self.util.render.inventory(self);
         // flush the frame buffer onto the game canvas
         ctx.putImageData(offscreenBufferData, 0, 0);
         // render mini-map directly onto the game canvas
         self.util.render.minimap(
           self,
-          self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 33,
-          self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 23
+          self.res[0] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10,
+          self.res[1] - self.const.R_MINIMAP * self.const.TILE_SIZE_MINIMAP - 10
         );
         // render stats directly onto the game canvas
         self.util.render.stats(self, deltaT);
