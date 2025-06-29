@@ -530,7 +530,15 @@
            */
           const X0 = x0.toFixedNum(5), Y0 = y0.toFixedNum(5);
           const X1 = x1.toFixedNum(5), Y1 = y1.toFixedNum(5);
-          return X0 + w0 > X1 && X1 + w1 > X0 && Y0 + h0 > Y1 && Y1 + h1 > Y0;
+
+          // FIXME: fucking floating-point rounding errors still! 😬 why would
+          // you ever mix rounded values with those that are not?
+          // return X0 + w0 > X1 && X1 + w1 > X0 && Y0 + h0 > Y1 && Y1 + h1 > Y0;
+
+          return (X0 + w0).toFixedNum(5) > X1 &&
+                 (X1 + w1).toFixedNum(5) > X0 &&
+                 (Y0 + h0).toFixedNum(5) > Y1 &&
+                 (Y1 + h1).toFixedNum(5) > Y0;
         },
         "pointVsTileHeight": function(self, x, y, tx, ty, tw, th) {
           const MAP_LEGEND = self.mapLegend;
