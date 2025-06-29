@@ -763,9 +763,10 @@
               const vDist = eucDist(sx, sy, vTraceX, vTraceY, 1);
               const hDist = eucDist(sx, sy, hTraceX, hTraceY, 1);
               /* determine whether the hit is on the vertical axis */
-              isVerticalHit = Number.isNaN(vDist) || vDist > hDist
-                ? 0
-                : vDist === hDist ? isVerticalHit : 1;
+              isVerticalHit =
+                Number.isNaN(vDist) || (vDist - hDist).toFixedNum(5) > 0
+                  ? 0
+                  : vDist === hDist ? isVerticalHit : 1;
               distCovered = isVerticalHit ? vDist : hDist;
               // just break out of the loop if we're past the goal point
               if (distCovered >= distanceToCover) continue;
