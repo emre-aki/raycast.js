@@ -577,6 +577,11 @@
             const tY = ty + tile[MAP_LEGEND.MARGIN_FFT_Y] * 0.1;
             const tW = tile[MAP_LEGEND.LEN_FFT_X] * 0.1;
             const tH = tile[MAP_LEGEND.LEN_FFT_Y] * 0.1;
+            /* FIXME: this pre-emptive test does not work as intended for the
+             * "east" and "south" vertices of the player AABB as those vertices
+             * might be in perfect alignment with an adjacent tile, which would
+             * be rejected by this test
+             */
             if (!rectVsRect(x, y, w, h, tX, tY, tW, tH)) continue;
             /* */
             const height = pointVsTileHeight(self, vx, vy, tX, tY, tW, tH)[0];
@@ -631,6 +636,10 @@
           while (!hitSolid && distCovered < distanceToCover &&
                  pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
+            /* FIXME: fix collisions against diagonal walls — use a technique
+             * similar to the one seen here:
+             * https://youtu.be/7Ik2vowGcU0?si=c9rrcYhgd6VyPczf&t=1604
+             */
             if (typeTile === TYPE_TILES.WALL_DIAG) {
               const dOffsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
               const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
