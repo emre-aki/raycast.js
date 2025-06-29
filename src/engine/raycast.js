@@ -642,12 +642,15 @@
               for (let i = 0; i < 4; ++i) {
                 const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
                 const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
-                const iDX = px + deltaX + offsetX, iDY = py + deltaY + offsetY;
+                const iSX = px + offsetX, iSY = py + offsetY;
+                const iDX = iSX + deltaX, iDY = iSY + deltaY;
+                const isSInside = isOnTheLeft(x0, y0, x1, y1, iSX, iSY);
                 const isDInside = isOnTheLeft(x0, y0, x1, y1, iDX, iDY);
-                /* is the player attempting to clip through the diagonal wall? */
-                if (isDInside) {
-                  const iSX = iDX - deltaX, iSY = iDY - deltaY;
-                  const isect = getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
+                /* is the player attempting to clip through the diagonal wall?
+                 */
+                if (isSInside ^ isDInside) {
+                  const isect =
+                    getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
                   /* FIXME: do not skip resolving, maybe, come up with a better
                    * resolution approach??
                    */
