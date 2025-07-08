@@ -499,6 +499,23 @@
         "pointVsRect": function(xr, yr, w, h, x, y) {
           return x > xr && x < xr + w && y > yr && y < yr + h;
         },
+        "lineVsLine": function (ux0, uy0, ux1, uy1, vx0, vy0, vx1, vy1)
+        {
+          function vec2dCross (u, v) { return u[0] * v[1] - u[1] * v[0]; } // FIXME: remove as a separate function
+          const u = [ux1 - ux0, uy1 - uy0];
+          const v = [vx1 - vx0, vy1 - vy0];
+          const c_a = [vx0 - ux0, vy0 - uy0];
+          const numer_t = vec2dCross(c_a, v);
+          const numer_q = vec2dCross(c_a, u);
+          const denom = vec2dCross(u, v);
+          const t = numer_t / denom;
+          const q = numer_q / denom;
+
+          const EPS = 1e-5;
+          if (t < EPS || t >= 1 - EPS || q < EPS || q >= 1 - EPS) return;
+
+          return [t * u[0] + ux0, t * u[1] + uy0];
+        },
         "pointVsPolygon": function(self, x, y, linedefs) {
           const getIntersect = self.util.getIntersect;
           const nLines = linedefs.length;
@@ -606,11 +623,10 @@
           const MARGIN_TO_WALL = self.const.MARGIN_TO_WALL;
           const KNEE_HEIGHT = self.player.kneeHeight;
           const PLAYER_HEIGHT = self.const.PLAYER_HEIGHT;
-          const CLOCKWISE = self.const.math.CLOCKWISE;
           const pointVsRect = self.util.collision.pointVsRect;
+          const lineVsLine = self.util.collision.lineVsLine;
           const eucDist = self.util.eucDist;
           const getIntersect = self.util.getIntersect;
-          const isOnTheLeft = self.util.isOnTheLeft;
           const isBlockingMapCell = self.util.isBlockingMapCell;
           const pointVsTileHeight = self.util.collision.pointVsTileHeight;
           /* calculate the properties for the movement ray */
@@ -644,60 +660,157 @@
           while (!hitSolid && distCovered < distanceToCover &&
                  pointVsRect(-1, -1, N_COLS + 1, N_ROWS + 1, tileX, tileY)) {
             hitSolid = isBlockingMapCell(self, tileX, tileY) ? 1 : 0;
-            /* FIXME: fix collisions against diagonal walls — use a technique
-             * similar to the one seen here:
-             * https://youtu.be/7Ik2vowGcU0?si=c9rrcYhgd6VyPczf&t=1604
-             */
-            if (typeTile === TYPE_TILES.WALL_DIAG) {
-              const dOffsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
-              const x0 = tileX + dOffsets[0][0], y0 = tileY + dOffsets[0][1];
-              const x1 = tileX + dOffsets[1][0], y1 = tileY + dOffsets[1][1];
-              /* check all 4 vertices of the player AABB against collisions with
-               * the diagonal wall when moving towards the goal
+            if (typeTile === TYPE_TILES.WALL_DIAG)
+            {
+              const offsets = OFFSET_DIAG_WALLS[tile[MAP_LEGEND.FACE_DIAG]];
+              const x0 = tileX + offsets[0][0], y0 = tileY + offsets[0][1];
+              const x1 = tileX + offsets[1][0], y1 = tileY + offsets[1][1];
+              /* test for collisions between the diagonals of the player AABB
+               * and the diagonal wall
                */
-              let iGX, iGY, distTrespassEarlistHit;
-              for (let i = 0; i < 4; ++i) {
-                const offsetX = MARGIN_TO_WALL * ((CLOCKWISE[i] & 1) ? 1 : -1);
-                const offsetY = MARGIN_TO_WALL * ((CLOCKWISE[i] & 2) ? 1 : -1);
-                const iSX = px + offsetX, iSY = py + offsetY;
-                const iDX = iSX + deltaX, iDY = iSY + deltaY;
-                const isSInside = isOnTheLeft(x0, y0, x1, y1, iSX, iSY);
-                const isDInside = isOnTheLeft(x0, y0, x1, y1, iDX, iDY);
-                /* is the player attempting to clip through the diagonal wall?
-                 */
-                if (isSInside ^ isDInside) {
-                  const isect =
-                    getIntersect(x0, y0, x1, y1, iSX, iSY, iDX, iDY);
-                  /* FIXME: do not skip resolving, maybe, come up with a better
-                   * resolution approach??
-                   */
-                  // if the movement vector and the diagonal wall are parallel
-                  if (!isect) continue;
-                  const isectX = isect[0], isectY = isect[1];
-                  // how far did the current vertex clipped through (trespassed)
-                  // the diagonal wall
-                  const distTrespass = eucDist(isectX, isectY, iDX, iDY);
-                  /* we need to resolve the collision for the vertex that had
-                   * clipped the farthest through the diagonal wall, as the
-                   * farther a vertex has trespassed the diagonal wall, the
-                   * earlier it must have collided with it
-                   */
-                  if ((distTrespassEarlistHit || 0) < distTrespass) {
-                    distTrespassEarlistHit = distTrespass;
-                    hitX = isectX; hitY = isectY;
-                    iGX = iDX; iGY = iDY;
+              const aabbx0 = px + deltaX - MARGIN_TO_WALL;
+              const aabby0 = py + deltaY - MARGIN_TO_WALL;
+              const aabbx1 = px + deltaX + MARGIN_TO_WALL;
+              const aabby1 = py + deltaY + MARGIN_TO_WALL;
+              const isect0 = lineVsLine(x0, y0, x1, y1,
+                                        aabbx0, aabby0, aabbx1, aabby1);
+              const isect1 = lineVsLine(x0, y0, x1, y1,
+                                        aabbx1, aabby0, aabbx0, aabby1);
+              /* when both diagonal vs. diagonal collisions fail, resort to
+               * resolving against the edges of the player AABB
+               */
+              let isect2, isect3;
+              if (rayDirX > 0)
+                isect2 = lineVsLine(x0, y0, x1, y1,
+                                    aabbx1, aabby0, aabbx1, aabby1);
+              else if (rayDirX < 0)
+                isect2 = lineVsLine(x0, y0, x1, y1,
+                                    aabbx0, aabby0, aabbx0, aabby1);
+              if (!isect2 && rayDirY > 0)
+                isect3 = lineVsLine(x0, y0, x1, y1,
+                                    aabbx0, aabby1, aabbx1, aabby1);
+              else if (!isect2 && rayDirY < 0)
+                isect3 = lineVsLine(x0, y0, x1, y1,
+                                    aabbx0, aabby0, aabbx1, aabby0);
+              /* because the engine currently only supports perfectly diagonal
+               * walls, it's guaranteed that at most a single intersection will
+               * ever occur
+               */
+              let sX, sY, dX, dY;
+              if (isect0)
+              {
+                sX = aabbx0;
+                sY = aabby0;
+                dX = aabbx1;
+                dY = aabby1;
+                hitX = isect0[0];
+                hitY = isect0[1];
+              }
+              else if (isect1)
+              {
+                sX = aabbx1;
+                sY = aabby0;
+                dX = aabbx0;
+                dY = aabby1;
+                hitX = isect1[0];
+                hitY = isect1[1];
+              }
+              else if (isect2)
+              {
+                dX = isect2[0];
+                dY = isect2[1];
+                if (rayDirX > 0)
+                {
+                  if (x0 < x1)
+                  {
+                    hitX = x0;
+                    hitY = y0;
+                  }
+                  else
+                  {
+                    hitX = x1;
+                    hitY = y1;
+                  }
+                }
+                else
+                {
+                  if (x0 < x1)
+                  {
+                    hitX = x1;
+                    hitY = y1;
+                  }
+                  else
+                  {
+                    hitX = x0;
+                    hitY = y0;
                   }
                 }
               }
-              /* if a valid collision has been found, calculate the normal
-               * on the surface of the diagonal wall, and return immediately
-               */
-              if (distTrespassEarlistHit)
-                // TODO: generalize for other rotations of non-axis-aligned walls
-                return [Math.SQRT1_2 * (y0 - y1), Math.SQRT1_2 * (x1 - x0),
-                        hitX, hitY, iGX, iGY];
-              // no collisions has been found, continue with the ray-casting
-              hitSolid = 0;
+              else if (isect3)
+              {
+                dX = isect3[0];
+                dY = isect3[1];
+                if (rayDirY > 0)
+                {
+                  if (y0 < y1)
+                  {
+                    hitX = x0;
+                    hitY = y0;
+                  }
+                  else
+                  {
+                    hitX = x1;
+                    hitY = y1;
+                  }
+                }
+                else
+                {
+                  if (y0 < y1)
+                  {
+                    hitX = x1;
+                    hitY = y1;
+                  }
+                  else
+                  {
+                    hitX = x0;
+                    hitY = y0;
+                  }
+                }
+              }
+              /* no collisions has been found, continue with the ray-casting */
+              else
+              {
+                hitSolid = 0;
+              }
+
+              if (hitSolid)
+              {
+                /* determine the direction along which we're going to resolve
+                 * the collision
+                 */
+                let normalX = 0, normalY = 0;
+                if (isect0 || isect1)
+                {
+                  normalX = (y0 - y1) * Math.SQRT1_2;
+                  normalY = (x1 - x0) * Math.SQRT1_2;
+                  const dot = (hitX - sX) * normalX + (hitY - sY) * normalY;
+                  if (dot > 0)
+                  {
+                    dX = sX;
+                    dY = sY;
+                  }
+                }
+                else if (isect2)
+                {
+                  normalX = -rayDirX;
+                }
+                else
+                {
+                  normalY = -rayDirY;
+                }
+
+                return [normalX, normalY, hitX, hitY, dX, dY];
+              }
             } else if (typeTile === TYPE_TILES.FREEFORM) {
               // TODO: detect freeform tile collisions
               /* calculate the "virtual" bounds of the free-form tile */
